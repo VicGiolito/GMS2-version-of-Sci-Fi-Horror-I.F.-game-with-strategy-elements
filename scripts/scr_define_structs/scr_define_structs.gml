@@ -23,7 +23,7 @@ function scr_define_structs(){
 		scavenged_once_boolean = false; //When == true, we always show the items in this room.
 		already_explored_boolean = false; //Determines whether or not we show the name and any enemies in that room when within the CHOOSE_DOOR_DIRECTION game state; if true, we do show all that.
 		
-		keyword_interaction_map = -1 //Is used as a ds_map
+		keyword_interaction_str_ar = -1 //Is used as an array
 		
 		directional_ar = -1; //Array containing structs
 		

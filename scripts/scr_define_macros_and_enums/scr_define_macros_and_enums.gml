@@ -9,17 +9,29 @@ function scr_define_macros_and_enums(){
 	
 	enum game_state {
 		main_menu,
+		display_intro,
 		main_game,
 		init_combat,
 		prep_combat,
 		assign_combat_command,
 		execute_combat_action,
 		access_inv,
-		choose_char,
+		choose_chars,
 		choose_door_dir,
 		use_target_item,
 		combat_choose_attack,
 		combat_target_rank
+	}
+	
+	enum main_menu_options {
+		main,
+		options,
+		sound_options,
+		video_options,
+		gameplay_settings,
+		resolutions_options,
+		total_main_menu_options
+		
 	}
 	
 	enum research_vessel_room { //These must match the same order in which they are placed in their corresponding tileset
