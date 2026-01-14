@@ -1,7 +1,7 @@
 
 
 
-function methods_and_funcs_from_python_that_need_converting(){
+function python_room_methods(){
 	
 	/*
 	

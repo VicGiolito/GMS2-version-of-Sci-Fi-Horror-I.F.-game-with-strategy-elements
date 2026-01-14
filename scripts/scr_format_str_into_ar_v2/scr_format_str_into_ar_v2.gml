@@ -1,5 +1,6 @@
 /* 
  * ALTERNATIVE VERSION: More efficient (recalculates width less often)
+ * Now also handles newline characters (\n)
  */
 function scr_format_str_into_ar_v2(str_to_format, max_str_len) {
     
@@ -21,6 +22,24 @@ function scr_format_str_into_ar_v2(str_to_format, max_str_len) {
     for(var i = 1; i <= string_length(str_to_format); i++) {
         
         var current_char = string_char_at(str_to_format, i);
+        
+        // Check for newline character
+        if (current_char == "\n") {
+            // Push the substring up to (but not including) the newline
+            var substring = string_copy(str_to_format, start_pos, i - start_pos);
+            array_push(formatted_str_ar, substring);
+            
+            // Remove the newline from the string
+            str_to_format = string_delete(str_to_format, i, 1);
+            
+            // Reset for next line
+            start_pos = i;  // Don't add 1 because we deleted a character
+            last_space_pos = 0;
+            accumulated_width = 0;
+            i = i - 1;  // Adjust i since we deleted a character
+            continue;
+        }
+        
         var char_width = string_width(current_char);
         
         // Track spaces as potential break points

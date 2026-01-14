@@ -10,13 +10,13 @@ function scr_define_macros_and_enums(){
 	enum game_state {
 		main_menu,
 		display_intro,
+		choose_chars,
 		main_game,
 		init_combat,
 		prep_combat,
 		assign_combat_command,
 		execute_combat_action,
 		access_inv,
-		choose_chars,
 		choose_door_dir,
 		use_target_item,
 		combat_choose_attack,
@@ -99,7 +99,7 @@ function scr_define_macros_and_enums(){
 		sub_machine_gun,
 		pulse_rifle,
 		flame_thrower,
-		grenade,
+		frag_grenade,
 		rocket_launcher,
 		lead_pipe,
 		assault_rifle,
@@ -158,27 +158,28 @@ function scr_define_macros_and_enums(){
 		spawn_light_sentinel_droid,
 		spawn_light_flamer_droid,
 		spawn_light_shotgun_droid,
+		spawn_light_buzzsaw_droid,
 		headbutt,
 		feral_bite,
+		adrenal_pen,
+		plasma_torch,
 		total_items
 	}
 	
 	enum character {
 		mercenary_cyborg,
 		child,
+		mechanician,
 		engineer,
 		doctor,
 		criminal,
 		ceo,
 		service_droid,
-		hidden_artificial_lf,
 		ogre,
-		janitory,
-		playboy,
 		janitor,
+		playboy,
 		biologist,
 		security_guard,
-		veteran,
 		neutral_infected_scientist,
 		neutral_jittering_buzzsaw,
 		neutral_whipstitch_sentinel,
@@ -291,6 +292,30 @@ function scr_define_macros_and_enums(){
 		total_keyword_events
 	}
 	
+	enum stat_boost {
+		security,
+		engineering,
+		science,
+		stealth,
+		scavenging,
+		strength,
+		wisdom,
+		intelligence,
+		dexterity,
+		accuracy,
+		hp,
+		sanity,
+		action_points,
+		ability_points,
+		armor,
+		evasion,
+		fire_res,
+		gas_res,
+		vacuum_res,
+		electric_res,
+		total_stats
+	}
+	
 	//Some stat type macros:
 	#macro AVG_ACC_VAL 7
 	#macro MIN_COMBAT_RAN_NUM 0
@@ -309,5 +334,9 @@ function scr_define_macros_and_enums(){
 	#macro BASE_UNCONSCIOUS_COUNT 4
 	#macro SUPPRESSED_EVASION_DEBUFF 2
 	#macro SUPPRESSED_SPEED_DEBUFF 2
-
+	#macro AVERAGE_EVASION_SCORE 0
+	#macro AVERAGE_ACCURACY_SCORE 7
+	#macro BASE_MAX_INFECTION 8
+	#macro PERSONAL_SHIELD_BONUS 1
+	#macro SMOKE_GRENADE_EVASION_BONUS 1
 }

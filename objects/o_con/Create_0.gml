@@ -7,9 +7,18 @@ global.cell_size = 128;
 global.cur_game_state = game_state.main_menu;
 cur_main_menu_option = main_menu_options.main;
 
-scr_define_macros_and_enums()
-scr_define_structs()
-scr_define_global_and_con_data()
+scr_define_macros_and_enums();
+
+scr_define_structs();
+
+main_menu_str_ar = ["Start New Game","Continue Game","Options","Exit"];
+ar_to_draw = [];
+
+party_limit = 3;
+
+global.pc_char_ar = [];
+global.enemy_char_ar = [];
+global.neutral_char_ar = [];
 
 //Fonts and colors:
 global.default_fnt = fnt_default_dialogue_screen;
@@ -72,6 +81,7 @@ global.left_window_x = global.win_w * global.left_win_w_percent;
 global.bottom_window_y = global.win_h * global.top_win_h_percent;
 global.top_win_h = global.win_h * global.top_win_h_percent;
 global.bottom_win_h = global.win_h * global.lower_win_h_percent;
+d($"o_con create event: g.bottom_win_h = {global.bottom_win_h}");
 
 global.bottom_and_top_win_w = global.win_w * global.top_and_bottom_w_percent;
 global.center_x_of_upper_window = global.left_window_x+(global.bottom_and_top_win_w / 2);
@@ -112,6 +122,7 @@ scr_define_tilemap_from_grid_structs(global.cur_grid);
 
 #region Define all our dialogue window vars:
 
+//Every new string element in our dialogue_ar is a NEW LINE.
 global.dialogue_ar = [];
 
 dialogue_window_width = 0;
@@ -142,14 +153,18 @@ global.scrollbar_drag_offset = 0;
 //Mouse wheel scroll speed:
 global.scroll_speed = 3;
 
+// Text input cursor variables
+blinking_cursor_x = 0;
+blinking_cursor_y = 0;
+cursor_blink_timer = 0;
+cursor_blink_speed = 30;  // Blink every 30 frames (0.5 seconds at 60fps)
+cursor_visible = true;
+
+player_input_str = "";
+
 #endregion
 
-//Add sample text:
-sample_text_2 = "\tFUCK FUCK FUCK FUCKING";
-repeat(50) {
-	scr_add_str_to_dialogue_ar(sample_text);
-	scr_add_str_to_dialogue_ar(sample_text_2);
-}
+scr_define_global_and_con_data();
 
 global.cur_char = -1;
 
@@ -159,12 +174,13 @@ d($"reset_full_screen_count: {global.reset_full_screen_count}");
 
 alarm[1] = 1; //center and zoom cam
 
+//Define a lot of 'content' type data like string arrays, etc.
+
+
 global.wait = false;
 global.wait_time = 1;
 
-scr_reset_wait()
-
-
+scr_reset_wait();
 
 
 

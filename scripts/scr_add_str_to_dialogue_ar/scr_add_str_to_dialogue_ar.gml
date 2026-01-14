@@ -1,5 +1,5 @@
 
-function scr_add_str_to_dialogue_ar(str_to_add){
+function scr_add_str_to_dialogue_ar(str_to_add, add_prompt_character = false){
 	
 	var formatted_str = scr_add_spaces_for_tabs(str_to_add);
 	
@@ -7,6 +7,10 @@ function scr_add_str_to_dialogue_ar(str_to_add){
 	
 	for(var i = 0; i < array_length(formatted_str); i++) {
 		array_push(global.dialogue_ar,formatted_str[i]);
+	}
+	
+	if add_prompt_character {
+		array_push(global.dialogue_ar,">");	
 	}
 	
 	//Update max scroll after new text is added:
