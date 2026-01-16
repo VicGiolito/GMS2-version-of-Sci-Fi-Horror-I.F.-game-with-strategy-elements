@@ -51,7 +51,7 @@ function scr_define_global_and_con_data(){
 		
 		primary_role_str = "Undefined";
         char_class_snippet = "Undefined";
-		temp_char_id = new Character(i,0,0,global.cur_grid,team_type.pc,false);
+		temp_char_id = new global.Character(i,0,0,global.cur_grid,team_type.pc,false);
 		char_name = temp_char_id.name;
 		array_push(char_str_ar,string(char_name));
 		

@@ -1,7 +1,6 @@
 
 //Only checks to see if its there and returns a boolean var of true if it is, false if its not
 
-
 function scr_check_char_type_enum_in_ar(ar_id,char_enum){
 	
 	var ar_len = array_length(ar_id), char_id;

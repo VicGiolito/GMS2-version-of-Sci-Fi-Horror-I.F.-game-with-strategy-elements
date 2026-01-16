@@ -16,6 +16,8 @@ This is a classic sub-pixel rendering issue with zooming! When your view is scal
 at fractional pixel positions on screen, causing them to flicker or disappear.
 */
 
+/*
+
 var view_x = camera_get_view_x(global.map_cam);
 var view_y = camera_get_view_y(global.map_cam);
 var zoom_w = camera_get_view_width(global.map_cam);
@@ -38,6 +40,8 @@ for(var yy = 0; yy <= global.cur_grid_h; yy++){
     var screen_y = ((yy * global.cell_size - view_y) / zoom_h) * display_get_gui_height();
     draw_line(grid_left, screen_y, grid_right, screen_y);
 }
+
+*/
 
 #endregion
 
@@ -219,6 +223,10 @@ if array_length(global.dialogue_ar) > 0 {
 
 //Draw our foreground UI, in any game state:
 draw_sprite_ext(spr_foreground_UI_320_200,0,0,0,global.foreground_ui_scale,global.foreground_ui_scale,0,c_white,1);
+
+//Draw our fps values:
+var debug_fps_str = "Intended FPS: "+string(game_get_speed(gamespeed_fps))+", Actual FPS: "+string(fps_real);
+draw_text_color(win_w-string_width(debug_fps_str)-16,32,debug_fps_str,c_red,c_red,c_red,c_red,1);
 
 
 

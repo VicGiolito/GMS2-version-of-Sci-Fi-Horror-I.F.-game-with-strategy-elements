@@ -3,6 +3,9 @@
 randomize();
 
 global.cell_size = 128;
+global.half_c = global.cell_size / 2;
+global.grid_offset_x = 0;
+global.grid_offset_y = 0;
 
 global.cur_game_state = game_state.main_menu;
 cur_main_menu_option = main_menu_options.main;
@@ -35,30 +38,15 @@ global.foreground_ui_scale = 6;
 
 #region ds_maps:
 
-global.research_vessel_grid = ds_grid_create(32,32);
+
+//Defines cur_grid_w and h and specific grid ids:
+scr_build_map_from_csv_file(location.research_vessel);
 
 global.cur_grid = global.research_vessel_grid;
 
-global.cur_grid_w = ds_grid_width(global.cur_grid);
-global.cur_grid_h = ds_grid_height(global.cur_grid);
-
-//Iterate through map, adding vacuum everywhere:
-for(var xx = 0; xx < ds_grid_width(global.research_vessel_grid); xx++){
-	for(var yy = 0; yy < ds_grid_height(global.research_vessel_grid); yy++){
-		global.research_vessel_grid[# xx,yy] = new Room(location.research_vessel,research_vessel_room.vacuum,xx,yy,global.research_vessel_grid);
-	}
-}
-
-//Start building map from inside out:
-global.origin_grid_x = global.cur_grid_w div 2;
-global.origin_grid_y = global.cur_grid_h div 2;
-var cur_grid_x = global.origin_grid_x, cur_grid_y = global.origin_grid_y;
-
-global.research_vessel_grid[# cur_grid_x,cur_grid_y] = new Room(location.research_vessel,research_vessel_room.stasis_chamber,cur_grid_x,cur_grid_y,global.research_vessel_grid);
-cur_grid_x--;
-global.research_vessel_grid[# cur_grid_x,cur_grid_y] = new Room(location.research_vessel,research_vessel_room.sc_corridor_west,cur_grid_x,cur_grid_y,global.research_vessel_grid);
-cur_grid_x += 2;
-global.research_vessel_grid[# cur_grid_x,cur_grid_y] = new Room(location.research_vessel,research_vessel_room.sc_corridor_east,cur_grid_x,cur_grid_y,global.research_vessel_grid);
+//Our 'stasis room' where players spawn:
+global.origin_grid_x = 5;
+global.origin_grid_y = 8;
 
 #endregion
 

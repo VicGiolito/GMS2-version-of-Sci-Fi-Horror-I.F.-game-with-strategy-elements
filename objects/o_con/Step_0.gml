@@ -290,8 +290,9 @@ else if global.cur_game_state == game_state.choose_chars {
 		
 		scr_reset_wait();
 		
-		//So there is a log of what the player is typing, add it to our screen:
-		scr_add_str_to_dialogue_ar(">"+string(player_input_str));
+		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
+		global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str);
+		//scr_add_str_to_dialogue_ar(">"+string(player_input_str));
 		
 		//Format our string:
 		player_input_str = string(player_input_str);
@@ -304,13 +305,18 @@ else if global.cur_game_state == game_state.choose_chars {
 			
 			if scr_check_char_type_enum_in_ar(global.pc_char_ar,cursor_pos) == false {
 			
-				array_push(global.pc_char_ar,new Character(cursor_pos,global.origin_grid_x,global.origin_grid_y,global.research_vessel_grid,team_type.pc,false) );
+				array_push(global.pc_char_ar,new global.Character(cursor_pos,global.origin_grid_x,global.origin_grid_y,global.research_vessel_grid,team_type.pc,true,true) );
 				
 				scr_add_str_to_dialogue_ar($"{global.pc_char_ar[array_length(global.pc_char_ar)-1].name} has been added to the party.",true);
 				
-				if array_length(global.pc_char_ar) >= party_limit {
-					scr_add_str_to_dialogue_ar("Main game has begun.");	
+				if array_length(global.pc_char_ar) >= party_limit {	
+					global.cur_char = global.pc_char_ar[0];
 					global.cur_game_state = game_state.main_game;
+					scr_clear_dialogue_ar();
+					scr_print_char_new_room_text(global.cur_char);
+					
+					scr_add_char_sprites_from_room(global.cur_char.cur_room_id);
+					scr_position_char_sprite_in_room(global.cur_char.cur_room_id);
 				}
 			} else {
 				scr_add_str_to_dialogue_ar("You've already added this character to your party.",true);	
@@ -324,6 +330,9 @@ else if global.cur_game_state == game_state.choose_chars {
 				var char_index = scr_return_char_type_index_in_ar(global.pc_char_ar,cursor_pos);
 				
 				if char_index != -1 {
+					
+					scr_add_remove_char_room_ar(global.pc_char_ar[char_index].cur_room_id,global.pc_char_ar[char_index],false);
+					
 					var deleted_char_name = global.pc_char_ar[char_index].name;
 					
 					scr_delete_val_from_ar(global.pc_char_ar,global.pc_char_ar[char_index]);
@@ -351,7 +360,9 @@ else if global.cur_game_state == game_state.choose_chars {
 
 	// Detect new character input
 	if (keyboard_lastchar != "") {
-	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left {
+	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right 
+		&& keyboard_lastkey != vk_left && keyboard_lastkey != vk_backspace {
+			
 			player_input_str += keyboard_lastchar;
 			keyboard_lastchar = ""; 
 		}
@@ -370,6 +381,7 @@ else if global.cur_game_state >= game_state.main_game {
 	
 	#region Logic for left side window:
 	
+	/*
 	if keyboard_check_released(vk_up) || keyboard_check_released(vk_down) && global.wait {
 		
 		scr_reset_wait();
@@ -383,12 +395,70 @@ else if global.cur_game_state >= game_state.main_game {
 		if cursor_pos < 0 cursor_pos = array_length(ar_to_use)-1;
 		else if cursor_pos >= array_length(ar_to_use) cursor_pos = 0;
 	}
+	*/
 	
 	if keyboard_check_released(vk_enter) && global.wait {
 		
 		scr_reset_wait();
 		
 		//Parse player_input_str:
+		
+		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
+		global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str);
+		
+		//Format our string:
+		player_input_str = string(player_input_str);
+		player_input_str = string_upper(player_input_str);
+		player_input_str = string_trim(player_input_str);
+		
+		//Parse player_input_str
+			//Add, start game:
+		if player_input_str == "W" || player_input_str == "WEST" || player_input_str == "N" || player_input_str == "NORTH" || player_input_str == "E" ||
+		player_input_str == "EAST" || player_input_str == "S" || player_input_str == "SOUTH" {
+			
+			var move_dir_x = 0, move_dir_y = 0, directional_macro = -1, move_str = "undefined";
+			
+			if player_input_str == "W" || player_input_str == "WEST" { move_dir_x = -1; directional_macro = DOOR_DIR_W; move_str = "WEST"; }
+			if player_input_str == "N" || player_input_str == "NORTH" { move_dir_y = -1; directional_macro = DOOR_DIR_N; move_str = "NORTH"; }
+			if player_input_str == "E" || player_input_str == "EAST" { move_dir_x = 1; directional_macro = DOOR_DIR_E; move_str = "EAST"; }
+			if player_input_str == "S" || player_input_str == "SOUTH" { move_dir_y = 1; directional_macro = DOOR_DIR_S; move_str = "SOUTH"; }
+			
+			//Check to see if that's a valid direction sides:
+			var directional_struct = global.cur_char.cur_room_id.directional_ar[directional_macro];
+			
+			//Move:
+			if directional_struct.door_enum == door_state.unlocked || directional_struct.door_enum == door_state.destroyed {
+				
+				//Remove from current room:
+				scr_add_remove_char_room_ar(global.cur_char.cur_room_id,global.cur_char,false);
+				//Update x and y vars:
+				global.cur_char.cur_grid_x += move_dir_x;
+				global.cur_char.cur_grid_y += move_dir_y;
+				//Update cur_room_id:
+				global.cur_char.cur_room_id = global.cur_grid[# global.cur_char.cur_grid_x,global.cur_char.cur_grid_y];
+				//Add to next room:
+				scr_add_remove_char_room_ar(global.cur_char.cur_room_id,global.cur_char,true);
+				
+				//Update corresponding char_sprite instance:
+				scr_position_char_sprite_in_room(global.cur_char.cur_room_id);
+				
+				//Display move result:
+				scr_add_str_to_dialogue_ar($"{global.cur_char.name} moves {move_str}.");
+				scr_add_str_to_dialogue_ar(" ");
+				scr_print_char_new_room_text(global.cur_char);
+			}
+			else{
+				scr_add_str_to_dialogue_ar("You cannot move in that direction, try again.",true);	
+			}
+			
+		}
+		
+		else {
+			scr_add_str_to_dialogue_ar("That is an invalid command, try again.",true);
+		}
+		
+		//Reset our player_input_str:
+		player_input_str = "";
 	}
 	
 	#endregion
@@ -397,7 +467,8 @@ else if global.cur_game_state >= game_state.main_game {
 
 	// Detect new character input
 	if (keyboard_lastchar != "") {
-	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left {
+	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left &&
+		keyboard_lastkey != vk_backspace {
 			player_input_str += keyboard_lastchar;
 			keyboard_lastchar = "";
 		}

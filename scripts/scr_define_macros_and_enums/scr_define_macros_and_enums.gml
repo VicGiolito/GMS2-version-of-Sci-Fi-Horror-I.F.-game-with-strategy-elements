@@ -35,39 +35,60 @@ function scr_define_macros_and_enums(){
 	}
 	
 	enum research_vessel_room { //These must match the same order in which they are placed in their corresponding tileset
-		nothing,
-		stasis_chamber,
-		sc_corridor_east,
-		sc_corridor_west,
-		basic_corridor_ew,
-		basic_corridor_ns,
-		commissary,
-		barracks,
-		armory,
-		control_room,
-		bridge,
-		environmental_control,
-		airlock,
-		medbay,
-		engine_room,
-		shuttle_bay,
-		engineer_bay,
-		crew_quarters,
-		supply_closet,
-		hydroponics_lab,
-		communication_station,
-		arboretum,
-		storage_room,
-		research_lab,
-		rec_room,
-		robotics_bay,
-		recycler,
-		astrometrics,
-		animal_lab,
-		officers_ready_room,
-		computer_core,
-		intersection,
-		vacuum,
+		nothing, //0
+		stasis_chamber, //1 done
+		sc_corridor_east, //2 done
+		sc_corridor_west, //3 done 
+		basic_corridor_ew, //4 done
+		basic_corridor_ns, //5 done
+		commissary, //6 done
+		barracks, //7 done
+		armory, //8 done
+		control_room, //9 done
+		bridge, //10 done
+		environmental_control, //11 done
+		airlock, //12 - not in use
+		medbay, //13 done
+		engine_room, //14 done
+		shuttle_bay, //15 done
+		engineer_bay, //16 done
+		crew_quarters, //17 done
+		supply_closet, //18 done
+		hydroponics_lab, //19 done
+		communication_station, //20 - not in use
+		arboretum_n_s_e_w, //21 done
+		storage_room, //22 done
+		research_lab, //23 done
+		rec_room, //24 - not in use
+		robotics_bay, //25 done
+		recycler, //26 done
+		astrometrics, //27 - not in use
+		animal_lab, //28 done
+		officers_quarters, //29 done
+		computer_core, //30 - not in use
+		
+		intersection_e_w_n, //31 done
+		intersection_e_w_s, //32 done
+		intersection_n_s_e, //33 done
+		intersection_n_s_w, //34 done
+		
+		vacuum, //35 done done
+		airlock_e_w_n_s, //36 done
+		airlock_n_s, //37 done
+		airlock_e_w, //38 done
+		
+		intersection_s_e, //39 done
+		intersection_w_s, //40 done
+		intersection_w_e_s_n, //41 done
+		airlock_n_s_e, //42 done
+		intersection_n_e, //43 done
+		arboretum_e_s, //44 done
+		arboretum_w_s, //45 done
+		arboretum_w_s_n, //46 done
+		arboretum_n_s_e, //47 done
+		arboretum_n_e, //48 done
+		arboretum_n_w, //49 done
+		
 		total_research_vessel_room_types
 	}
 
@@ -196,6 +217,7 @@ function scr_define_macros_and_enums(){
 	}
 	
 	enum door_state {
+		wall,
 		unlocked,
 		locked,
 		jammed,
@@ -203,6 +225,12 @@ function scr_define_macros_and_enums(){
 		open_space,
 		total_door_states
 	}
+	
+	//Macros for door directions:
+	#macro DOOR_DIR_W 0
+	#macro DOOR_DIR_N 1
+	#macro DOOR_DIR_E 2
+	#macro DOOR_DIR_S 3
 	
 	enum hazard_type {
 		toxic_gas,
@@ -327,6 +355,8 @@ function scr_define_macros_and_enums(){
 	#macro ADRENAL_PEN_BUFF 2
 	#macro OGRE_MELEE_ACC_BUFF 1
 	#macro OGRE_MELEE_MAX_DMG_BUFF 5
+	#macro BASE_DOOR_HP 20
+	#macro BASE_WALL_HP 100
 	
 	//Some other status type or misc. macros:
 	#macro DOT_FIRE 5

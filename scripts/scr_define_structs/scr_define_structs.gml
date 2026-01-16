@@ -3,11 +3,13 @@ function scr_define_structs(){
 	
 	#region Character struct
 	
-	Character = function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, char_team_enum, add_to_room_list_bool, wep_loadout_int = 0) constructor {
+	global.Character = function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, attach_abilities_boolean = false, wep_loadout_int = 0) constructor {
 		
 		struct_type_enum = struct_type.Character;
 		
         add_to_room_list_boolean = add_to_room_list_bool;
+		
+		char_sprite_inst_id = -1;
 
         wep_loadout_int = wep_loadout_int; //Only a debug var used for certain enemies to change their wep loadout, for debug purposes
 
@@ -53,9 +55,9 @@ function scr_define_structs(){
         max_action_points = 2;
 
         inv_list = [];
-        ability_list = -1;
+        ability_ar = -1;
 
-        char_team_enum = char_team_enum;
+        char_team_enum = team_enum;
 
         name = "Not defined";
         subjective_pronoun = "he";
@@ -93,7 +95,7 @@ function scr_define_structs(){
 		
 		if add_to_room_list_bool {
 	        cur_grid = spawn_grid;
-	        cur_room_id = spawn_grid[spawn_grid_y][spawn_grid_x];
+	        cur_room_id = spawn_grid[# spawn_grid_x, spawn_grid_y];
 	        cur_grid_x = spawn_grid_x;
 	        cur_grid_y = spawn_grid_y;
 			
@@ -185,8 +187,8 @@ function scr_define_structs(){
 
             accuracy = AVERAGE_ACCURACY_SCORE-1; //Worse than average accuracy, only hits about 50% of the time, on average
             evasion = AVERAGE_EVASION_SCORE-1; //Worse than average evasion
-
-            
+	
+			if attach_abilities_boolean scr_add_ability(self,item_type.headbutt);
 		}
 
         else if char_type_enum == character.doctor {
@@ -1716,18 +1718,21 @@ function scr_define_structs(){
 	
 	#region Room struct:
 	
-	Room = function(location_type_enum,room_type_enum,spawn_grid_x,spawn_grid_y,location_grid_id) constructor
+	global.Room = function(location_type_enum,room_type_enum,spawn_grid_x,spawn_grid_y,location_grid_id) constructor
 	{
 		struct_type_enum = struct_type.Room;
 		
-		scavenge_ar = -1; //Everything == and after scavenge_resource.total_resources index is an item
+		scavenge_ar = []; //Anything at or beyond *.total_resources is considered an item.
+		for(var i = 0; i < scavenge_resource.total_resources; i++) {
+			array_push(scavenge_ar,0);
+		}
 		
 		powered_boolean = false;
 		
 		cover_enum = cover_val.none; //May not even implement this; provides a static buff or debuff to pcs during combat, making some rooms more suitable as defensive choke points.
 		
-		unpowered_room_desc = "undefined";
-		powered_room_desc = "undefined";
+		pre_event_unpowered_room_desc = "undefined";
+		pre_event_powered_room_desc = "undefined";
 		post_event_unpowered_room_desc = "undefined";
 		post_event_powered_room_desc = "undefined";
 		
@@ -1736,7 +1741,11 @@ function scr_define_structs(){
 		
 		keyword_interaction_str_ar = -1 //Is used as an array
 		
-		directional_ar = -1; //Array containing structs
+		directional_ar = []; //Array containing structs
+		//Default is defined to open space - vacuum
+		repeat(4) {
+			array_push(directional_ar,{ door_enum: door_state.open_space, dir_hp: -1 })	
+		}
 		
 		enemies_in_room_ar = -1;
 		pcs_in_room_ar = -1
@@ -1751,157 +1760,852 @@ function scr_define_structs(){
 		
 		room_name_str = "undefined"
 		
+		main_room_event_already_triggered = false;
+		
         if location_type_enum == location.research_vessel {
 			
 			if room_enum == research_vessel_room.basic_corridor_ew {
-				scavenge_ar = [];
-				for(var i = 0; i < scavenge_resource.total_resources; i++) {
-					array_push(scavenge_ar,0);
-				}
+				
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
-				unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the vessel's disuse."
-				powered_room_desc = unpowered_room_desc;
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
-				directional_ar = [];
-				array_push(directional_ar,{ door_dir: "EAST", door_state: door_state.unlocked });
-				array_push(directional_ar,{ door_dir: "WEST", door_state: door_state.unlocked });
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				
 				room_name_str = "EAST-WEST CORRIDOR";	
 			}
 			
 			else if room_enum == research_vessel_room.basic_corridor_ns {
-				scavenge_ar = [];
-				for(var i = 0; i < scavenge_resource.total_resources; i++) {
-					array_push(scavenge_ar,0);
-				}
+				
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
-				unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the vessel's disuse."
-				powered_room_desc = unpowered_room_desc;
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
 				directional_ar = [];
-				array_push(directional_ar,{ door_dir: "EAST", door_state: door_state.unlocked });
-				array_push(directional_ar,{ door_dir: "WEST", door_state: door_state.unlocked });
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				
 				room_name_str = "NORTH-SOUTH CORRIDOR";
 			}
 			
 			else if room_enum == research_vessel_room.storage_room {
-				scavenge_ar = [];
-				for(var i = 0; i < scavenge_resource.total_resources; i++) {
-					array_push(scavenge_ar,0);
-				}
+				
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				scavenge_ar[scavenge_resource.tech_advanced] = 1;
 				scavenge_ar[scavenge_resource.food] = irandom_range(6,12);
 				
-				unpowered_room_desc = "Racks of mostly empty shelving and opened boxes indicate that this room was once used for storage. Dust and debris are mostly all that remain. It looks as though the most important items have been pilfered already. The whirling red flare of the emergency lights overhead sends strange shadows pin-wheeling across the walls.";
+				pre_event_unpowered_room_desc = "Racks of mostly empty shelving and opened boxes indicate that this room was once used for storage. Dust and debris are mostly all that remain. It looks as though the most important items have been pilfered already.\n\tThe whirling red flare of the emergency lights overhead sends strange shadows pin-wheeling across the walls.";
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
 				room_name_str = "STORAGE ROOM"
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
 			}
 			
 			else if room_enum == research_vessel_room.hydroponics_lab {
-				scavenge_ar = [];
-				for(var i = 0; i < scavenge_resource.total_resources; i++) {
-					array_push(scavenge_ar,0);
-				}
+				
 				scavenge_ar[scavenge_resource.food] = irandom_range(12,24);
 				
-				unpowered_room_desc = "Rows and rows of metal grow boxes line the room, their contents nothing more than withered weeds to clutching to dry, gray dirt. There's a nest of hydraulics and hoses in the walls, and huge sunlamps are recessed in the ceiling, now dark and inert. If you can restore power to this room, perhaps there's a way to get these hydroponics working again?"
-				powered_room_desc = "The rows of hydroponics buzz happily with spray from the moisture pumps, while the leafy green vegetables within eagerly drink the light from the sunlamps overhead. These crops of potatoes, beans, and cabbages have clearly been genetically modified to grow quickly."
+				pre_event_unpowered_room_desc = "Rows and rows of metal grow boxes line the room, their contents nothing more than withered weeds to clutching to dry, gray dirt. There's a nest of hydraulics and hoses in the walls, and huge sunlamps are recessed in the ceiling, now dark and inert.\n\tIf you can restore power to this room, perhaps there's a way to get these hydroponics working again?"
+				pre_event_powered_room_desc = "The rows of hydroponics buzz happily with spray from the moisture pumps, while the leafy green vegetables within eagerly drink the light from the sunlamps overhead.\n\tThese crops of potatoes, beans, and cabbages have clearly been genetically modified to grow quickly."
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
 				room_name_str = "HYDROPONICS LAB"
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 			}
 			
 			else if room_enum == research_vessel_room.stasis_chamber {
-				scavenge_ar = [];
-				for(var i = 0; i < scavenge_resource.total_resources; i++) {
-					array_push(scavenge_ar,0);
-				}
+				
 				scavenge_ar[scavenge_resource.food] = 12;
 				scavenge_ar[scavenge_resource.ammo] = 55;
 				scavenge_ar[scavenge_resource.tech_basic] = 4;
 				
 				//Items:
-				//self.scavenge_resource_list.append(Item(ENUM_ITEM_SUIT_ENVIRONMENTAL))
-                //self.scavenge_resource_list.append(Item(ENUM_ITEM_MEDKIT))
-				
-				directional_ar = [];
-				array_push(directional_ar,{ door_dir: "EAST", door_state: door_state.unlocked });
-				array_push(directional_ar,{ door_dir: "WEST", door_state: door_state.unlocked });
+				array_push(scavenge_ar,item_type.suit_environmental);
+                array_push(scavenge_ar,item_type.medkit);
 				
                 room_name_str = "STASIS ROOM";
 				
-				unpowered_room_desc = [
-					"Klaxons blare, and an eerie red illumination seeps from the emergency lights in the floor. Row upon row of stasis pods have been arranged in this room, most of them shattered or inoperable. Those corpses who had sought refuge within them have met a truly ignoble end, asphyxiated in their sleep. There's only one STASIS POD that still looks operational and inviting, gleaming pearl-white in the blood-hued gloom.",
-                    "The room itself has been badly damaged. Refuse and debris lay scattered about, along with piles of personal effects: whatever non-essential items the sleepers had stripped from their bodies before hastily clamboring within the statis pods to seal their doom.",
-                    "Hull stresses and fractures have fissured the walls and ceiling, exposing pipes and electrical wires. One particularly damaged PIPE is rapidly venting a noxious green gas, caustic enough to make you sputter and gag. A nearby exposed service panel reveals two huge circular valves: a BRONZE VALVE and a STEEL VALVE.",
-                    "The cover of the service panel looks as though it was torn off with some haste, almost as though someone was determined to access these valves but soon abandoned their task; you can only speculate as to why."
+				pre_event_unpowered_room_desc = [
+					"Klaxons blare, and an eerie red illumination seeps from the emergency lights in the floor. Row upon row of stasis pods have been arranged in this room, most of them shattered or inoperable. Those corpses who had sought refuge within them have met a truly ignoble end, asphyxiated in their sleep. There's only one empty STASIS POD that still looks operational and inviting, gleaming pearl-white in the blood-hued gloom.\n",
+                    "\tThe room itself has been badly damaged. Refuse and debris lay scattered about, along with piles of personal effects: whatever non-essential items the sleepers had stripped from their bodies before hastily clamboring within the statis pods to seal their doom.\n",
+                    "\tHull stresses and fractures have fissured the walls and ceiling, exposing pipes and electrical wires. One particularly damaged PIPE is rapidly venting a noxious green gas, caustic enough to make you sputter and gag. A nearby exposed service panel reveals two huge circular valves: a BRONZE VALVE and a STEEL VALVE.\n",
+                    "\tThe cover of the service panel looks as though it was torn off with some haste, almost as though someone was determined to access these valves but soon abandoned their task; you can only speculate as to why.\n"
 				]
 				
-				powered_room_desc = unpowered_room_desc;
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 			}
 			
 			else if room_enum == research_vessel_room.sc_corridor_west {
-				scavenge_ar = [];
-				for(var i = 0; i < scavenge_resource.total_resources; i++) {
-					array_push(scavenge_ar,0);
-				}
+				
 				scavenge_ar[scavenge_resource.tech_basic] = 4;
 				
 				room_name_str = "EAST-WEST CORRIDOR";
 				
 				directional_ar = [];
-				array_push(directional_ar,{ door_dir: "EAST", door_state: door_state.unlocked });
-				array_push(directional_ar,{ door_dir: "WEST", door_state: door_state.unlocked });
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				
 				keyword_interaction_map = ds_map_create();
 				ds_map_add(keyword_interaction_map,"CORPSE",keyword_event.research_vessel_hall_east_of_sr);
 			
-                unpowered_room_desc = [
-                    "The air smells foul and stuffy in this narrow corridor, and is suffused with the same ominous dim red light. The floor is metal grating and the walls are made up of panels of burnished steel.",
-                    "A shadowed and inert form is slumped against the western bulkhead door, as if in peaceful repose. Upon closer inspection, you can see that the man is one of the security forces on board, if his military fatigues and body armor are any indication. You can also see that he is very dead: his eyes stare lifelessly at the jagged hole in his abdomen beneath his flak vest, admiring the great heap of coiled intestines that lay piled between his legs.",
-                    "If your eyes aren't mistaken in the gloomy light, there's a strangely colored, green goo clinging to the edges of the gaping wound, and more of it dribbling from his mouth. The CORPSE is also clutching a pistol in a death grip. Judging by the bloody hole in the side of his head, it looks as though his last act was to use the weapon on himself.",
-                    "The self-inflicted head wound, combined with the abyss where the man's stomach used to be, has certainly given you pause. Nonetheless, the CORPSE is carrying some useful looking gear, and there could be more in the pockets of his tactical vest. Is it wise to take a closer look?"
+                pre_event_unpowered_room_desc = [
+                    "The air smells foul and stuffy in this narrow corridor, and is suffused with the same ominous dim red light. The floor is metal grating and the walls are made up of panels of burnished steel.\n",
+                    "\tA shadowed and inert form is slumped against the western bulkhead door, as if in peaceful repose. Upon closer inspection, you can see that the man is one of the security forces on board, if his military fatigues and body armor are any indication. You can also see that he is very dead: his eyes stare lifelessly at the jagged hole in his abdomen beneath his flak vest, admiring the great heap of coiled intestines that lay piled between his legs.\n",
+                    "\tIf your eyes aren't mistaken in the gloomy light, there's a strangely colored, green goo clinging to the edges of the gaping wound, and more of it dribbling from his mouth. The CORPSE is also clutching a pistol in a death grip. Judging by the bloody hole in the side of his head, it looks as though his last act was to use the weapon on himself.\n",
+                    "\tThe self-inflicted head wound, combined with the abyss where the man's stomach used to be, has certainly given you pause. Nonetheless, the CORPSE is carrying some useful looking gear, and there could be more in the pockets of his tactical vest. Is it wise to take a closer look?\n"
                 ]
-				powered_room_desc = unpowered_room_desc;
+				
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
 				post_event_unpowered_room_desc = [
-                    "The air smells foul and stuffy in this narrow corridor, and is suffused with the same ominous dim red light. The floor is metal grating and the walls are made up of panels of burnished steel.",
-                    "The corpse still slumped beside the western bulkhead door serves as a grim reminder of the consequence of carelessness."
+                    "The air smells foul and stuffy in this narrow corridor, and is suffused with the same ominous dim red light. The floor is metal grating and the walls are made up of panels of burnished steel.\n",
+                    "\tThe corpse still slumped beside the western bulkhead door serves as a grim reminder of the consequence of carelessness."
                 ]
+				
 				post_event_powered_room_desc = post_event_unpowered_room_desc;
+				
 			}
 			
 			else if room_enum == research_vessel_room.sc_corridor_east {
-				scavenge_ar = [];
-				for(var i = 0; i < scavenge_resource.total_resources; i++) {
-					array_push(scavenge_ar,0);
-				}
 				
 				room_name_str = "EAST-WEST CORRIDOR";
 				
 				directional_ar = [];
-				array_push(directional_ar,{ door_dir: "EAST", door_state: door_state.unlocked });
-				array_push(directional_ar,{ door_dir: "WEST", door_state: door_state.unlocked });
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				
-				unpowered_room_desc = "There's an NPC in this room."
-				powered_room_desc = "There's an NPC in this room.";
+				pre_event_unpowered_room_desc = "There's an NPC in this room.";
+				pre_event_powered_room_desc = "There's an NPC in this room.";
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.supply_closet {
+				
+				room_name_str = "SUPPLY ROOM";
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				pre_event_unpowered_room_desc = "The door to this room opens upon a narrow chamber with a second story catwalk, but the red emergency lighting recessed within the floor does little to illuminate your surroundings beyond your next step.\n\tThere are rows of narrow locked cabinets receded within the walls, but in the sanguine gloom you can't make out the labeling that identifies them. The banks of computer monitors beside each locker no longer grant access to the contents within; the consoles are utterly dead.\n";
+				pre_event_powered_room_desc = "Beneath the white wash of the flood lamps from the ceiling, you can finally pick your way through the contents of this room. The computer consoles beside each locker are alive with chittering and scrolling green text. It is an easy thing to navigate their file structures, and the corresponding lockers pop open with a hiss after just a few key strokes.";
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.bridge {
+				
+				room_name_str = "BRIDGE";
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				pre_event_unpowered_room_desc = "You breath a sigh of relief upon realizing that you have at last discovered the central processing unit of this ship: the bridge. The cushioned chairs, the banks of computer monitors, and the raised, rotating gyroscope supporting the pilot's seat all leave little doubt in your mind that you have finally found the command station of this vessel.\n\tThe room is still without power, however. Stumbling through the bloodied gloom, you collapse within the cushioned embrace of an officer's chair. Find your own wearied expression staring back at you from one of the dead facades of a computer monitor. Until the power is restored, you won't be able to accomplish anything here.";
+				pre_event_powered_room_desc = "You breath a sigh of relief upon realizing that you have at last discovered the central processing unit of this ship: the bridge. The cushioned chairs, the banks of computer monitors, and the raised, rotating gyroscope supporting the pilot's seat all leave little doubt in your mind that you have finally found the command station of this vessel.\n\tThere are more than a dozen blinking interfaces that whir to life as you pass by, and it looks like their security systems have already been disabled. You sit surrounded by blinking screens that display propulsion, nagivation, communications, sub-systems and more. You could OPERATE any one of them with little trouble.";
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.barracks {
+				
+				room_name_str = "BARRACKS";
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				pre_event_unpowered_room_desc = "This room is long and wide, with mess tables welded to the floor along its central line. It looks like shaded screens conceal military bunks in the walls.\n\tBeyond that, it's difficult to make out much in the gloom--although your eyes are quick tp imagine leaping and contorted forms cast by the shadows of the whirling gaze of the emergency lights."
+				pre_event_powered_room_desc = "This room is long and wide, with mess tables welded to the floor along its central line. It looks like shaded screens conceal military bunks in the walls.\n\tWith the power restored, you can make out the lockers inlaid within the walls beside each bunk. It looks like their security consoles have been disabled: the cabinets open easily."
+
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.airlock_e_w_n_s {
+				
+				room_name_str = "MATERIAL AIRLOCK";
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
+				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.airlock_e_w {
+				
+				room_name_str = "MATERIAL AIRLOCK";
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
+				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			} 
+			
+			else if room_enum == research_vessel_room.airlock_n_s {
+				
+				room_name_str = "MATERIAL AIRLOCK";
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
+				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			} 
+			
+			else if room_enum == research_vessel_room.airlock_n_s_e {
+				
+				room_name_str = "MATERIAL AIRLOCK";
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
+				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\tWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.officers_quarters {
+				
+				room_name_str = "OFFICER'S QUARTERS"; //We find some lore here, perhaps? Can spend action points to regain sanity here, perhaps?
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				pre_event_unpowered_room_desc = "Officer's Quarters.";
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.engineer_bay {
+				
+				room_name_str = "ENGINEERING BAY"; 
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				pre_event_unpowered_room_desc = "Engineering Bay.";
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.environmental_control {
+				
+				room_name_str = "ENVIRONMENTAL CONTROL"; 
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				pre_event_unpowered_room_desc = "Environmental Control.";
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+			}
+			
+			else if room_enum == research_vessel_room.intersection_e_w_n {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.intersection_e_w_s {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.intersection_n_s_e {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.intersection_n_s_w {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.intersection_s_e {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.intersection_w_s {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.intersection_w_e_s_n {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.intersection_n_e {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "INTERSECTION";
+			}
+			
+			else if room_enum == research_vessel_room.arboretum_e_s {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Arboretum"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "ARBORETUM";
+			}
+			
+			else if room_enum == research_vessel_room.arboretum_n_s_e_w {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Arboretum"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "ARBORETUM";
+			}
+			
+			else if room_enum == research_vessel_room.arboretum_w_s {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Arboretum"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "ARBORETUM";
+			}
+			
+			else if room_enum == research_vessel_room.arboretum_w_s_n {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Arboretum"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "ARBORETUM";
+			}
+			
+			else if room_enum == research_vessel_room.arboretum_n_s_e {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Arboretum"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "ARBORETUM";
+			}
+			
+			else if room_enum == research_vessel_room.arboretum_n_e {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Arboretum"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "ARBORETUM";
+			}
+			
+			else if room_enum == research_vessel_room.arboretum_n_w {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Arboretum"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "ARBORETUM";
+			}
+			
+			else if room_enum == research_vessel_room.commissary {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Commissary"
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "COMMISSARY";
+			}
+			
+			else if room_enum == research_vessel_room.armory {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Armory."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "ARMORY";
+			}
+			
+			else if room_enum == research_vessel_room.control_room {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Control Room."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "CONTROL ROOM";
+			}
+			
+			else if room_enum == research_vessel_room.medbay {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Medical Bay."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "MEDICAL BAY";
+			}
+			
+			else if room_enum == research_vessel_room.engine_room {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Engine Room."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "ENGINE ROOM";
+			}
+			
+			else if room_enum == research_vessel_room.shuttle_bay {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Shuttle Bay."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "SHUTTLE BAY";
+			}
+			
+			else if room_enum == research_vessel_room.crew_quarters {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Crew Quarters."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "CREW QUARTERS";
+			}
+			
+			else if room_enum == research_vessel_room.research_lab {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Research Laboratory."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "RESEARCH LABORATORY";
+			}
+			
+			else if room_enum == research_vessel_room.robotics_bay {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Robotics Bay."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "ROBOTICS BAY";
+			}
+			
+			else if room_enum == research_vessel_room.recycler {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Recycling Station."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				
+				room_name_str = "RECYCLING STATION";
+			}
+			
+			else if room_enum == research_vessel_room.animal_lab {
+				
+				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
+				pre_event_unpowered_room_desc = "Animal Laboratory."
+				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				directional_ar = [];
+				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				
+				room_name_str = "ANIMAL LABORATORY";
 			}
 			
 			else if room_enum == research_vessel_room.vacuum {
-				room_name_str = "SPACE - VACUUM"	
+				room_name_str = "SPACE - VACUUM";
 				
-				unpowered_room_desc = "The cold vacuum of space will kill even the strongest man in two turns.";
-                powered_room_desc = "The cold vacuum of space will kill even the strongest man in two turns.";
+				pre_event_unpowered_room_desc = "You are but a speck of detritus floating through this ocean of stars.";
+				pre_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
+				post_event_powered_room_desc = pre_event_powered_room_desc;
+				
+				//No need to define directional_ar, it's already been done for default rooms.
 			}
 			
 			else {
 				d($"Constructor event for Room struct: room_type_enum: {room_type_enum} not captured by if case for location_type_enum {location_type_enum}");
+				show_error($"Foir room_type enum: {room_enum}, grid x:{spawn_grid_x}, room_y: {spawn_grid_y}: room enum not yet defined", true);
 			}
 		} //End of if location_type enum == research vessel
 
 	}
 	
 	#endregion
+	
 }

@@ -15,4 +15,7 @@ function scr_add_str_to_dialogue_ar(str_to_add, add_prompt_character = false){
 	
 	//Update max scroll after new text is added:
 	scr_calculate_max_scroll();
+	
+	//Always update our scroll position to == our max scroll after we add text:
+	global.scroll_position = global.max_scroll;
 }
