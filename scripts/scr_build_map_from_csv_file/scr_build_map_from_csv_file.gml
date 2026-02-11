@@ -18,7 +18,7 @@ function scr_build_map_from_csv_file(location_enum){
 		for(var xx = 0; xx < global.cur_grid_w; xx++) {
 			for(var yy = 0; yy < global.cur_grid_h; yy++){
 				//Delete comma from string, if applicable:
-				if xx != global.cur_grid_w-1 && yy != global.cur_grid_h-1 {
+				if xx != global.cur_grid_w-1 && yy != global.cur_grid_h-1 { //There are no commas for the last coordinates in any row/colum
 					global.research_vessel_grid[# xx,yy] = string_delete(global.research_vessel_grid[# xx,yy],string_length(global.research_vessel_grid[# xx,yy]), 1);
 				}
 				//Convert to real number:

@@ -245,12 +245,15 @@ else if global.cur_game_state == game_state.display_intro {
 			intro_state = 0;
 			//Load our first char description:
 			cursor_pos = 0;
-			scr_add_str_to_dialogue_ar(char_stats_ar[cursor_pos],true);
+			scr_add_str_to_dialogue_ar(char_stats_ar[cursor_pos],false);
+			//scr_add_str_to_dialogue_ar(" ");
+			scr_add_str_to_dialogue_ar($"You must choose {party_limit-array_length(global.pc_char_ar)} more characters to add to your party. Enter 'A' or 'ADD' to add this character to your party, or 'R' or 'REMOVE' to remove them. Commands are not case-sensitive.",true);
 		}
 		
-		//d($"cursor_x: {cursor_x}, cursor_y: {cursor_y}.");
 		keyboard_lastchar = "";
 		player_input_str = "";
+		
+		global.scroll_position = 0; //Reset to the top position in our dialogue box
 	}
 	if keyboard_check_released(vk_escape) {
 		global.cur_game_state = game_state.main_menu;
@@ -262,7 +265,7 @@ else if global.cur_game_state == game_state.display_intro {
 
 #endregion
 
-#region game_state >= main_game logic:
+#region game_state == choose_chars:
 
 else if global.cur_game_state == game_state.choose_chars {
 	
@@ -283,7 +286,7 @@ else if global.cur_game_state == game_state.choose_chars {
 		scr_clear_dialogue_ar();
 		scr_add_str_to_dialogue_ar(char_stats_ar[cursor_pos]);
 		scr_add_str_to_dialogue_ar(" ");
-		scr_add_str_to_dialogue_ar($"You must choose {party_limit-array_length(global.pc_char_ar)} more characters to add to your party. Enter 'A' or 'ADD' to add this character to your party, or 'R' or 'REMOVE' to remove them. Commands are not case-sensitive.",true);
+		scr_add_str_to_dialogue_ar($"You must choose {party_limit-array_length(global.pc_char_ar)} more characters to add to your party. Enter 'A' or 'ADD' to add this character to your party, 'R' or 'REMOVE' to remove them, or 'B' or 'BIO' to learn about their backstory. Commands are not case-sensitive. Use the up and down arrow keys to move between stasis pods.",true);
 	}
 	
 	if keyboard_check_released(vk_enter) && global.wait {
@@ -300,17 +303,29 @@ else if global.cur_game_state == game_state.choose_chars {
 		player_input_str = string_trim(player_input_str);
 		
 		//Parse player_input_str
+		
+		//Access help commands:
+		if player_input_str == "H" || player_input_str == "HELP" {
+			scr_add_str_to_dialogue_ar(global.help_instructions_str_ar);	
+		}
+		
 			//Add, start game:
-		if player_input_str == "A" || player_input_str == "ADD" {
+		else if player_input_str == "A" || player_input_str == "ADD" {
 			
 			if scr_check_char_type_enum_in_ar(global.pc_char_ar,cursor_pos) == false {
 			
 				array_push(global.pc_char_ar,new global.Character(cursor_pos,global.origin_grid_x,global.origin_grid_y,global.research_vessel_grid,team_type.pc,true,true) );
 				
+				//Set its 'char_ar_pos' var:
+				global.pc_char_ar[array_length(global.pc_char_ar)-1].char_ar_pos = array_length(global.pc_char_ar)-1;
+				
+				d($"For char struct: {global.pc_char_ar[array_length(global.pc_char_ar)-1].name}, char_ar_pos == {global.pc_char_ar[array_length(global.pc_char_ar)-1].char_ar_pos}")
+				
 				scr_add_str_to_dialogue_ar($"{global.pc_char_ar[array_length(global.pc_char_ar)-1].name} has been added to the party.",true);
 				
 				if array_length(global.pc_char_ar) >= party_limit {	
 					global.cur_char = global.pc_char_ar[0];
+					global.cur_char_index = 0;
 					global.cur_game_state = game_state.main_game;
 					scr_clear_dialogue_ar();
 					scr_print_char_new_room_text(global.cur_char);
@@ -412,8 +427,49 @@ else if global.cur_game_state >= game_state.main_game {
 		player_input_str = string_trim(player_input_str);
 		
 		//Parse player_input_str
-			//Add, start game:
-		if player_input_str == "W" || player_input_str == "WEST" || player_input_str == "N" || player_input_str == "NORTH" || player_input_str == "E" ||
+		
+		#region Logic for iterating through party or change chars:
+		
+		var changed_cur_char = false;
+		
+		//See if we're entering a number in an attempt to change chars:
+		try {
+			var index_int = real(player_input_str);
+			
+			if index_int >= 0 && index_int < array_length(global.pc_char_ar) {
+				global.cur_char_index = index_int;
+				changed_cur_char = true;
+			}	
+		}
+		catch(_exception) {
+			//do nothing, move on
+			d($"Could not convert index_int into a real number, index_int == {index_int} and _exception == {_exception}")
+		}
+		
+		if player_input_str == "<" || player_input_str == ">" {
+			changed_cur_char = true;
+			if player_input_str == "<" global.cur_char_index --;
+			else global.cur_char_index ++;
+			//Cap:
+			if global.cur_char_index < 0 global.cur_char_index = array_length(global.pc_char_ar)-1;
+			else if global.cur_char_index >= array_length(global.pc_char_ar) global.cur_char_index = 0;
+		}
+		
+		#endregion
+		
+		#region Logic for movement commands:
+		
+		if changed_cur_char {
+			global.cur_char = global.pc_char_ar[global.cur_char_index];
+			scr_add_str_to_dialogue_ar(scr_return_cur_char_str(global.cur_char),true);
+		}
+		
+		//Access help commands:
+		else if player_input_str == "H" || player_input_str == "HELP" {
+			scr_add_str_to_dialogue_ar(global.help_instructions_str_ar);	
+		}
+		
+		else if player_input_str == "W" || player_input_str == "WEST" || player_input_str == "N" || player_input_str == "NORTH" || player_input_str == "E" ||
 		player_input_str == "EAST" || player_input_str == "S" || player_input_str == "SOUTH" {
 			
 			var move_dir_x = 0, move_dir_y = 0, directional_macro = -1, move_str = "undefined";
@@ -442,9 +498,11 @@ else if global.cur_game_state >= game_state.main_game {
 				//Update corresponding char_sprite instance:
 				scr_position_char_sprite_in_room(global.cur_char.cur_room_id);
 				
+				//Update camera:
+				scr_move_cam(global.map_cam,global.cell_size*move_dir_x,global.cell_size*move_dir_y);
+				
 				//Display move result:
-				scr_add_str_to_dialogue_ar($"{global.cur_char.name} moves {move_str}.");
-				scr_add_str_to_dialogue_ar(" ");
+				scr_add_str_to_dialogue_ar($"{global.cur_char.name} moves {move_str}.\n\n");
 				scr_print_char_new_room_text(global.cur_char);
 			}
 			else{
@@ -452,6 +510,8 @@ else if global.cur_game_state >= game_state.main_game {
 			}
 			
 		}
+		
+		#endregion
 		
 		else {
 			scr_add_str_to_dialogue_ar("That is an invalid command, try again.",true);

@@ -2,7 +2,7 @@
 
 randomize();
 
-global.cell_size = 128;
+global.cell_size = 132;
 global.half_c = global.cell_size / 2;
 global.grid_offset_x = 0;
 global.grid_offset_y = 0;
@@ -23,6 +23,8 @@ global.pc_char_ar = [];
 global.enemy_char_ar = [];
 global.neutral_char_ar = [];
 
+global.cur_char_index = 0;
+
 //Fonts and colors:
 global.default_fnt = fnt_default_dialogue_screen;
 draw_set_font(global.default_fnt);
@@ -37,7 +39,6 @@ global.default_line_h = string_height("A");
 global.foreground_ui_scale = 6;
 
 #region ds_maps:
-
 
 //Defines cur_grid_w and h and specific grid ids:
 scr_build_map_from_csv_file(location.research_vessel);

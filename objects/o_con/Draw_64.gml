@@ -1,16 +1,18 @@
 /// @description o_con draw gui event
 
 //Periodically reset screen to full because occasionally it resets to smaller resolution for some unknown reason.
+//Edit: this isn't fixing the problem or doing anything at all (apparently)
 global.reset_full_screen_count--;
 if global.reset_full_screen_count <= 0 {
 	//window_set_fullscreen(true);
-	global.reset_full_screen_count =  global.reset_full_screen_val;
+	global.reset_full_screen_count = global.reset_full_screen_val;
 	//show_debug_message("o_con Draw gui event: automatic timer: RESET WINDOW TO FULL.")
 }
 
 var win_w = window_get_width(), win_h = window_get_height();
 
 #region Draw grid lines - we do this here in draw_gui event to avoid any 'camera transformations' that
+
 /* arise from sub-pixel rendering issues. According to ai:
 This is a classic sub-pixel rendering issue with zooming! When your view is scaled, the grid lines end up 
 at fractional pixel positions on screen, causing them to flicker or disappear.
@@ -112,6 +114,10 @@ else if global.cur_game_state == game_state.choose_chars {
 	
 	var y_offset = string_height(char_str_ar[0])+4;
 	var asterisk_string = "";
+	
+	//Draw a bit of an explanation of what the left side window is being used for:
+	draw_text(origin_x,origin_y,"BROWSE THE STASIS PODS:");
+	origin_y += y_offset*2;
 	
 	for(var i = 0; i < array_length(char_str_ar); i++) {
 		asterisk_string = ""
@@ -225,8 +231,8 @@ if array_length(global.dialogue_ar) > 0 {
 draw_sprite_ext(spr_foreground_UI_320_200,0,0,0,global.foreground_ui_scale,global.foreground_ui_scale,0,c_white,1);
 
 //Draw our fps values:
-var debug_fps_str = "Intended FPS: "+string(game_get_speed(gamespeed_fps))+", Actual FPS: "+string(fps_real);
-draw_text_color(win_w-string_width(debug_fps_str)-16,32,debug_fps_str,c_red,c_red,c_red,c_red,1);
+//var debug_fps_str = "Intended FPS: "+string(game_get_speed(gamespeed_fps))+", Actual FPS: "+string(fps_real);
+//draw_text_color(win_w-string_width(debug_fps_str)-16,32,debug_fps_str,c_red,c_red,c_red,c_red,1);
 
 
 

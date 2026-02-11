@@ -3,6 +3,7 @@ for that specific coordinate of the tilemap layer.
 */
 
 function scr_define_tilemap_from_grid_structs(grid_to_use){
+	
 	var lay_id = layer_get_id("tile_main");
 	var tile_id = layer_tilemap_get_id(lay_id);
 	
@@ -10,7 +11,7 @@ function scr_define_tilemap_from_grid_structs(grid_to_use){
 	
 	var grid_w = ds_grid_width(grid_to_use), grid_h = ds_grid_height(grid_to_use);
 	
-	var struct_id,tile_enum;
+	var struct_id, tile_enum;
 	
 	for(var xx = 0; xx < grid_w; xx++){
 		for(var yy = 0; yy < grid_h; yy++){

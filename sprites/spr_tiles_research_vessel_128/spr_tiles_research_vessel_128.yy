@@ -2,9 +2,9 @@
   "resourceType": "GMSprite",
   "resourceVersion": "1.0",
   "name": "spr_tiles_research_vessel_128",
-  "bbox_bottom": 511,
-  "bbox_left": 0,
-  "bbox_right": 2047,
+  "bbox_bottom": 131,
+  "bbox_left": 132,
+  "bbox_right": 1715,
   "bbox_top": 0,
   "bboxMode": 0,
   "collisionKind": 1,
@@ -15,8 +15,8 @@
   "frames": [
     {"resourceType":"GMSpriteFrame","resourceVersion":"1.1","name":"1f33ad2b-b13a-4150-b519-75a9514a2703",},
   ],
-  "gridX": 128,
-  "gridY": 128,
+  "gridX": 132,
+  "gridY": 132,
   "height": 2048,
   "HTile": false,
   "layers": [

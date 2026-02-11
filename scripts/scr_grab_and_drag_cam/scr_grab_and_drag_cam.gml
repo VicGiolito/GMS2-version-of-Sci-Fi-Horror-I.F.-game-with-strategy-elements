@@ -6,14 +6,14 @@ function scr_grab_and_drag_cam(cam_id){
 	//ai claude version:
 	
 	//Gather and set vars:
-	if mouse_check_button_pressed(mb_middle) {
+	if mouse_check_button_pressed(mb_middle) || mouse_check_button_pressed(mb_left) {
 	    // Reset global vars - store the window mouse position as anchor:
 	    global.cam_grab_origin_x = window_mouse_get_x();
 	    global.cam_grab_origin_y = window_mouse_get_y();
 	}
 
 	// "drag" camera position while holding down the mouse button:
-	if mouse_check_button(mb_middle) {
+	if mouse_check_button(mb_middle) || mouse_check_button(mb_left) {
 	    //Get current mouse coordinates within the window:
 		var win_mouse_x = window_mouse_get_x();
 	    var win_mouse_y = window_mouse_get_y();
