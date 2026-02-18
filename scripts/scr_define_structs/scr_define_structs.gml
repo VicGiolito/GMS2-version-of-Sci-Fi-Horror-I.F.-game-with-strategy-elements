@@ -3,7 +3,7 @@ function scr_define_structs(){
 	
 	#region Character struct
 	
-	global.Character = function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, attach_abilities_boolean = false, wep_loadout_int = 0) constructor {
+	global.Character = function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, wep_loadout_int = 0) constructor {
 		
 		struct_type_enum = struct_type.Character;
 		
@@ -56,7 +56,6 @@ function scr_define_structs(){
         cur_action_points = 2;
         max_action_points = 2;
 
-        inv_list = [];
         ability_ar = -1;
 
         char_team_enum = team_enum;
@@ -88,9 +87,10 @@ function scr_define_structs(){
 
         dist_to_enemy = 0; //Used for enemy ai
 
-        // Initialize inv_list and nested total_slots:
+        // Initialize inv_ar and nested total_slots:
+		inv_ar = [];
         for(var i = 0 ; i < equip_slot.total_slots; i++) {
-            array_push(inv_list, -1);
+            array_push(inv_ar, -1);
 		}
 
         char_type_enum = char_enum;
@@ -102,7 +102,9 @@ function scr_define_structs(){
 	        cur_grid_y = spawn_grid_y;
 			
 			scr_add_remove_char_room_ar(cur_room_id,self,true);
-		} else {
+		} 
+		
+		else {
 			cur_grid = -1;
 			cur_room_id = -1;
 			cur_grid_x = -1;
@@ -193,7 +195,7 @@ function scr_define_structs(){
             accuracy = AVERAGE_ACCURACY_SCORE-1; //Worse than average accuracy, only hits about 50% of the time, on average
             evasion = AVERAGE_EVASION_SCORE-1; //Worse than average evasion
 	
-			if attach_abilities_boolean scr_add_ability(self,item_type.headbutt);
+			scr_add_ability(self,item_type.headbutt);
 		}
 
         else if char_type_enum == character.doctor {
@@ -360,7 +362,7 @@ function scr_define_structs(){
             dexterity = 3;
             spd = 4;
 
-            armor = 1;
+            armor = 0; //Is set from passive
             //Base 'half-mechanical' resistences:
             res_fire = 50;
             res_vacuum = 50;
@@ -370,8 +372,6 @@ function scr_define_structs(){
             res_infect = 50;
             res_poison = 25;
             res_suppress = 25;
-
-
 		}
 
         else if char_type_enum == character.security_guard {
@@ -612,6 +612,8 @@ function scr_define_structs(){
             res_electric = 0;
 			
 			nick_name = "Larva";
+			
+			scr_add_ability(self,item_type.infection_needle);
 		}
 
         else if char_type_enum == character.neutral_jittering_buzzsaw {
@@ -920,7 +922,7 @@ function scr_define_structs(){
         is_combat_abil_only_boolean = false; //For abilities only; determines whether or not an ability is displayed on our list in the main game state.
         abil_passes_turn_boolean = false; //And when I say 'passes turn', I mean the advance_cur_combat_char is immediately called after using it.
 
-        is_shield_boolean = false; //Currently only used utils.py function check_for_equipped_weapon()
+        is_shield_boolean = false; //Currently only used in scr_check_valid_item_equip()
         can_suppress_boolean = false;
         can_overwatch_boolean = false;
 
@@ -951,7 +953,7 @@ function scr_define_structs(){
         item_desc = "Not defined";
         item_dmg_str = "Not defined";
 
-        equip_slot_list = []; // Default, this means that this item cannot be equipped: such as medkit, etc.
+        equip_slot_list = []; // Default, empty_ar, this means that this item cannot be equipped: such as medkit, etc.
 
         slot_designation_str = "";
         item_verb = "fires";
@@ -1120,7 +1122,6 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 0
             item_name = "PERSONAL SHIELD GENERATOR"
-            equip_slot_list = [equip_slot.body];
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP to gain the following for 3 turns:"
@@ -1136,8 +1137,7 @@ function scr_define_structs(){
         else if item_enum == item_type.smoke_grenade {  // Cooper ability
             dmg_min = 0
             dmg_max = 0
-            item_name = "SMOKE GRENADE"
-            equip_slot_list = [equip_slot.body] 
+            item_name = "SMOKE GRENADE" 
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP and pass your turn: every friendly unit in your party gains the following for next 3 turns:"
@@ -1153,7 +1153,6 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 0
             item_name = "FIELD MEDICINE"
-            equip_slot_list = [equip_slot.body]  // Indicates either hand can equip
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals 5 hit points and is cleared of the following status effects: burning, bleeding, poisoned."
@@ -1184,7 +1183,6 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 0
             item_name = "WHIPSTITCH SENTINEL DROID"
-            equip_slot_list = [equip_slot.body]  // Indicates either hand can equip
             max_range = 0
             ability_point_cost = 6
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy."
@@ -1199,7 +1197,6 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 0
             item_name = "SPINNING SCATTERSHOT DROID"
-            equip_slot_list = [equip_slot.body]  // Indicates either hand can equip
             max_range = 0
             ability_point_cost = 4
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN."
@@ -1214,7 +1211,6 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 0
             item_name = "FUMIGATING FLAMER DROID"
-            equip_slot_list = [equip_slot.body]  // Indicates either hand can equip
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a FUMIGATING FLAMER DROID at your position. This fearless little droid would wheel itself through the gates of hell to protect you. It has been affixed with a FLAMETHROWER and is belching an unhealthy amount of smoke."
@@ -1229,7 +1225,6 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 0
             item_name = "JITTERING BUZZSAW DROID"
-            equip_slot_list = [equip_slot.body]  // Indicates either hand can equip
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction..."
@@ -1243,7 +1238,6 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 0
             item_name = "ENERGIZING STIMULANT"
-            equip_slot_list = [equip_slot.body]  // Indicates either hand can equip
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"Spend {ability_point_cost} AP: target player character gains 2 ability points."
@@ -1317,26 +1311,26 @@ function scr_define_structs(){
             infection_chance = 10
 		}
         else if item_enum == item_type.infection_needle {
-            dmg_min = 4
-            dmg_max = 4
-            requires_ammo_boolean = false
-            item_name = "INFECTED BARB"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "stabs with a"
-            item_dmg_str = "punctured"
-            max_range = 0
-            infection_chance = 100
+            dmg_min = 4;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "INFECTED BARB";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "stabs with a";
+            item_dmg_str = "punctured";
+            max_range = 0;
+            infection_chance = 100;
 		}
         else if item_enum == item_type.police_truncheon {
-            dmg_min = 3
-            dmg_max = 4
-            requires_ammo_boolean = false
-            item_name = "POLICE TRUNCHEON"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "swings the"
-            item_dmg_str = "blundgeoned"
-            max_range = 0
-            stun_chance = 25
+            dmg_min = 3;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "POLICE TRUNCHEON";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "swings the";
+            item_dmg_str = "blundgeoned";
+            max_range = 0;
+            stun_chance = 25;
 		}
         else if item_enum == item_type.stun_baton { //Has a 100% chance of stunning enemies, minus their electric_res
             dmg_min = 1
@@ -1753,7 +1747,7 @@ function scr_define_structs(){
 		}
 
         //Define slot_designation_str - currently only using the Accessory string, print_inv gets too cluttered otherwise
-        if is_array(equip_slot_list) {
+        if is_array(equip_slot_list) && array_length(equip_slot_list) > 0 {
             if is_array(equip_slot_list[0]) {
                 slot_designation_str = "Both Hands";
 			}
@@ -1831,6 +1825,9 @@ function scr_define_structs(){
 		main_room_event_already_triggered = false;
 		
 		explored_boolean = false;
+		doors_already_added_boolean = false;
+		
+		hazard_ar = -1; //If hazards are present, functions as a array with enum values representing hazard types
 		
         if location_type_enum == location.research_vessel {
 			
@@ -1913,6 +1910,10 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.stasis_chamber {
 				
+				//Hazard ar:
+				hazard_ar = [];
+				array_push(hazard_ar,hazard_type.toxic_gas);
+				
 				scavenge_ar[scavenge_resource.food] = 12;
 				scavenge_ar[scavenge_resource.ammo] = 55;
 				scavenge_ar[scavenge_resource.tech_basic] = 4;
@@ -1924,10 +1925,9 @@ function scr_define_structs(){
                 room_name_str = "STASIS ROOM";
 				
 				pre_event_unpowered_room_desc = [
-					"Klaxons blare, and an eerie red illumination seeps from the emergency lights in the floor. Row upon row of stasis pods have been arranged in this room, most of them shattered or inoperable. Those corpses who had sought refuge within them have met a truly ignoble end, asphyxiated in their sleep. There's only one empty STASIS POD that still looks operational and inviting, gleaming pearl-white in the blood-hued gloom.\n",
-                    "\nThe room itself has been badly damaged. Refuse and debris lay scattered about, along with piles of personal effects: whatever non-essential items the sleepers had stripped from their bodies before hastily clamboring within the statis pods to seal their doom.\n",
-                    "\nHull stresses and fractures have fissured the walls and ceiling, exposing pipes and electrical wires. One particularly damaged PIPE is rapidly venting a noxious green gas, caustic enough to make you sputter and gag. A nearby exposed service panel reveals two huge circular valves: a BRONZE VALVE and a STEEL VALVE.\n",
-                    "\nThe cover of the service panel looks as though it was torn off with some haste, almost as though someone was determined to access these valves but soon abandoned their task; you can only speculate as to why.\n"
+					"Klaxons blare, and an eerie red illumination seeps from the emergency lights in the floor. Rows of stasis pods have been arranged in this room, most of them damaged or inoperable. Those corpses who had sought refuge within them have met a truly ignoble end, asphyxiated in their sleep. You were one of the lucky few who managed to fight off hibernation and awaken--though only time will tell if your ultimate fate will be any different from their own. There's only one empty STASIS POD that still looks operational and inviting, gleaming pearl-white in the blood-hued gloom.\n",
+                    "\nThe room itself has been badly damaged. Refuse and debris lay scattered about, along with piles of personal effects: whatever non-essential items the sleepers had hastily stripped from their bodies before clamboring inside the statis pods to seal their doom.\n",
+                    "\nHull stresses and fractures have fissured the walls and ceiling, exposing pipes and electrical wires. One particularly damaged PIPE is rapidly venting a noxious white gas, caustic enough to make you sputter and gag. A nearby exposed service panel reveals two huge circular valves: a BRONZE VALVE and a STEEL VALVE.\n"
 				]
 				
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -1943,6 +1943,14 @@ function scr_define_structs(){
 			}
 			
 			else if room_enum == research_vessel_room.sc_corridor_west {
+				
+				//Debug:
+					//Hazard ar:
+				hazard_ar = [];
+				array_push(hazard_ar,hazard_type.toxic_gas);
+				array_push(hazard_ar,hazard_type.electric_current);
+				array_push(hazard_ar,hazard_type.vacuum);
+				array_push(hazard_ar,hazard_type.fire);
 				
 				scavenge_ar[scavenge_resource.tech_basic] = 4;
 				
@@ -2553,10 +2561,10 @@ function scr_define_structs(){
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
 				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				
 				room_name_str = "SHUTTLE BAY";
 			}

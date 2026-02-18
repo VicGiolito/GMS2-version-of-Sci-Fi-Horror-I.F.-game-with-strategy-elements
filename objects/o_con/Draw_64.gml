@@ -70,6 +70,7 @@ if global.cur_game_state == game_state.main_menu {
 	//text slowly blinks out...
 	var origin_x = global.left_window_text_offset_x;
 	var origin_y = global.left_window_text_offset_y;
+	var y_offset = global.default_line_h;
 	
 	//Define ar_to_draw:
 	
@@ -129,7 +130,152 @@ else if global.cur_game_state == game_state.choose_chars {
 	draw_sprite(spr_main_menu_cursor,0,origin_x-(sprite_get_width(asset_get_index("spr_main_menu_cursor"))), origin_y+(cursor_pos*y_offset) );
 
 	scr_reset_font_align();
+}
+
+#endregion
+
+#region Draw left window data for if game_state >= main: 
+
+else if global.cur_game_state >= game_state.main_game {
+
+	draw_set_valign(fa_middle)
 	
+	var origin_x = global.left_window_text_offset_x;
+	var origin_y = global.left_window_text_offset_y;
+	
+	//Draw global resources:
+	draw_text(origin_x,origin_y,$"Food: {global.resources_food} Scrap: {global.resources_scrap} Engine Fuel: {global.resources_engine_fuel}");
+	
+	origin_y += global.default_line_h;
+	
+	draw_text(origin_x,origin_y, $"Basic Tech.: {global.resources_basic_tech} Advanced Tech.: {global.resources_advanced_tech}");
+	
+	if is_struct(global.cur_char) && global.cur_char.struct_type_enum == struct_type.Character {
+		
+		origin_y += global.default_line_h*2;
+		
+		draw_text(origin_x,origin_y,$"Controlling: {global.cur_char.name}");
+	
+		origin_y += global.default_line_h*2;
+	
+		draw_text(origin_x,origin_y,$"HP: {global.cur_char.hp_cur}/{global.cur_char.hp_max} A.P.: {global.cur_char.ability_points_cur}/{global.cur_char.ability_points_max} Sanity: {global.cur_char.sanity_cur}/{global.cur_char.sanity_max}");
+	
+		origin_y += global.default_line_h*2;
+		
+		draw_text(origin_x,origin_y,$"Security: {global.cur_char.security} Engineering: {global.cur_char.engineering}");
+		
+		origin_y += global.default_line_h;
+		
+		draw_text(origin_x,origin_y,$"Science: {global.cur_char.science} Stealth: {global.cur_char.stealth}");
+		
+		origin_y += global.default_line_h*2;
+		
+		draw_text(origin_x,origin_y,$"Armor: {global.cur_char.armor} Evasion: {global.cur_char.evasion}");
+		
+		origin_y += global.default_line_h*2;
+		
+		draw_text(origin_x,origin_y,$"Resistances: Fire: {global.cur_char.res_fire} Vacuum: {global.cur_char.res_vacuum}");
+		
+		origin_y += global.default_line_h;
+		
+		draw_text(origin_x,origin_y,$"Electric: {global.cur_char.res_electric} Poison: {global.cur_char.res_poison} Bleed: {global.cur_char.res_bleed}");
+		
+		origin_y += global.default_line_h;
+		
+		draw_text(origin_x,origin_y,$"Stun: {global.cur_char.res_stun} Infection: {global.cur_char.res_infect} Suppress: {global.cur_char.res_suppress}");
+		
+		origin_y += global.default_line_h*2;
+		
+		if is_array(global.cur_char.ability_ar) && array_length(global.cur_char.ability_ar) > 0 {
+			
+			draw_text(origin_x,origin_y,$"Abilities:"); 
+			origin_y += global.default_line_h;
+			
+			var ar_len = array_length(global.cur_char.ability_ar)
+		
+			var abil_struct_id;
+			for(var i = 0; i < ar_len; i++) {
+				
+				abil_struct_id = global.cur_char.ability_ar[i];
+				
+				if abil_struct_id != -1 {
+					
+					var abil_name = "undefined";
+					
+					if is_struct(abil_struct_id) && abil_struct_id.struct_type_enum == struct_type.Item {
+						abil_name = string(abil_struct_id.item_name)+" (combat)";
+					} else {
+						abil_name = scr_return_abil_enum_name(abil_struct_id);	
+					}
+					
+					draw_text(origin_x,origin_y,$"{abil_name}");
+					origin_y += global.default_line_h;
+				}
+			}
+			
+			origin_y += global.default_line_h;
+		}
+		
+		draw_text(origin_x,origin_y,$"Inventory:"); 
+		
+		origin_y += global.default_line_h;
+		
+		var accessory_name = "";
+		if is_struct(global.cur_char.inv_ar[equip_slot.accessory]) && global.cur_char.inv_ar[equip_slot.accessory].struct_type_enum == struct_type.Item {
+			accessory_name = global.cur_char.inv_ar[equip_slot.accessory].item_name;
+		}
+		
+		draw_text(origin_x,origin_y,$"0.) Accessory: {accessory_name}"); 
+		
+		origin_y += global.default_line_h;
+		
+		var body_item_name = "";
+		if is_struct(global.cur_char.inv_ar[equip_slot.body]) && global.cur_char.inv_ar[equip_slot.body].struct_type_enum == struct_type.Item {
+			body_item_name = global.cur_char.inv_ar[equip_slot.body].item_name;
+		}
+		
+		draw_text(origin_x,origin_y,$"1.) Body: {body_item_name}"); 
+		
+		origin_y += global.default_line_h;
+		
+		var item_name = "";
+		if is_struct(global.cur_char.inv_ar[equip_slot.rh]) && global.cur_char.inv_ar[equip_slot.rh].struct_type_enum == struct_type.Item {
+			item_name = global.cur_char.inv_ar[equip_slot.rh].item_name;
+		}
+		
+		draw_text(origin_x,origin_y,$"2.) Right Hand: {item_name}"); 
+		
+		origin_y += global.default_line_h;
+		
+		var item_name = "";
+		if is_struct(global.cur_char.inv_ar[equip_slot.lh]) && global.cur_char.inv_ar[equip_slot.lh].struct_type_enum == struct_type.Item {
+			item_name = global.cur_char.inv_ar[equip_slot.lh].item_name;
+		}
+		
+		draw_text(origin_x,origin_y,$"3.) Left Hand: {item_name}"); 
+		
+		origin_y += global.default_line_h*2;
+		
+		draw_text(origin_x,origin_y,$"Carrying:"); 
+		
+		origin_y += global.default_line_h;
+		
+		var ar_len = array_length(global.cur_char.inv_ar)
+		
+		if ar_len > equip_slot.total_slots {
+			var item_struct_id;
+			for(var i = equip_slot.total_slots; i < ar_len; i++) {
+				item_struct_id = global.cur_char.inv_ar[i];
+				if is_struct(item_struct_id) && item_struct_id.struct_type_enum == struct_type.Item {
+					draw_text(origin_x,origin_y,$"{i}.) {item_struct_id.item_name}");
+					origin_y += global.default_line_h;
+				}
+			}
+		}
+	}
+	
+	scr_reset_font_align();
+
 }
 
 #endregion
@@ -190,6 +336,66 @@ if (global.max_scroll > 0) {
 
 #endregion
 
+#region DEFUNCT - Draw our left side window text - currently visible in any game state:
+
+/*
+
+// Calculate visible line range
+var start_line = floor(global.left_win_scroll_position);
+var visible_lines = ceil((detailed_view_win_h - global.left_window_text_offset_x * 2) / global.dialogue_line_h) + 1;
+
+// Draw text lines
+var text_x = detailed_view_win_x + global.left_window_text_offset_x;
+var text_y = detailed_view_win_y + global.left_window_text_offset_y - ((global.left_win_scroll_position - start_line) * global.dialogue_line_h);
+
+for (var i = start_line; i < min(start_line + visible_lines, array_length(global.detailed_view_ar)); i++) {
+    if (i >= 0 && i < array_length(global.detailed_view_ar)) {
+        var current_y = text_y + ((i - start_line) * global.dialogue_line_h);
+        
+        // Only draw if within window bounds
+        if (current_y >= detailed_view_win_y && current_y < detailed_view_win_y + detailed_view_win_h) {
+            draw_text(text_x, current_y, global.detailed_view_ar[i]);
+        }
+    }
+}
+
+// Draw scrollbar only if there's content to scroll
+if (global.left_win_max_scroll > 0) {
+    // Recalculate scrollbar positions for drawing
+    var scrollbar_x = detailed_view_win_x + detailed_view_win_w - global.scrollbar_width - scrollbar_right_edge_offset_x;
+    var scrollbar_y = detailed_view_win_y + scrollbar_right_edge_offset_y;
+    var scrollbar_track_height = detailed_view_win_h - scrollbar_right_edge_offset_y;
+    
+    var scroll_ratio = global.left_win_scroll_position / global.left_win_max_scroll;
+    var visible_ratio = min(1, (detailed_view_win_h / global.dialogue_line_h) / array_length(global.detailed_view_ar));
+    var button_height = max(global.scrollbar_button_height, scrollbar_track_height * visible_ratio);
+    var button_y = scrollbar_y + (scrollbar_track_height - button_height) * scroll_ratio;
+    
+    // Draw scrollbar track
+    draw_rectangle_color(scrollbar_x, scrollbar_y, 
+                   scrollbar_x + global.scrollbar_width, 
+                   scrollbar_y + scrollbar_track_height, global.scrollbar_color,global.scrollbar_color,global.scrollbar_color,global.scrollbar_color,false);
+    
+    // Draw scrollbar button
+    draw_rectangle_color(scrollbar_x, button_y,
+                   scrollbar_x + global.scrollbar_width,
+                   button_y + button_height, global.scrollbar_button_color,global.scrollbar_button_color,global.scrollbar_button_color,global.scrollbar_button_color,false);
+    
+    // Draw button border
+    draw_set_color(c_white);
+    draw_rectangle(scrollbar_x, button_y,
+                   scrollbar_x + global.scrollbar_width,
+                   button_y + button_height, true);
+				   
+	// Reset drawing settings
+	draw_set_color(global.default_fnt_color);
+	draw_set_alpha(1);
+}
+
+*/
+
+#endregion
+
 #region Draw text input cursor (blinking line)
 
 // Only draw cursor if we're in a state where text input is expected
@@ -231,8 +437,8 @@ if array_length(global.dialogue_ar) > 0 {
 draw_sprite_ext(spr_foreground_UI_320_200,0,0,0,global.foreground_ui_scale,global.foreground_ui_scale,0,c_white,1);
 
 //Draw our fps values:
-//var debug_fps_str = "Intended FPS: "+string(game_get_speed(gamespeed_fps))+", Actual FPS: "+string(fps_real);
-//draw_text_color(win_w-string_width(debug_fps_str)-16,32,debug_fps_str,c_red,c_red,c_red,c_red,1);
+var debug_fps_str = "Intended FPS: "+string(game_get_speed(gamespeed_fps))+", Actual FPS: "+string(fps_real);
+draw_text_color(win_w-string_width(debug_fps_str)-16,32,debug_fps_str,c_red,c_red,c_red,c_red,1);
 
 
 

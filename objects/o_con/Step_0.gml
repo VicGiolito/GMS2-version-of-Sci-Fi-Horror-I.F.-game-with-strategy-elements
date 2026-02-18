@@ -10,12 +10,8 @@ if keyboard_check_released(vk_f2) {
 	game_restart();
 }
 
-if keyboard_check(vk_lcontrol) and keyboard_check_released(vk_enter) {
-	if window_get_fullscreen() == false {
-		window_set_fullscreen(true);	
-	} else {
-		window_set_fullscreen(false)	
-	}
+if keyboard_check(vk_lcontrol) && keyboard_check_released(vk_enter) {
+	window_set_fullscreen(true);
 }
 
 #endregion
@@ -37,7 +33,7 @@ scr_calculate_max_scroll();
 //Store mouse GUI coordinates:
 var mouse_gui_x = device_mouse_x_to_gui(0), mouse_gui_y = device_mouse_y_to_gui(0);
 
-var mouse_in_window = point_in_rectangle(mouse_gui_x,mouse_gui_y,dialogue_window_x,dialogue_window_y,
+var mouse_in_dialogue_window = point_in_rectangle(mouse_gui_x,mouse_gui_y,dialogue_window_x,dialogue_window_y,
 dialogue_window_x+dialogue_window_width,dialogue_window_y+dialogue_window_height);
 
 //Calculate scroll bar position:
@@ -51,6 +47,7 @@ if (global.max_scroll > 0) {
 	scroll_ratio = global.scroll_position / global.max_scroll;	
 }
 
+//Define scroll vars:
 var visible_ratio = min(1, (dialogue_window_height / global.dialogue_line_h) / max(1, array_length(global.dialogue_ar)));
 var button_height = max(global.scrollbar_button_height, scrollbar_track_height * visible_ratio);
 var button_y = scrollbar_y + (scrollbar_track_height - button_height) * scroll_ratio;
@@ -70,6 +67,7 @@ if (mouse_check_button_released(mb_left)) {
     global.scrollbar_dragging = false;
 }
 
+//Main dialogue box scrollbar position updating:
 if (global.scrollbar_dragging) {
     // Calculate new scroll position based on mouse
     var target_button_y = mouse_gui_y - global.scrollbar_drag_offset;
@@ -79,14 +77,13 @@ if (global.scrollbar_dragging) {
 }
 
 // Handle mouse wheel scrolling (only when mouse is in window)
-if (mouse_in_window) {
+if (mouse_in_dialogue_window) {
     var wheel = mouse_wheel_down() - mouse_wheel_up();
     global.scroll_position += wheel * global.scroll_speed;
 }
 
-// Clamp scroll position
+// Clamp both scroll positions
 global.scroll_position = clamp(global.scroll_position, 0, global.max_scroll);
-
 
 #endregion
 
@@ -94,20 +91,35 @@ global.scroll_position = clamp(global.scroll_position, 0, global.max_scroll);
 
 if global.cur_game_state == game_state.main_menu {
 	
+	var ar_to_use;
+	
+	if cur_main_menu_option == main_menu_options.main {
+		ar_to_use = main_menu_str_ar;	
+	}
+	else if cur_main_menu_option == main_menu_options.options {
+		ar_to_use = options_menu_str_ar;	
+	}
+	else if cur_main_menu_option == main_menu_options.video_options {
+		ar_to_use = video_options_str_ar;	
+	}
+	else if cur_main_menu_option == main_menu_options.resolutions_options {
+		ar_to_use = resolutions_str_ar;	
+	}
+	
 	if keyboard_check_released(vk_up) || keyboard_check_released(vk_down) {
 		
 		if keyboard_check_released(vk_up) cursor_pos--;
 		else cursor_pos++;
 		
 		//Cap:
-		if cursor_pos < 0 cursor_pos = array_length(ar_to_draw)-1;
-		else if cursor_pos >= array_length(ar_to_draw) cursor_pos = 0;
+		if cursor_pos < 0 cursor_pos = array_length(ar_to_use)-1;
+		else if cursor_pos >= array_length(ar_to_use) cursor_pos = 0;
 	}
 	
 	if keyboard_check_released(vk_escape) {
-		if cur_main_menu_option == main_menu_options.options {
-			cur_main_menu_option = main_menu_options.main;	
-		}
+		//Return to main:
+		cur_main_menu_option = main_menu_options.main;	
+		cursor_pos = 0; //Reset
 	}
 	
 	if keyboard_check_released(vk_enter) && global.wait {
@@ -324,9 +336,27 @@ else if global.cur_game_state == game_state.choose_chars {
 				scr_add_str_to_dialogue_ar($"{global.pc_char_ar[array_length(global.pc_char_ar)-1].name} has been added to the party.",true);
 				
 				if array_length(global.pc_char_ar) >= party_limit {	
+					
 					global.cur_char = global.pc_char_ar[0];
 					global.cur_char_index = 0;
 					global.cur_game_state = game_state.main_game;
+					
+					//Define initial starting items for all chars in the g.pc_char_ar
+					scr_setup_char_init_gear_and_abils();
+					scr_add_items_to_grid(global.research_vessel_grid);
+					
+					//Set explored and doors_already_added boolean var for origin room == true:
+					global.cur_grid[# global.origin_grid_x,global.origin_grid_y].explored_boolean = true;
+					global.cur_grid[# global.origin_grid_x,global.origin_grid_y].doors_already_added_boolean = true
+					
+					//Add its corresponding tile to the tile_main:
+						//scr_add_cell_to_tilemap(global.tile_main_lay_id,global.cur_grid[# global.origin_grid_x,global.origin_grid_y].room_enum,global.origin_grid_x,global.origin_grid_y);
+					
+					//Add doors to the tile_doors for that room:
+						//scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.origin_grid_x,global.origin_grid_y);
+					
+					scr_reveal_entire_grid(global.cur_grid);
+					
 					scr_clear_dialogue_ar();
 					scr_print_char_new_room_text(global.cur_char);
 					
@@ -424,13 +454,15 @@ else if global.cur_game_state >= game_state.main_game {
 		//Format our string:
 		player_input_str = string(player_input_str);
 		player_input_str = string_upper(player_input_str);
-		player_input_str = string_trim(player_input_str);
+		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
+		
+		d($"After formatting, player_Input_str == {player_input_str}");
 		
 		//Parse player_input_str
 		
 		#region Logic for iterating through party or change chars:
 		
-		var changed_cur_char = false;
+		var changed_cur_char = false, multi_word_str_failed = false;
 		
 		//See if we're entering a number in an attempt to change chars:
 		try {
@@ -443,7 +475,7 @@ else if global.cur_game_state >= game_state.main_game {
 		}
 		catch(_exception) {
 			//do nothing, move on
-			d($"Could not convert index_int into a real number, index_int == {index_int} and _exception == {_exception}")
+			d($"This is a normal, expected catch block: could not convert index_int into a real number (intentional), _exception == {_exception}")
 		}
 		
 		if player_input_str == "<" || player_input_str == ">" {
@@ -457,11 +489,27 @@ else if global.cur_game_state >= game_state.main_game {
 		
 		#endregion
 		
-		#region Logic for movement commands:
-		
 		if changed_cur_char {
 			global.cur_char = global.pc_char_ar[global.cur_char_index];
 			scr_add_str_to_dialogue_ar(scr_return_cur_char_str(global.cur_char),true);
+		}
+		
+		//Pickup all items from room:
+		else if player_input_str == "SCAVENGE" {
+			
+			if is_array(global.cur_char.cur_room_id.scavenge_ar) && array_length(global.cur_char.cur_room_id.scavenge_ar) > 0 {
+			
+				scr_scavenge_items_from_room(global.cur_char,global.cur_char.cur_room_id);
+			}
+			else {
+				scr_add_str_to_dialogue_ar("There are no items or resources in this room to collect.");	
+				scr_add_str_to_dialogue_ar("\n",true);
+			}
+		}
+		
+		//Print room description again:
+		else if player_input_str == "L" || player_input_str == "LOOK" {
+			scr_print_char_new_room_text(global.cur_char);
 		}
 		
 		//Access help commands:
@@ -469,6 +517,9 @@ else if global.cur_game_state >= game_state.main_game {
 			scr_add_str_to_dialogue_ar(global.help_instructions_str_ar);	
 		}
 		
+		#region Logic for movement commands:
+		
+		//Movement commands:
 		else if player_input_str == "W" || player_input_str == "WEST" || player_input_str == "N" || player_input_str == "NORTH" || player_input_str == "E" ||
 		player_input_str == "EAST" || player_input_str == "S" || player_input_str == "SOUTH" {
 			
@@ -487,12 +538,15 @@ else if global.cur_game_state >= game_state.main_game {
 				
 				//Remove from current room:
 				scr_add_remove_char_room_ar(global.cur_char.cur_room_id,global.cur_char,false);
-				//Update x and y vars:
+				
+				//Update char x and y vars:
 				global.cur_char.cur_grid_x += move_dir_x;
 				global.cur_char.cur_grid_y += move_dir_y;
+				
 				//Update cur_room_id:
 				global.cur_char.cur_room_id = global.cur_grid[# global.cur_char.cur_grid_x,global.cur_char.cur_grid_y];
-				//Add to next room:
+				
+				//Add to next room array:
 				scr_add_remove_char_room_ar(global.cur_char.cur_room_id,global.cur_char,true);
 				
 				//Update corresponding char_sprite instance:
@@ -500,6 +554,23 @@ else if global.cur_game_state >= game_state.main_game {
 				
 				//Update camera:
 				scr_move_cam(global.map_cam,global.cell_size*move_dir_x,global.cell_size*move_dir_y);
+				
+				//Add room to tilemap, if it hasn't already been done:
+				if global.cur_char.cur_room_id.explored_boolean == false {
+					scr_add_cell_to_tilemap(global.tile_main_lay_id,global.cur_char.cur_room_id.room_enum,global.cur_char.cur_grid_x,global.cur_char.cur_grid_y);
+				}
+				//Add doors to room, if it hasn't already been done:
+				if global.cur_char.cur_room_id.doors_already_added_boolean == false {
+					scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.cur_char.cur_grid_x,global.cur_char.cur_grid_y);
+				}
+				
+				//Update the room's boolean vars:
+				global.cur_char.cur_room_id.explored_boolean = true;
+				global.cur_char.cur_room_id.doors_already_added_boolean = true;
+			
+				//Call scr_reset_visibility(), then update visibility:
+				scr_reset_visibility();
+				scr_update_visibility();
 				
 				//Display move result:
 				scr_add_str_to_dialogue_ar($"{global.cur_char.name} moves {move_str}.\n\n");
@@ -513,7 +584,79 @@ else if global.cur_game_state >= game_state.main_game {
 		
 		#endregion
 		
-		else {
+		//All multi-word commands:
+		else if scr_check_multi_word_str(player_input_str) == true {
+			
+			var multi_word_ar = scr_return_multi_word_ar(player_input_str);
+			
+			var valid_drop_item = false, valid_equip_or_unequip = false, valid_item_index = false;
+			
+			if multi_word_ar[0] == "D" || multi_word_ar[0] == "DROP" valid_drop_item = true;
+			
+			else if multi_word_ar[0] == "E" || multi_word_ar[0] == "EQUIP" valid_equip_or_unequip = true;
+			
+			//Make sure its a valid item in the inventory:
+			try {
+				var index_int = real(multi_word_ar[1]);
+					
+				if index_int >= 0 && index_int < array_length(global.cur_char.inv_ar) && 
+				is_struct(global.cur_char.inv_ar[index_int]) && global.cur_char.inv_ar[index_int].struct_type_enum == struct_type.Item {
+					
+					valid_item_index = true;
+					
+					var item_struct_id = global.cur_char.inv_ar[index_int];
+				}
+				else {
+					multi_word_str_failed = true;
+					scr_add_str_to_dialogue_ar("There is no such item in your inventory, try again.", true);	
+				}
+			}
+			
+			catch(_exception) {
+				multi_word_str_failed = true;
+				scr_add_str_to_dialogue_ar("There is no such item in your inventory, try again.", true);
+			}
+			
+			#region Dropping items back into a room:
+			
+			if valid_drop_item && valid_item_index {
+				
+				scr_drop_item_into_room(global.cur_char,item_struct_id,index_int,global.cur_char.cur_room_id);	
+			}
+			
+			#endregion
+			
+			#region Equip or unequip an item in your inventory:
+			
+			else if valid_equip_or_unequip && valid_item_index {
+				
+				//Determine if we're equipping, unequipping, or swapping items (unequipping, then equipping):
+					//Unequipping:
+				if index_int < equip_slot.total_slots {
+					
+					scr_equip_or_unequip_item(global.cur_char,item_struct_id,index_int,false,false);
+				}
+				
+				//Equipping:
+				else if index_int >= equip_slot.total_slots {
+					
+					var valid_equip = scr_check_valid_equip(global.cur_char,item_struct_id);
+					
+					if valid_equip {
+						
+						scr_equip_or_unequip_item(global.cur_char,item_struct_id,index_int,true,false);		
+					}
+					else {
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar($"You can't equip the {item_struct_id.item_name}, make sure the corresponding equipment slot is free first.",true);
+					}
+				}
+			}
+			
+			#endregion
+		}
+		
+		else if multi_word_str_failed == false {
 			scr_add_str_to_dialogue_ar("That is an invalid command, try again.",true);
 		}
 		

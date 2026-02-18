@@ -22,7 +22,7 @@ function scr_define_global_and_con_data(){
         "\tGood luck!\n",
 		"\n",
         "Press enter to continue.\n"
-		]
+		];
 		
 	start_new_game_intro_2 = [
 		"Somewhere deep within the void of space, the jagged silhouette of a starship passes before a field of stars. Its hard lines and angles are proof of the existence of some greater intelligence in this cold and unforgiving realm. Its towering spires and minarets are testament to the ingenuity and perseverance of untold generations. Yet the vessel is utterly dark, as if it has succumbed at last to the yawning abyss of the universe. It moves as though adrift, pin-wheeling slowly around its center axis.\n",
@@ -64,14 +64,20 @@ function scr_define_global_and_con_data(){
         "\n'UNLOCK {DIRECTION}': Consumes one of your key cards to unlock the door in the corresponding direction.\n",
         "\n'JAM {DIRECTION}': Costs 1 action point per character. You will then be asked how many characters in the same room will attempt to jam the door. Uses random scrap items found in the room and your character(s) strength to attempt to jam the door in the corresponding direction. A strength-based skill test will ensue to determine if the action was successful.\n",
         "\n'HIDE': Costs 1 action point to hide a character in the current room, using whatever cover they can find. A stealth-based skill check ensues to determine if this action was successful. Note that the effectiveness of this action is dependent upon the level of cover in the current room, with 'low amounts of cover' providing a 30% chance to remain concealed in the room; 'medium amounts of cover' providing a 60% chance to remain concealed in the room; and 'large amounts of cover' providing a 90% chance to remain concealed in the room.\n",
-        "\n'AMBUSH': Costs 1 action point to initiate combat against an enemy or enemies in the current room while a character is HIDDEN, giving you a full extra turn against the enemy. Initiating an ambush will also allow you to add other currently hidden characters to the combat. If you choose not to add them, they will remain hidden and not participate in the battle.\n",
+        "\n'AMBUSH': Costs 1 action point to initiate combat against an enemy or enemies in the current room while a character is HIDDEN, giving you a full extra turn against the enemy. Initiating an ambush will also allow you to add other currently hidden characters to the combat. If you choose not to add them, they will remain hidden and not participate in the battle. If you choose to add them but they were not hidden, then the turn order within combat will proceed as normal.\n",
         "\n'INV' or 'INVENTORY': Access the inventory options for the current character.\n",
         "\n'L' or 'LOOK': Describe the room that the current character is standing in once more.\n",
         "\n'STAT' or 'STATS': Examine each of the current character's statistics.\n",
         "\n'P' or 'PARTY': Show a list of all player-controlled characters, along with their corresponding number, which can be used to change the current character.\n",
         "\n<, >, or 0-9: Change control to the corresponding character.\n",
         "\nYou will also notice that many rooms contain keywords in ALL CAPS that represent a feature of the room that the player can interact with. Simply entering the name of these capitalized keywords will allow you to fully interact with that feature.\n",
-		"\nThe combat screen has its own unique set of commands, as described in that game state.\n"
+		"\nThe combat screen has its own unique set of commands, as described in that game state.\n",
+		"INVENTORY COMMANDS:\n",
+		"'E' or 'EQUIP' followed by a space, followed by a {inventory number}: Equip or unequip item in your inventory.\n",
+		"'D' or 'DROP' followed by a space, followed by a {inventory number}: Drop item back into current room.\n",
+		"'U' or 'USE' followed by a space, followed by a {inventory number}: Use an item if your inventory, if applicable.\n",
+		"'G' or 'GIVE' followed by a space, followed by a {inventory number}: Give an item in your inventory to another character in the same room. You will then be asked which character to give the item to.\n",
+		"'L' or 'LOOK' followed by a space, followed by a {inventory number}: Learn more about an item in your inventory.\n"
 	];
 	
 	#endregion

@@ -7,6 +7,26 @@ function scr_define_macros_and_enums(){
 		Item
 	}	
 	
+	enum icon_type { //used in o_con draw event with our local 'icon_ar'
+		powered_room,
+		enemies_present,
+		fire,
+		electric,
+		vacuum,
+		gas
+	}
+	
+	//These are mostly 'passive' type abilities and abilities that do NOT double as items:
+	enum ability_type {
+		healing_factor, //+1 every other turn
+		thick_hide, //+1 armor
+		hardened_skin, //+1 armor
+		melee_specialist,
+		child, //Increased stealth, low hp, can't use weapons or armor.
+		cragos,
+		total_ability_types
+	}
+	
 	enum game_state {
 		main_menu,
 		display_intro,
@@ -73,6 +93,7 @@ function scr_define_macros_and_enums(){
 		intersection_n_s_w, //34 done
 		
 		vacuum, //35 done done
+		
 		airlock_e_w_n_s, //36 done
 		airlock_n_s, //37 done
 		airlock_e_w, //38 done
@@ -217,13 +238,16 @@ function scr_define_macros_and_enums(){
 		total_char_types
 	}
 	
+	//Must match the order of the sprites in spr_tiles_doors_44; wall and open are irrelevant
 	enum door_state {
-		wall,
-		unlocked,
+		
 		locked,
+		unlocked,
 		jammed,
 		destroyed,
+		wall,
 		open_space,
+
 		total_door_states
 	}
 	
@@ -233,16 +257,21 @@ function scr_define_macros_and_enums(){
 	#macro DOOR_DIR_E 2
 	#macro DOOR_DIR_S 3
 	
+	//Macros for FOW tiles - must match order in which placed in spr_tiles_fow_132
+	#macro TILE_FOW 1
+	#macro TILE_SHROUD 2
+	
 	enum hazard_type {
 		toxic_gas,
 		fire,
 		vacuum,
-		electric_current
+		electric_current,
+		total_hazard_types
 	}
 	
 	enum equip_slot {
-		body,
 		accessory,
+		body,
 		rh,
 		lh,
 		total_slots
@@ -298,13 +327,10 @@ function scr_define_macros_and_enums(){
 		tech_basic,
 		tech_advanced,
 		food,
-		credits,
 		scrap,
-		bio_matter,
 		ammo,
 		engine_fuel,
 		total_resources //At and beyond this index, Item instances are stored
-		
 	}
 	
 	//Not even sure if I'll implement this - rooms have different 'cover' values:

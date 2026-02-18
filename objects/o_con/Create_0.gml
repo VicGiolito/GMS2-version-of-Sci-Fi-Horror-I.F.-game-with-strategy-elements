@@ -2,7 +2,7 @@
 
 randomize();
 
-global.cell_size = 132;
+global.cell_size = 264;
 global.half_c = global.cell_size / 2;
 global.grid_offset_x = 0;
 global.grid_offset_y = 0;
@@ -14,8 +14,7 @@ scr_define_macros_and_enums();
 
 scr_define_structs();
 
-main_menu_str_ar = ["Start New Game","Continue Game","Options","Exit"];
-ar_to_draw = [];
+main_menu_str_ar = ["Start New Game\n", "Continue Game\n", "Options\n", "Exit\n"];
 
 party_limit = 3;
 
@@ -38,6 +37,12 @@ global.default_line_h = string_height("A");
 
 global.foreground_ui_scale = 6;
 
+spr_icon_offset_x = sprite_get_width(asset_get_index("spr_hazard_electrical")) / 2;
+spr_icon_offset_y = sprite_get_height(asset_get_index("spr_hazard_electrical"));
+spr_icon_w = sprite_get_width(asset_get_index("spr_hazard_electrical"));
+spr_icon_h = sprite_get_height(asset_get_index("spr_hazard_electrical"));
+
+
 #region ds_maps:
 
 //Defines cur_grid_w and h and specific grid ids:
@@ -45,9 +50,16 @@ scr_build_map_from_csv_file(location.research_vessel);
 
 global.cur_grid = global.research_vessel_grid;
 
+global.cur_grid_w = ds_grid_width(global.cur_grid);
+global.cur_grid_h = ds_grid_height(global.cur_grid);
+
 //Our 'stasis room' where players spawn:
 global.origin_grid_x = 5;
 global.origin_grid_y = 8;
+
+global.tile_main_lay_id = layer_tilemap_get_id(layer_get_id("tile_main"));
+global.tile_doors_lay_id = layer_tilemap_get_id(layer_get_id("tile_doors"));
+global.tile_fow_lay_id = layer_tilemap_get_id(layer_get_id("tile_fow"));
 
 #endregion
 
@@ -84,6 +96,10 @@ global.lower_dialogue_window_txt_origin_y = global.top_win_h+(global.lower_windo
 global.left_window_text_offset_x = 64;
 global.left_window_text_offset_y = 64;
 
+global.max_abilities = 6;
+global.max_player_inv = 31 - global.max_abilities+1; //Most just a constraint of many lines I can fit in the left window
+
+
 d($"global.center_x_of_upper_window: {global.center_x_of_upper_window}, global.center_y_of_upper_window: {global.center_y_of_upper_window}");
 
 global.cur_zoom_val = 1; //This is the zoom value that is used in our camera functions when zooming in or out.
@@ -97,24 +113,26 @@ scr_setup_cam_view(true,false,global.win_w,global.win_h,0,0,0,0);
 
 #endregion
 
-sample_text = "\tLorem ipsum dolor sit amet, \tconsectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non \tproident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+sample_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
 global.default_dialogue_screen_max_text_w = global.bottom_and_top_win_w-(global.lower_window_txt_buffer_x*3);
 
 cursor_pos = 0;
 
-#region Define tilemap from grid structs:
+#region Defunct - Define tilemap from grid structs:
 
-scr_define_tilemap_from_grid_structs(global.cur_grid);
+//scr_define_tilemap_from_grid_structs(global.cur_grid);
 
 #endregion
 
 #region Define all our dialogue window vars:
 
+//Variables for main dialogue box (lower right side window):
+
 //Every new string element in our dialogue_ar is a NEW LINE.
 global.dialogue_ar = [];
 
-dialogue_window_width = 0;
+dialogue_window_width = 0; //These vars are updated in step event
 dialogue_window_height = 0;
 dialogue_window_x = 0;
 dialogue_window_y = 0;
@@ -164,13 +182,21 @@ d($"reset_full_screen_count: {global.reset_full_screen_count}");
 alarm[1] = 1; //center and zoom cam
 
 //Define a lot of 'content' type data like string arrays, etc.
-
+global.resources_food = 0;
+global.resources_scrap = 0;
+global.resources_basic_tech = 0;
+global.resources_advanced_tech = 0;
+global.resources_engine_fuel = 0;
+global.resources_ammo = 0;
 
 global.wait = false;
 global.wait_time = 1;
 
 scr_reset_wait();
 
+//Add our first text to the left side window - we wait so that the step event has a chance to run, and several
+//positional vars get a chance to be updated:
+alarm[2] = 2;
 
 
 

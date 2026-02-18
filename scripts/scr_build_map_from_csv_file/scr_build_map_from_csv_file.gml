@@ -1,4 +1,9 @@
 
+/* Fill our corresponding location grid with enums from a csv file
+
+
+
+*/
 
 function scr_build_map_from_csv_file(location_enum){
 	
@@ -28,6 +33,25 @@ function scr_build_map_from_csv_file(location_enum){
 				//d($"At grid x: {xx}, y: {yy}, val == {room_enum}");
 				//Now instantiate that enum:
 				global.research_vessel_grid[# xx,yy] = new global.Room(location.research_vessel,room_enum,xx,yy,global.research_vessel_grid);
+				
+				//Add enemies:
+				var room_enum = global.research_vessel_grid[# xx,yy].room_enum;
+				if room_enum == research_vessel_room.sc_corridor_west {
+					if !is_array(global.research_vessel_grid[# xx,yy].enemies_in_room_ar) {
+						//global.research_vessel_grid[# xx,yy].enemies_in_room_ar = [];
+						//array_push(global.research_vessel_grid[# xx,yy].enemies_in_room_ar, new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true));
+						//function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, wep_loadout_int = 0) 
+					}
+				}
+				else if room_enum == research_vessel_room.shuttle_bay {
+					if !is_array(global.research_vessel_grid[# xx,yy].enemies_in_room_ar) {
+						global.research_vessel_grid[# xx,yy].enemies_in_room_ar = [];
+						repeat(3) {
+							array_push(global.research_vessel_grid[# xx,yy].enemies_in_room_ar, new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true));
+							//function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, wep_loadout_int = 0) 
+						}
+					}
+				}
 			}
 		}
 	}
