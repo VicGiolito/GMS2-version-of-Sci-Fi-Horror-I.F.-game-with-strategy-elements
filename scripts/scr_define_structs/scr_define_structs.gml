@@ -7,6 +7,12 @@ function scr_define_structs(){
 		
 		struct_type_enum = struct_type.Character;
 		
+		unique_id = global.unique_struct_id_num;
+		
+		global.unique_struct_id_num++;
+		
+		flood_fill_path_grid = -1; //Is used as a ds_grid for flood fill pathing steps after character creation.
+		
         add_to_room_list_boolean = add_to_room_list_bool;
 		
 		char_sprite_inst_id = -1;
@@ -37,6 +43,8 @@ function scr_define_structs(){
         ability_points_max = 0;
         sanity_cur = 0;
         sanity_max = 0;
+		move_points_max = 2;
+		move_points_cur = move_points_max;
 
         armor = 0;
         evasion = AVERAGE_EVASION_SCORE;
@@ -56,7 +64,8 @@ function scr_define_structs(){
         cur_action_points = 2;
         max_action_points = 2;
 
-        ability_ar = -1;
+        ability_ar = -1; //ACTIVATEABLE abilities, like combat abilities; these also double as item structs.
+		passive_abil_ar = -1;
 
         char_team_enum = team_enum;
 
@@ -65,23 +74,33 @@ function scr_define_structs(){
         possessive_pronoun = "his";
 		
 		if char_team_enum == team_type.enemy {
-			starting_combat_rank = rank_pos.enemy_far;	
+			cur_combat_rank = rank_pos.enemy_far;
 		}
 		else {
-			starting_combat_rank = rank_pos.pc_far;
+			cur_combat_rank = rank_pos.pc_far;
 		}
         
-        cur_combat_rank = 0;
+		pc_is_combat_moving = false;
         participated_in_new_turn_battle = false;
         combat_ai_preference = enemy_combat_ai.ranged_coward;
         chosen_weapon = -1;
         targeted_rank = -1;
         ai_inferior_alternate_wep = -1;
         hold_the_line_count = 0;
-
+		passing_item_struct_id = -1;
+		passing_item_index = -1;
+		using_item_struct_id = -1;
+		using_item_index = -1;
+		
+		char_sprite_room_x = 0; //updated by scr_update_char_sprite_position_vars
+		char_sprite_room_y = 0; //updated by scr_update_char_sprite_position_vars
+		
+		has_fled_combat_bool = false;
+		
         enemy_ai_move_boolean = false;
         enemy_ai_fight_boolean = false;
         is_opportunity_attacker_boolean = false;
+		combat_move_dir = 0; //1=south; -1 = north.
 
         ai_is_suppressor_boolean = false; //Just a sub-set of the ENUM_AI_COMBAT_RANGED_COWARD, this enemy chooses an item with suppression instead, and resorts to a weaker melee weapon when pcs finally close with it in melee; otherwise it behaves exactly the same as Spined Spitters.
 
@@ -102,6 +121,7 @@ function scr_define_structs(){
 	        cur_grid_y = spawn_grid_y;
 			
 			scr_add_remove_char_room_ar(cur_room_id,self,true);
+			scr_add_remove_char_from_global_ar(self,true);
 		} 
 		
 		else {
@@ -115,13 +135,13 @@ function scr_define_structs(){
 
         overwatch_rank = -1;
         will_overwatch_boolean = false
-
+	
+		//status effect type vars:
         infection_count = 0;
         char_max_infection = BASE_MAX_INFECTION;
         burning_count = 0;
         poisoned_count = 0;
         bleeding_count = 0;
-        unconscious_count = 0;
         inside_toxic_gas_boolean = false;
         inside_vacuum_boolean = false;
         healing_nanites_count = 0;
@@ -132,8 +152,9 @@ function scr_define_structs(){
 
         resolve_dot_effects_boolean = true;
         healing_passive_boolean = false;
-        unconscious_boolean = false;
-        completely_dead_boolean = false;
+        unconscious_bool = false;
+		unconscious_count = 0;
+        has_died_bool = false;
 
         healing_factor_boolean = false;
         healing_factor_cd = 0;
@@ -148,7 +169,10 @@ function scr_define_structs(){
 		
 		nick_name = undefined;
 		
-		//Important: struct methods must be defined before they are called:
+		//more combat related stats:
+		evading_boolean = false;
+		
+		avail_weps_or_abils_list = -1; //Used as an array; is filled with either items from rh and lh or abilities.
 
         #region Define char stats....
 		
@@ -189,13 +213,11 @@ function scr_define_structs(){
                 $"*{name} dusts himself off, grumbling: 'How do you kill a dead man?'*",
                 $"*'Shit,' {name} mumbles. 'Must've died again.'",
                 $"{name} clambers to his feet, spitting a gob of blood from his mouth. It's congealed before it hits the ground. 'Now you've really pissed me off.'",
-                $"'I've still got a few debts left to pay,' {name} grumbles. He grins maliciously, cracking his knuckles. 'And a few skulls left to split...'"
+                $"'I've still got a few debts left to pay,' {name} grumbles. He grins with a mouth full of jagged teeth, cracking his knuckles. 'And a few skulls left to split...'"
             ];
 
             accuracy = AVERAGE_ACCURACY_SCORE-1; //Worse than average accuracy, only hits about 50% of the time, on average
-            evasion = AVERAGE_EVASION_SCORE-1; //Worse than average evasion
-	
-			scr_add_ability(self,item_type.headbutt);
+            evasion = AVERAGE_EVASION_SCORE; //
 		}
 
         else if char_type_enum == character.doctor {
@@ -226,7 +248,7 @@ function scr_define_structs(){
 		}
 		
 		else if char_type_enum == character.veteran {
-            name = "Malin, 'The Veteran'";
+            name = "Nikano, 'The Veteran'";
             hp_max = 10;
             hp_cur = 10;
             ability_points_cur = 10;
@@ -372,6 +394,21 @@ function scr_define_structs(){
             res_infect = 50;
             res_poison = 25;
             res_suppress = 25;
+			
+			//debug only:
+			/*
+			infection_count = 1;
+	        burning_count = 1;
+	        poisoned_count = 1;
+	        bleeding_count = 1;
+	        inside_toxic_gas_boolean = true;
+	        inside_vacuum_boolean = true;
+	        healing_nanites_count = 1;
+	        adrenal_pen_count = 1;
+	        suppressed_count = 1;
+	        stun_count = 1;
+			*/
+			
 		}
 
         else if char_type_enum == character.security_guard {
@@ -514,8 +551,8 @@ function scr_define_structs(){
 
         else if char_type_enum == character.child {
             name = "Kira, 'The Gamer'";
-            hp_max = 4;
-            hp_cur = 4;
+            hp_max = 1; //5
+            hp_cur = hp_max;
             ability_points_cur = 6;
             ability_points_max = 6;
             sanity_cur = 5;
@@ -610,10 +647,12 @@ function scr_define_structs(){
             res_vacuum = 100;
             res_gas = 100;
             res_electric = 0;
+			accuracy = AVG_ACC_VAL+1;
 			
 			nick_name = "Larva";
 			
 			scr_add_ability(self,item_type.infection_needle);
+			scr_add_ability(self,item_type.writhing_tendril);
 		}
 
         else if char_type_enum == character.neutral_jittering_buzzsaw {
@@ -690,12 +729,10 @@ function scr_define_structs(){
             res_poison = 500;
             res_infect = 500;
             res_bleed = 500;
-            
-
 		}
 
         else if char_type_enum == character.neutral_whipstitch_sentinel {
-            name = "Whipstitch Sentinel Droid";;
+            name = "Whipstitch Sentinel Droid";
             hp_max = irandom_range(6,8)
             hp_cur = hp_max;
             ability_points_cur = 3;
@@ -763,6 +800,8 @@ function scr_define_structs(){
             res_vacuum = 100;
             res_gas = 100;
             res_electric = 0;
+			
+			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
             suppress_immune_boolean = true;
             stun_immune_boolean = true;
@@ -773,7 +812,7 @@ function scr_define_structs(){
 
             spd = -1
 
-     
+			scr_add_ability(self,item_type.monstrous_claw);
 		}
 
         else if char_type_enum == character.enemy_spined_spitter {
@@ -793,6 +832,8 @@ function scr_define_structs(){
             res_vacuum = 100
             res_gas = 100
             res_electric = 0
+			
+			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
             combat_ai_preference = enemy_combat_ai.ranged_coward;
 
@@ -811,6 +852,8 @@ function scr_define_structs(){
             sanity_max = 20
 			
 			nick_name = "TransformedSldr.";
+			
+			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
             armor = 0
             evasion = -1
@@ -835,6 +878,8 @@ function scr_define_structs(){
             sanity_max = 20
 			
 			nick_name = "Shambler";
+			
+			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
             armor = 0
             evasion = 0
@@ -859,6 +904,8 @@ function scr_define_structs(){
             sanity_max = 20
 			
 			nick_name = "Lurker";
+			
+			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
             armor = 0
             evasion = 2
@@ -893,11 +940,11 @@ function scr_define_structs(){
 	
 	#region Item struct:
 	
-	global.Item = function(item_enum) constructor
+	global.Item = function(item_enum_val) constructor
 	{
 		struct_type_enum = struct_type.Item;
 
-        item_enum = item_enum;
+        item_enum = item_enum_val;
 
         stat_boost_list = [];
         for(var i = 0; i < stat_boost.total_stats; i++) {
@@ -915,7 +962,6 @@ function scr_define_structs(){
         melee_debuff_boolean = false;
         equippable_boolean = true;
         usable_boolean = false;
-        changes_stats_boolean = false;
         combat_usable_boolean = false; //Used in conjunction with items that can ALSO be used by characters in combat, like adrenal pen.
         use_script  = -1; //For items or abilities that are 'used'
         use_requires_target_boolean = false; //For items or abilities that are 'used', usually destroyed after, and require a target- such as the medkit, adrenal pen, healing nanites, etc.
@@ -925,15 +971,6 @@ function scr_define_structs(){
         is_shield_boolean = false; //Currently only used in scr_check_valid_item_equip()
         can_suppress_boolean = false;
         can_overwatch_boolean = false;
-
-        // None of these are in use and are used within the stat_boost_list instead:
-        vacuum_res = 0;
-        gas_res = 0;
-        fire_res = 0;
-        electrical_res = 0;
-        armor_bonus = 0;
-        evade_bonus = 0;
-        shield_bonus = 0;
 
         ability_point_cost = 0;
         ability_cost_str = "";
@@ -962,9 +999,9 @@ function scr_define_structs(){
         //region Define item stats for each item:
 
         if item_enum == item_type.flashlight {
-            dmg_min = 1
-            dmg_max = 1
-            item_name = "FLASHLIGHT"
+            dmg_min = 1;
+            dmg_max = 1;
+            item_name = "FLASHLIGHT";
             equip_slot_list = [equip_slot.accessory];
 		}
         else if item_enum == item_type.shotgun {
@@ -979,217 +1016,216 @@ function scr_define_structs(){
             can_overwatch_boolean = true;
             bleed_chance = 25;
             item_desc = "Your standard issue military grade shotgun most commonly used by security personnel.";
-            can_overwatch_boolean = true;
 		}
         else if item_enum == item_type.semi_auto_pistol {
-            dmg_min = 1
-            dmg_max = 4
-            max_range = 2
-            item_name = "SEMI-AUTOMATIC PISTOL"
+            dmg_min = 1;
+            dmg_max = 4;
+            max_range = 2;
+            item_name = "SEMI-AUTOMATIC PISTOL";
             equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
-            item_verb = "fires the"
-            item_dmg_str = "shot"
-           can_overwatch_boolean = true
-            bleed_chance = 10
+            item_verb = "fires the";
+            item_dmg_str = "shot";
+            can_overwatch_boolean = true;
+            bleed_chance = 10;
 		}
         else if item_enum == item_type.pulse_pistol {
-            dmg_min = 2
-            dmg_max = 5
-            requires_ammo_boolean = false
-            item_name = "PULSE PISTOL"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            max_range = 3
-            item_verb = "fires the"
-            item_dmg_str = "burned"
-            can_overwatch_boolean = true
-            burn_chance = 10
+            dmg_min = 2;
+            dmg_max = 5;
+            requires_ammo_boolean = false;
+            item_name = "PULSE PISTOL";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            max_range = 3;
+            item_verb = "fires the";
+            item_dmg_str = "burned";
+            can_overwatch_boolean = true;
+            burn_chance = 10;
 		}
         else if item_enum == item_type.frag_grenade {
-            dmg_min = 8
-            dmg_max = 12
-            item_name = "FRAGMENTATION GRENADE"
-            single_use_boolean = true
-            equip_slot_list = [equip_slot.rh,equip_slot.lh]  // Indicates either hand can equip
-            max_range = 2
-            item_verb = "tosses the"
-            item_dmg_str = "shredded"
-            aoe_count = 6
-            burn_chance = 25
-            bleed_chance = 25
+            dmg_min = 8;
+            dmg_max = 12;
+            item_name = "FRAGMENTATION GRENADE";
+            single_use_boolean = true;
+            equip_slot_list = [equip_slot.rh,equip_slot.lh];  // Indicates either hand can equip
+            max_range = 2;
+            item_verb = "tosses the";
+            item_dmg_str = "shredded";
+            aoe_count = 6;
+            burn_chance = 25;
+            bleed_chance = 25;
 		}
         else if item_enum == item_type.flame_thrower {
-            dmg_min = 3
-            dmg_max = 6
-            item_name = "FLAMETHROWER"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 0
-            item_verb = "spews fire with the"
-            item_dmg_str = "burned"
-            aoe_count = -1
-            burn_chance = 75
-            always_checks_status_effect_boolean = true
+            dmg_min = 3;
+            dmg_max = 6;
+            item_name = "FLAMETHROWER";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 0;
+            item_verb = "spews fire with the";
+            item_dmg_str = "burned";
+            aoe_count = -1;
+            burn_chance = 75;
+            always_checks_status_effect_boolean = true;
 		}
         else if item_enum == item_type.hand_flamer { //Torvald ability
-            dmg_min = 2
-            dmg_max = 5
-            item_name = "PALM FLAMER"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 1
-            item_verb = "spews fire with the"
-            item_dmg_str = "burned"
-            aoe_count = -1
-            burn_chance = 75
-            always_checks_status_effect_boolean = true
-            ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP"
-            is_combat_abil_only_boolean = true
-            requires_ammo_boolean = false
+            dmg_min = 2;
+            dmg_max = 5;
+            item_name = "PALM FLAMER";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 1;
+            item_verb = "spews fire with the";
+            item_dmg_str = "burned";
+            aoe_count = -1;
+            burn_chance = 75;
+            always_checks_status_effect_boolean = true;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP";
+            is_combat_abil_only_boolean = true;
+            requires_ammo_boolean = false;
 		}
 
         else if item_enum == item_type.wrist_rockets { //Torvald ability
-            dmg_min = 8
-            dmg_max = 12
-            item_name = "WRIST ROCKETS"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 3
-            item_verb = "fires"
-            item_dmg_str = "shredded"
-            aoe_count = 6
-            burn_chance = 25
-            bleed_chance = 25
-            suppress_chance = 50
-            stun_chance = 25
-            always_checks_status_effect_boolean = true
-            ability_point_cost = 5
-            ability_cost_str = $"Spend {ability_point_cost} AP"
-            is_combat_abil_only_boolean = true
-            requires_ammo_boolean = false
+            dmg_min = 8;
+            dmg_max = 12;
+            item_name = "WRIST ROCKETS";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 3;
+            item_verb = "fires";
+            item_dmg_str = "shredded";
+            aoe_count = 6;
+            burn_chance = 25;
+            bleed_chance = 25;
+            suppress_chance = 50;
+            stun_chance = 25;
+            always_checks_status_effect_boolean = true;
+            ability_point_cost = 5;
+            ability_cost_str = $"Spend {ability_point_cost} AP";
+            is_combat_abil_only_boolean = true;
+            requires_ammo_boolean = false;
 		}
 
         else if item_enum == item_type.shocking_grasp { //Torvald ability
-            dmg_min = 2
-            dmg_max = 4
-            item_name = "SHOCKING GRASP"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 0
-            item_verb = "grabs with a"
-            item_dmg_str = "burned"
-            aoe_count = 1
-            burn_chance = 10
-            stun_chance = 75
-            always_checks_status_effect_boolean = true
-            ability_point_cost = 2
-            ability_cost_str = $"Spend {ability_point_cost} AP"
-            is_combat_abil_only_boolean = true
-            requires_ammo_boolean = false
+            dmg_min = 2;
+            dmg_max = 4;
+            item_name = "SHOCKING GRASP";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 0;
+            item_verb = "grabs with a";
+            item_dmg_str = "burned";
+            aoe_count = 1;
+            burn_chance = 10;
+            stun_chance = 75;
+            always_checks_status_effect_boolean = true;
+            ability_point_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP";
+            is_combat_abil_only_boolean = true;
+            requires_ammo_boolean = false;
 		}
 
         else if item_enum == item_type.headbutt { //ogre
-            dmg_min = 2
-            dmg_max = 5
-            item_name = "HEAD BUTT"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 0
-            item_verb = "roars and smashes with a vicious"
-            item_dmg_str = "battered"
-            aoe_count = 1
-            stun_chance = 75
-            ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP"
-            is_combat_abil_only_boolean = true
-            requires_ammo_boolean = false
-            always_checks_status_effect_boolean = true
+            dmg_min = 2;
+            dmg_max = 5;
+            item_name = "HEAD BUTT";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 0;
+            item_verb = "roars and smashes with a vicious";
+            item_dmg_str = "battered";
+            aoe_count = 1;
+            stun_chance = 75;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP";
+            is_combat_abil_only_boolean = true;
+            requires_ammo_boolean = false;
+            always_checks_status_effect_boolean = true;
 		}
 
         else if item_enum == item_type.feral_bite { //ogre
-            dmg_min = 3
-            dmg_max = 6
-            item_name = "MONSTROUS BITE"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 0
-            item_verb = "screams and lunges with a"
-            item_dmg_str = "bitten"
-            aoe_count = 1
-            bleed_chance = 100
-            ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP"
-            is_combat_abil_only_boolean = true
-            requires_ammo_boolean = false
+            dmg_min = 3;
+            dmg_max = 6;
+            item_name = "MONSTROUS MAW";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 0;
+            item_verb = "screams and lunges with a";
+            item_dmg_str = "bitten";
+            aoe_count = 1;
+            bleed_chance = 100;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP";
+            is_combat_abil_only_boolean = true;
+            requires_ammo_boolean = false;
 		}
 
         //This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.personal_shield_generator { //Torvald ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "PERSONAL SHIELD GENERATOR"
-            max_range = 0
-            ability_point_cost = 3
-            ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP to gain the following for 3 turns:"
-            stat_boost_list[stat_boost.armor] = PERSONAL_SHIELD_BONUS
-            stat_boost_list[stat_boost.evasion] = PERSONAL_SHIELD_BONUS
-            is_combat_abil_only_boolean = true
-            non_attack_ability_boolean = true
-            abil_passes_turn_boolean = false
-            requires_ammo_boolean = false
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "PERSONAL SHIELD GENERATOR";
+            max_range = 0;
+            ability_point_cost = 3;
+            ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP to gain the following for 3 turns:";
+            stat_boost_list[stat_boost.armor] = PERSONAL_SHIELD_BONUS;
+            stat_boost_list[stat_boost.evasion] = PERSONAL_SHIELD_BONUS;
+            is_combat_abil_only_boolean = true;
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = false;
+            requires_ammo_boolean = false;
 		}
 
         // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.smoke_grenade {  // Cooper ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "SMOKE GRENADE" 
-            max_range = 0
-            ability_point_cost = 3
-            ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP and pass your turn: every friendly unit in your party gains the following for next 3 turns:"
-            stat_boost_list[stat_boost.evasion] = SMOKE_GRENADE_EVASION_BONUS
-            is_combat_abil_only_boolean = true
-            non_attack_ability_boolean = true
-            abil_passes_turn_boolean = true
-            requires_ammo_boolean = false
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "SMOKE GRENADE" ;
+            max_range = 0;
+            ability_point_cost = 3;
+            ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP and pass your turn: every friendly unit in your party gains the following for next 3 turns:";
+            stat_boost_list[stat_boost.evasion] = SMOKE_GRENADE_EVASION_BONUS;
+            is_combat_abil_only_boolean = true;
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
 		}
 
         // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.field_medicine {  // Doctor ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "FIELD MEDICINE"
-            max_range = 0
-            ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals 5 hit points and is cleared of the following status effects: burning, bleeding, poisoned."
-            is_combat_abil_only_boolean = true
-            non_attack_ability_boolean = false //This abil requires a target, so we don't use the execute_non_attack_ability() script, we use the item_id.use_item() script after targeting a pc
-            abil_passes_turn_boolean = true
-            requires_ammo_boolean = false
-            use_requires_target_boolean = true  // Brings us to the USE_ITEM game state if this ability is used from the combat game state CHOOSE_ATTACK
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "FIELD MEDICINE";
+            max_range = 0;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals 5 hit points and is cleared of the following status effects: burning, bleeding, poisoned.";
+            is_combat_abil_only_boolean = true;
+            non_attack_ability_boolean = false; //This abil requires a target, so we don't use the execute_non_attack_ability() script, we use the item_id.use_item() script after targeting a pc
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+            use_requires_target_boolean = true;  // Brings us to the USE_ITEM game state if this ability is used from the combat game state CHOOSE_ATTACK
 		}
 		
         // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.spawn_light_sentry_gun {  // Engineer ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "LIGHT SENTRY GUN"
-            equip_slot_list = [equip_slot.body]  // Indicates either hand can equip
-            max_range = 0
-            ability_point_cost = 4
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a LIGHT SENTRY GUN at your position. Sentry guns do not move, fire at enemies within their range, and set overwatch when enemies are beyond their range."
-            is_combat_abil_only_boolean = true
-            non_attack_ability_boolean = true
-            abil_passes_turn_boolean = true
-            requires_ammo_boolean = false
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "LIGHT SENTRY GUN";
+            equip_slot_list = [equip_slot.body];  // Indicates either hand can equip
+            max_range = 0;
+            ability_point_cost = 4;
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a LIGHT SENTRY GUN at your position. Sentry guns do not move, fire at enemies within their range, and set overwatch when enemies are beyond their range.";
+            is_combat_abil_only_boolean = true;
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
 		}
 
         // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.spawn_light_sentry_gun {  // Engineer ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "WHIPSTITCH SENTINEL DROID"
-            max_range = 0
-            ability_point_cost = 6
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy."
-            is_combat_abil_only_boolean = true
-            non_attack_ability_boolean = true
-            abil_passes_turn_boolean = true
-            requires_ammo_boolean = false
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "WHIPSTITCH SENTINEL DROID";
+            max_range = 0;
+            ability_point_cost = 6;
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy.";
+            is_combat_abil_only_boolean = true;
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1345,15 +1381,15 @@ function scr_define_structs(){
             always_checks_status_effect_boolean = true
 		}
         else if item_enum == item_type.fire_axe {
-            dmg_min = 2
-            dmg_max = 5
-            requires_ammo_boolean = false
-            item_name = "FIRE AXE"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "swings the"
-            item_dmg_str = "mauled"
-            max_range = 0
-            bleed_chance = 25
+            dmg_min = 2;
+            dmg_max = 5;
+            requires_ammo_boolean = false;
+            item_name = "FIRE AXE";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "swings the";
+            item_dmg_str = "mauled";
+            max_range = 0;
+            bleed_chance = 25;
 		}
         else if item_enum == item_type.crude_buzzsaw {
             dmg_min = 5
@@ -1434,82 +1470,82 @@ function scr_define_structs(){
             always_checks_status_effect_boolean = true
 		}
         else if item_enum == item_type.acid_cloud {
-            dmg_min = 1
-            dmg_max = 3
-            item_name = "ACID CLOUD"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 2
-            item_verb = "belches a massive"
-            item_dmg_str = "melted"
-            aoe_count = -1
-            poison_chance = 75
-            bleed_chance = 20
-            infection_chance = 10
-            always_checks_status_effect_boolean = true
+            dmg_min = 1;
+            dmg_max = 3;
+            item_name = "ACID CLOUD";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 2;
+            item_verb = "belches a massive";
+            item_dmg_str = "melted";
+            aoe_count = -1;
+            poison_chance = 75;
+            bleed_chance = 20;
+            infection_chance = 10;
+            always_checks_status_effect_boolean = true;
 		}
         else if item_enum == item_type.sticky_slime {
-            dmg_min = 0
-            dmg_max = 1
-            item_name = "STICKY SLIME"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 5
-            item_verb = "sprays"
-            item_dmg_str = "melted"
-            aoe_count = -1
-            suppress_chance = 75
-            always_checks_status_effect_boolean = true
-            infection_chance = 10
+            dmg_min = 0;
+            dmg_max = 1;
+            item_name = "STICKY SLIME";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 5;
+            item_verb = "sprays";
+            item_dmg_str = "melted";
+            aoe_count = -1;
+            suppress_chance = 75;
+            always_checks_status_effect_boolean = true;
+            infection_chance = 10;
 		}
         else if item_enum == item_type.filament_spray {
-            dmg_min = 0
-            dmg_max = 1
-            item_name = "FILAMENT SPRAY"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 5
-            item_verb = "spits a massive"
-            item_dmg_str = "melted"
-            aoe_count = -1
-            infection_chance = 10
-            poison_chance = 10
-            stun_chance = 20
-            always_checks_status_effect_boolean = true
+            dmg_min = 0;
+            dmg_max = 1;
+            item_name = "FILAMENT SPRAY";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 5;
+            item_verb = "spits a massive";
+            item_dmg_str = "melted";
+            aoe_count = -1;
+            infection_chance = 10;
+            poison_chance = 10;
+            stun_chance = 20;
+            always_checks_status_effect_boolean = true;
 		}
         else if item_enum == item_type.toxic_grenade_launcher {
-            dmg_min = 1
-            dmg_max = 4
-            item_name = "TOXIC GRENADE LAUNCHER"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 4 //Debug value
-            item_verb = "fires the"
-            item_dmg_str = "burned"
-            aoe_count = -1
-            poison_chance = 75
-            always_checks_status_effect_boolean = true
+            dmg_min = 1;
+            dmg_max = 4;
+            item_name = "TOXIC GRENADE LAUNCHER";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 4; //Debug value
+            item_verb = "fires the";
+            item_dmg_str = "burned";
+            aoe_count = -1;
+            poison_chance = 75;
+            always_checks_status_effect_boolean = true;
 		}
         else if item_enum == item_type.frag_grenade_launcher {
-            dmg_min = 5
-            dmg_max = 10
-            item_name = "FRAGMENTAION GRENADE LAUNCHER"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 5 //Debug value
-            item_verb = "fires the"
-            item_dmg_str = "shredded"
-            aoe_count = 4
-            burn_chance = 25
-            always_checks_status_effect_boolean = true
+            dmg_min = 5;
+            dmg_max = 10;
+            item_name = "FRAGMENTAION GRENADE LAUNCHER";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 5; //Debug value
+            item_verb = "fires the";
+            item_dmg_str = "shredded";
+            aoe_count = 4;
+            burn_chance = 25;
+            always_checks_status_effect_boolean = true;
 		}
         else if item_enum == item_type.concussion_grenade_launcher {
-            dmg_min = 0
-            dmg_max = 1
-            item_name = "CONCUSSION GRENADE LAUNCHER"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 4
-            item_verb = "fires the"
-            item_dmg_str = "concussed"
-            aoe_count = -1
-            stun_chance = 75
-            suppress_chance = 75
-            always_checks_status_effect_boolean = true
+            dmg_min = 0;
+            dmg_max = 1;
+            item_name = "CONCUSSION GRENADE LAUNCHER";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 4;
+            item_verb = "fires the";
+            item_dmg_str = "concussed";
+            aoe_count = -1;
+            stun_chance = 75;
+            suppress_chance = 75;
+            always_checks_status_effect_boolean = true;
 		}
         
         else if item_enum == item_type.sub_machine_gun {
@@ -1564,18 +1600,18 @@ function scr_define_structs(){
             burn_chance = 25
 		}
         else if item_enum == item_type.medkit {
-            single_use_boolean = true
-            usable_boolean = true
-            item_name = "MEDICAL KIT"
-            equippable_boolean = false
-            combat_usable_boolean = true
+            single_use_boolean = true;
+            usable_boolean = true;
+            item_name = "MEDICAL KIT";
+            equippable_boolean = false;
+            combat_usable_boolean = true;
 		}
         else if item_enum == item_type.regen_nanites {
-            single_use_boolean = true
-            usable_boolean = true
-            item_name = "PEN OF REGENERATION NANITES"
-            equippable_boolean = false
-            combat_usable_boolean = true
+            single_use_boolean = true;
+            usable_boolean = true;
+            item_name = "PEN OF REGENERATION NANITES";
+            equippable_boolean = false;
+            combat_usable_boolean = true;
 		}
         else if item_enum == item_type.kiras_noisy_game {
             single_use_boolean = false
@@ -1584,69 +1620,55 @@ function scr_define_structs(){
             equippable_boolean = false
 		}
         else if item_enum == item_type.suit_environmental {
-            fire_res = 50
-            electrical_res = 50
-            gas_res = 100
-            armor_bonus = 1
-            evade_bonus = -1
-            item_name = "HAZMAT SUIT"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.evasion] = -1
-            stat_boost_list[stat_boost.armor] = 1
-            stat_boost_list[stat_boost.fire_res] = 50
-            stat_boost_list[stat_boost.electric_res] = 50
-            stat_boost_list[stat_boost.gas_res] = 100
-            changes_stats_boolean = true
+            item_name = "HAZMAT SUIT";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.evasion] = -1;
+            stat_boost_list[stat_boost.armor] = 1;
+            stat_boost_list[stat_boost.fire_res] = 50;
+            stat_boost_list[stat_boost.electric_res] = 50;
+            stat_boost_list[stat_boost.gas_res] = 100;
 		}
         else if item_enum == item_type.suit_prisoner_jumpsuit {
             item_name = "PRISONER JUMPSUIT"
             stat_boost_list[stat_boost.evasion] = 1
-            changes_stats_boolean = true
             equip_slot_list = [equip_slot.body]
 		}
         else if item_enum == item_type.suit_engineer_garb {
             item_name = "ENGINEER GARB"
             equip_slot_list = [equip_slot.body]
             stat_boost_list[stat_boost.evasion] = 1
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.suit_scientist_labcoat {
             item_name = "SCIENTIST LABCOAT"
             equip_slot_list = [equip_slot.body]
             stat_boost_list[stat_boost.evasion] = 1
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.suit_medical_scrubs {
             item_name = "MEDICAL SCRUBS"
             equip_slot_list = [equip_slot.body]
             stat_boost_list[stat_boost.evasion] = 1
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.suit_officer_jumpsuit {
             item_name = "OFFICER JUMPSUIT"
             equip_slot_list = [equip_slot.body]
             stat_boost_list[stat_boost.evasion] = 1
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.suit_civilian_jumpsuit {
             item_name = "CIVILIAN JUMPSUIT"
             equip_slot_list = [equip_slot.body]
             stat_boost_list[stat_boost.evasion] = 1
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.suit_flak_armor {
             item_name = "FLAK ARMOR"
             equip_slot_list = [equip_slot.body]
             stat_boost_list[stat_boost.armor] = 2
             stat_boost_list[stat_boost.evasion] = 0
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.suit_security_vest {
             item_name = "SECURITY VEST"
             equip_slot_list = [equip_slot.body]
             stat_boost_list[stat_boost.armor] = 1
             stat_boost_list[stat_boost.evasion] = 1
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.suit_marine {
             item_name = "MARINE ARMOR"
@@ -1657,7 +1679,6 @@ function scr_define_structs(){
             stat_boost_list[stat_boost.vacuum_res] = 50
             stat_boost_list[stat_boost.gas_res] = 100
             stat_boost_list[stat_boost.fire_res] = 100
-            changes_stats_boolean = true
 		}
         else if item_enum == item_type.adrenal_pen {
             single_use_boolean = true
@@ -1673,23 +1694,20 @@ function scr_define_structs(){
             equippable_boolean = false
 		}
         else if item_enum == item_type.access_targeting_hud {
-            item_name = "TACTICAL MONOCLE"
-            equip_slot_list = [equip_slot.accessory]
-            stat_boost_list[stat_boost.accuracy] = 1
-            changes_stats_boolean = true
+            item_name = "TACTICAL MONOCLE";
+            equip_slot_list = [equip_slot.accessory];
+            stat_boost_list[stat_boost.accuracy] = 1;
 		}
         else if item_enum == item_type.shield_riot {
-            item_name = "RIOT SHIELD"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh]  // Indicates either hand can equip
-            changes_stats_boolean = true
-            stat_boost_list[stat_boost.armor] = 1
-            stat_boost_list[stat_boost.evasion] = 1
+            item_name = "RIOT SHIELD";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh];  // Indicates either hand can equip
+            stat_boost_list[stat_boost.armor] = 1;
+            stat_boost_list[stat_boost.evasion] = 1;
             is_shield_boolean = true
 		}
         else if item_enum == item_type.shield_flak {
             item_name = "FLAK SHIELD"
             equip_slot_list = [equip_slot.rh, equip_slot.lh]  // Indicates either hand can equip
-            changes_stats_boolean = true
             stat_boost_list[stat_boost.armor] = 2
             stat_boost_list[stat_boost.evasion] = 2
             is_shield_boolean = true
@@ -1697,7 +1715,6 @@ function scr_define_structs(){
         else if item_enum == item_type.shield_phase {
             item_name = "PHASE SHIELD"
             equip_slot_list = [equip_slot.rh, equip_slot.lh]  // Indicates either hand can equip
-            changes_stats_boolean = true
             stat_boost_list[stat_boost.armor] = 3
             stat_boost_list[stat_boost.evasion] = 4
             is_shield_boolean = true
@@ -1706,7 +1723,7 @@ function scr_define_structs(){
             dmg_min = 1
             dmg_max = 2
             requires_ammo_boolean = false
-            item_name = "FISTS"
+            item_name = "FIST"
             equip_slot_list = [equip_slot.rh, equip_slot.lh] //Indicates either hand can equip
             item_verb = "punches with their"
             item_dmg_str = "battered"
@@ -1716,7 +1733,7 @@ function scr_define_structs(){
             dmg_min = 0
             dmg_max = 1
             requires_ammo_boolean = false
-            item_name = "CHILD FISTS"
+            item_name = "CHILD FIST"
             equip_slot_list = [equip_slot.rh, equip_slot.lh] //Indicates either hand can equip
             item_verb = "punches with their"
             item_dmg_str = "battered"
@@ -1726,7 +1743,7 @@ function scr_define_structs(){
             dmg_min = 2
             dmg_max = 4
             requires_ammo_boolean = false
-            item_name = "GIANT FISTS"
+            item_name = "GIANT FIST"
             equip_slot_list = [equip_slot.rh, equip_slot.lh] //Indicates either hand can equip
             item_verb = "punches with their"
             item_dmg_str = "battered"
@@ -1784,10 +1801,7 @@ function scr_define_structs(){
 	{
 		struct_type_enum = struct_type.Room;
 		
-		scavenge_ar = []; //Anything at or beyond *.total_resources is considered an item.
-		for(var i = 0; i < scavenge_resource.total_resources; i++) {
-			array_push(scavenge_ar,0);
-		}
+		scavenge_ar = -1; //Is used as an array; anything at or beyond *.total_resources is considered an item.
 		
 		powered_boolean = false;
 		
@@ -1833,6 +1847,8 @@ function scr_define_structs(){
 			
 			if room_enum == research_vessel_room.basic_corridor_ew {
 				
+				scavenge_ar = [];
+				
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -1850,6 +1866,8 @@ function scr_define_structs(){
 			}
 			
 			else if room_enum == research_vessel_room.basic_corridor_ns {
+				
+				scavenge_ar = [];
 				
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
@@ -1870,6 +1888,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.storage_room {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				scavenge_ar[scavenge_resource.tech_advanced] = 1;
 				scavenge_ar[scavenge_resource.food] = irandom_range(6,12);
@@ -1891,6 +1910,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.hydroponics_lab {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.food] = irandom_range(12,24);
 				
 				pre_event_unpowered_room_desc = "Rows and rows of metal grow boxes line the room, their contents nothing more than withered weeds to clutching to dry, gray dirt. There's a nest of hydraulics and hoses in the walls, and huge sunlamps are recessed in the ceiling, now dark and inert.\n\nIf you can restore power to this room, perhaps there's a way to get these hydroponics working again?"
@@ -1914,6 +1934,10 @@ function scr_define_structs(){
 				hazard_ar = [];
 				array_push(hazard_ar,hazard_type.toxic_gas);
 				
+				scavenge_ar = [];
+				for(var i = 0; i < scavenge_resource.total_resources; i++) {
+					scavenge_ar[i] = 0;	
+				}
 				scavenge_ar[scavenge_resource.food] = 12;
 				scavenge_ar[scavenge_resource.ammo] = 55;
 				scavenge_ar[scavenge_resource.tech_basic] = 4;
@@ -1921,6 +1945,7 @@ function scr_define_structs(){
 				//Items:
 				array_push(scavenge_ar,item_type.suit_environmental);
                 array_push(scavenge_ar,item_type.medkit);
+				array_push(scavenge_ar,item_type.lead_pipe);
 				
                 room_name_str = "STASIS ROOM";
 				
@@ -1952,6 +1977,7 @@ function scr_define_structs(){
 				array_push(hazard_ar,hazard_type.vacuum);
 				array_push(hazard_ar,hazard_type.fire);
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = 4;
 				
 				room_name_str = "EAST-WEST CORRIDOR";
@@ -1993,8 +2019,8 @@ function scr_define_structs(){
 				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				
-				pre_event_unpowered_room_desc = "There's an NPC in this room.";
-				pre_event_powered_room_desc = "There's an NPC in this room.";
+				pre_event_unpowered_room_desc = "This is the room with the friendly scientist in it.";
+				pre_event_powered_room_desc = "This is the room with the friendly scientist in it.";
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
@@ -2172,6 +2198,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_e_w_n {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2191,6 +2218,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_e_w_s {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2210,6 +2238,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_n_s_e {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2229,6 +2258,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_n_s_w {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2248,6 +2278,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_s_e {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2267,6 +2298,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_w_s {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2286,6 +2318,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_w_e_s_n {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2305,6 +2338,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_n_e {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
@@ -2324,6 +2358,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.arboretum_e_s {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Arboretum"
@@ -2343,6 +2378,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.arboretum_n_s_e_w {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Arboretum"
@@ -2362,6 +2398,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.arboretum_w_s {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Arboretum"
@@ -2381,6 +2418,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.arboretum_w_s_n {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Arboretum"
@@ -2400,6 +2438,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.arboretum_n_s_e {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Arboretum"
@@ -2419,6 +2458,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.arboretum_n_e {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Arboretum"
@@ -2438,6 +2478,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.arboretum_n_w {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Arboretum"
@@ -2457,6 +2498,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.commissary {
 				
+				scavenge_ar = [];
 				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Commissary"
@@ -2476,7 +2518,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.armory {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
 				
 				pre_event_unpowered_room_desc = "Armory."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2495,7 +2537,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.control_room {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
 				
 				pre_event_unpowered_room_desc = "Control Room."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2514,7 +2556,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.medbay {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+				
 				
 				pre_event_unpowered_room_desc = "Medical Bay."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2533,7 +2575,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.engine_room {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+			
 				
 				pre_event_unpowered_room_desc = "Engine Room."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2552,7 +2594,6 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.shuttle_bay {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Shuttle Bay."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2571,7 +2612,6 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.crew_quarters {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Crew Quarters."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2590,7 +2630,6 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.research_lab {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
 				
 				pre_event_unpowered_room_desc = "Research Laboratory."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2609,8 +2648,6 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.robotics_bay {
 				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
-				
 				pre_event_unpowered_room_desc = "Robotics Bay."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
@@ -2627,8 +2664,7 @@ function scr_define_structs(){
 			}
 			
 			else if room_enum == research_vessel_room.recycler {
-				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
+
 				
 				pre_event_unpowered_room_desc = "Recycling Station."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2646,9 +2682,7 @@ function scr_define_structs(){
 			}
 			
 			else if room_enum == research_vessel_room.animal_lab {
-				
-				scavenge_ar[scavenge_resource.tech_basic] = irandom_range(0,3);
-				
+	
 				pre_event_unpowered_room_desc = "Animal Laboratory."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				

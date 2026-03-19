@@ -57,9 +57,19 @@ function scr_define_global_and_con_data(){
 	#region Help instructions:
 	
 	global.help_instructions_str_ar = [
-		"When choosing characters, enter 'A' or 'ADD' to add a character to your party, or 'R' or 'REMOVE' to remove them. Using the up and down arrow keys changes the currently selected statis pod. You can also enter 'B' or 'BIO' to learn about a character's backstory.\n\n",
-        "The following is a list of available commands to be used in the primary game state:\n\n",
-        "'SCAVENGE': This command can only be used once per room, and will automatically collect any global resources and items that can be found within the room.\n",
+		"-------------------------------------\n",
+		"INSTRUCTIONS AND ALL COMMANDS:\n",
+		"-------------------------------------\n",
+		"\nCommands are not case sensitive.\n",
+		"\nCHOOSING CHARACTERS:\n\n",
+		"Use the up and down arrow keys to change the currently selected statis pod.\n\n",
+		"Enter 'A' or 'ADD' to add a character to your party.\n\n",
+		"'R' or 'REMOVE' to remove a character from your party.\n\n",
+		"You can also enter 'B' or 'BIO' to learn about a character's backstory. This can be performed in any game screen.\n",
+        
+		"\n-------------------------------------\n",
+		"\nMAIN GAME:\n",
+        "\n'SCAVENGE': This command will automatically collect any global resources and items that are to be found within the current room.\n",
         "\nDirectional commands to move between rooms: 'E' or 'EAST'; 'W' or 'WEST'; 'N' or 'NORTH'; 'S' or 'SOUTH': Costs 1 action point and 1 food per character. You will then be asked which characters in the same room you would also like to move with you, if any. The corresponding direction must be accessible.\n",
         "\n'UNLOCK {DIRECTION}': Consumes one of your key cards to unlock the door in the corresponding direction.\n",
         "\n'JAM {DIRECTION}': Costs 1 action point per character. You will then be asked how many characters in the same room will attempt to jam the door. Uses random scrap items found in the room and your character(s) strength to attempt to jam the door in the corresponding direction. A strength-based skill test will ensue to determine if the action was successful.\n",
@@ -70,14 +80,27 @@ function scr_define_global_and_con_data(){
         "\n'STAT' or 'STATS': Examine each of the current character's statistics.\n",
         "\n'P' or 'PARTY': Show a list of all player-controlled characters, along with their corresponding number, which can be used to change the current character.\n",
         "\n<, >, or 0-9: Change control to the corresponding character.\n",
+		"\n'ABIL'ITY: Choose from a list of your character's skills and abilities.\n",
+		"\n'E' or 'END': This will end your turn, triggering enemy movement and consuming one unit of food. Starving characters lose 1 hit point at the end of each turn. At the start of each turn, enemies automatically attack any characters in the same room that are not hidden.\n",
         "\nYou will also notice that many rooms contain keywords in ALL CAPS that represent a feature of the room that the player can interact with. Simply entering the name of these capitalized keywords will allow you to fully interact with that feature.\n",
-		"\nThe combat screen has its own unique set of commands, as described in that game state.\n",
-		"INVENTORY COMMANDS:\n",
-		"'E' or 'EQUIP' followed by a space, followed by a {inventory number}: Equip or unequip item in your inventory.\n",
-		"'D' or 'DROP' followed by a space, followed by a {inventory number}: Drop item back into current room.\n",
-		"'U' or 'USE' followed by a space, followed by a {inventory number}: Use an item if your inventory, if applicable.\n",
-		"'G' or 'GIVE' followed by a space, followed by a {inventory number}: Give an item in your inventory to another character in the same room. You will then be asked which character to give the item to.\n",
-		"'L' or 'LOOK' followed by a space, followed by a {inventory number}: Learn more about an item in your inventory.\n"
+		
+		"\n-------------------------------------\n",
+		"\nCOMBAT:\n",
+		"\n'F'IGHT: Automatically attack with your currently equipped weapon. Note: enemies are not attacked directly - instead you target their position on the battle field. If your weapon is ranged, you will be asked which position you want to target for attack.\n",
+		"\n'ABIL'ITY: Consume ability points instead of ammunition, and choose from a list of your character's skills and abilities.\n",
+		"\n'O'VERWATCH: If your currently equipped weapon supports over watch fire, you will aim your weapon at a target position on the battlefield and fire upon any enemy that moves into it. Very useful when facing off against large swarms of enemies that prefer melee combat.\n",
+		"\n'R'UN {direction: 'e','w','n','s'}: Attempt to flee in the indicated direction. You must be standing in either the distant player position or the distant enemy position to perform this action. If your character is within range of enemy attacks, one enemy chosen at random will gain a free attack against them. Characters can only flee once per game turn, so be mindful of where you end up - if you run into a room that also has enemies, you will be forced to fight again - this time to the death.\n",
+		"\n'<' or '>': Change control to the corresponding character. This can only be performed during the combat preparation phase.\n",
+		"\nA note about combat: Most ranged weapons consume 1 unit of ammunition per attack, but if you're using the 'F'ight command, many weapons (such as the shotgun) have a random chance to attack multiple times, up to a certain amount. Some weapons like the flame thrower will even attack every enemy in the designated rank, so be mindful of this fact if you're running low on ammunition.\n",
+		"\n-------------------------------------\n",
+		"\nINVENTORY COMMANDS (Accessible from main game and combat):\n",
+		"\n'INV' or 'INVENTORY': Print a more detailed list of every item in your inventory, and examine all of their relevant stats.",
+		"\n'E' or 'EQUIP' followed by a space, followed by a {inventory number}: Equip or unequip item in your inventory.\n",
+		"\n'D' or 'DROP' followed by a space, followed by a {inventory number}: Drop item back into current room.\n",
+		"\n'U' or 'USE' followed by a space, followed by a {inventory number}: Use an item if your inventory, if applicable.\n",
+		"\n'G' or 'GIVE' followed by a space, followed by a {inventory number}: Give an item in your inventory to another character in the same room. You will then be asked which character to give the item to.\n",
+		"\n'EX' or 'EXAMINE' followed by a space, followed by a {inventory number}: Examine an item in your inventory to learn more about it.\n",
+		"-------------------------------------\n"
 	];
 	
 	#endregion
@@ -102,17 +125,19 @@ function scr_define_global_and_con_data(){
 			char_class_snippet = "This stubbled brute almost looks like the standard variant of the Keth Corporation clone, only... bigger. Much bigger. Uglier, too.";
 			
 			array_push(char_bio_ar, [
+				"Background:\n",
 				"Cragos, 'The Ogre':\n",
-                "\nCragos was intended to be just another of the millions of faceless clones born into servitude by the Kethas Corporation, but a power surge in his gestation vat caused an excessive amount of growth hormone to be released into his developmental stew. As a result, he emerged from his birthing chamber weeks before his brothers and sisters, a hulking giant of a man with the mind of a child, and a misshapen face that only a mother could love... If only he had one.\n",
+                "Cragos was intended to be just another of the millions of faceless clones born into servitude by the Kethas Corporation, but a power surge within his gestation vat caused an excessive amount of growth hormone to be released into his developmental stew. As a result, he emerged from his birthing chamber weeks before his brothers and sisters, a hulking giant of a man with the mind of a child, and a misshapen face that only a mother could love... If only he had one.\n",
                 "\nThe scientists at Keth Corp. were bemused by this unanticipated variant, and rigorously tested his physical and mental capabilities to determine the viability of his strain. They called it 'testing,' but Cragos would soon come to know the euphimism for what it truly was: torture.\n",
                 "\nHe was only six weeks old by the time they had subjected him to a battery of tests that included blunt force trauma, precision tissue damage, and unimaginable G-forces, all to determine the tolerances of his physical structure, and also the rate of his healing factor, which surpassed even that of his kin. He was at least spared the psychological conditioning, not by any act of mercy, but merely because he was overlooked and forgotten after the researchers grew bored of his screams, and labeled his mutation as 'UNSATISFACTORY.'\n",
-				"\nHe was deemed too large and clumsy to be useful on the battlefield, and a terrible shot, too, owing to the fact that his left eye was positioned considerably lower than his right. He was too hideous even to serve as steward in the gilded homes of the elite back in the Core.\n",
-                "\nA simple barcode stamped to the back of his neck designated him as such. He was slated to be reprocessed and recycled, in fact, liquified and fed back to his fellow clones as essential nutrients, had the interstellar freighter that was his home not been attacked by raiders from the Fringe. It was of course Keth Corp. policy to never reveal the secrets of their proprietary technology, and so they reduced the massive hulk of their own starship to ruins in the depths of space, rather than submit to the pirates' boarding party. The brigands did not leave empty handed, however.\n",
+				"\nHe was deemed too large and clumsy to be useful on the battlefield, and a terrible shot, too, owing to the fact that his left eye was positioned considerably lower than his right, ruining his depth perception. He was too hideous even to serve as steward in the gilded homes of the elite back in the Core.\n",
+                "\nA simple barcode stamped to the back of his neck designated him as nothing more than unproductive organic matter. He was slated to be reprocessed and recycled, liquified and fed back to his fellow clones as essential nutrients, had the interstellar freighter that was his home not been attacked by raiders from the Fringe. It was of course Keth Corp. policy to never reveal the secrets of their proprietary technology, and so they reduced the massive hulk of their own starship to ruins in the depths of space, rather than submit to the pirates' boarding party. The brigands did not leave empty handed, however.\n",
                 "\nThey found Cragos still clinging to life in a small pressurized compartment in a field of floating debris, like a cockroach that refused to die, or a caterpillar cocooned in stasis, patiently awaiting chrysalis. Unlike the scientists at Keth Corp., they found good use for his muscle among their ranks, all right.\n",
-                "\nBanditry was their trade, and his healing factor an invaluable asset. The absence of psychological conditioning had made it possible for Cragos to adjust to their nomadic lifestyle, to view himself as an invidual at last, as a person who could inspire respect--if never love.\n",
-                "\nThey named him 'Cragos,' after the son of the stone god who ruled the mountains of their homeworld. And as the years passed he became well known as the most vicious and relentless of their clan. Eventually he outlived them all, and when the very last of their clan had been shot down by enforcers from the Core, Cragos struck out into the void to earn his own coin, plying his trade as a mercenary for hire, a dealer of death and punishment alike. Yet he never forgot the faces of his tormentors who had given him life, and always he hoarded the horror of his past as fuel for future conquests.\n",
+                "\nBanditry was their trade, and his healing factor an invaluable asset. To their enemies, he was a terror to behold during their raids of the corporations' interstellar shipping lanes; many of their victims simply laid down arms at the mere sight of his towering bulk and monstrous visage. The absence of psychological conditioning had made it possible for Cragos to adjust to their nomadic lifestyle, to view himself as an invidual at last, as a person who could inspire respect--if never love.\n",
+                "\nThey named him 'Cragos,' after the son of the stone god who ruled the mountains of their homeworld. And as the years passed he became well known as the most vicious and relentless of their clan. Eventually, in the wake of countless raids and robberies, Cragos found himself alone once more, the sole survivor of generations of utter barbarity and violence, enduring still when all others had fallen, thanks in no small part to his regenerative power; and when the very last of his clan had been shot down by enforcers from the Core, Cragos struck out into the void to earn his own coin, plying his trade as a mercenary for hire, a dealer of death and punishment alike. Yet he never forgot the faces of his tormentors who had given him life, and always he hoarded the horror of his past as fuel for future conquests.\n",
                 "\nIt was a kidnapping job gone sideways that found him in a stasis chamber aboard the Keth Corp. research vessel 'Niffy.' And there he remains: a caged animal once more, eyes closed, yet not sleeping--always dreaming of vengeance against the inexhaustible and inexorable corporation that made him...\n",
-                "\nAlways dreaming... And always promising pain.\n"
+                "\nAlways dreaming...\n",
+				"\n... And always promising pain.\n"
 				]);
 		}
 		
@@ -125,7 +150,7 @@ function scr_define_global_and_con_data(){
 		
 		else if i == character.playboy {
 			primary_role_str = "CIVILIAN";
-            char_class_snippet = "Immediately identifiable is the handsome scion of the rival conglomerate Boros Incorporated, better known for his sexual conquests than his contributions to the family's sterling legacy. What is he doing here?"
+            char_class_snippet = "Immediately identifiable as the handsome scion of the rival conglomerate Boros Incorporated, better known for his sexual conquests than his contributions to his family's sterling legacy. What is he doing here?"
 		
 			array_push(char_bio_ar,"This character's bio hasn't been written yet.");
 		}
@@ -202,9 +227,11 @@ function scr_define_global_and_con_data(){
 		
 		else if i == character.veteran {
 			primary_role_str = "SECURITY";
-            char_class_snippet = "Not every planet from the Fringe submitted so quietly to corporate 'sponsorship' from the Core. Some resisted--though all yielded, in the end. Corvax was one such world that sought independence from corporate rule. The insurgents there adorned themselves with the same tribal tatoos that surround this woman's left eye. Her ascetic features and weathered skin also suggest a life of extreme deprivation. The militia of Corvax often sought refuge from the Enforcers within the vast jungles that once blanketed that world. It was even said that some of them modified their genetic code to become like the beasts of those forests, to make themselves stronger, faster, and escape detection... But surely those reports were just unfounded rumors. After all, cross-splicing the human genome with non-human DNA was always a risky endeavor and prone to dangerous side effects, and such techniques were never perfected outside of the Core. Still, there's a bestial aspect to this woman's features that makes you wonder...";
+            var char_bio = "Background:\n\nNikano, 'The Veteran':\n\nNot every planet from the Fringe submitted so quietly to corporate 'sponsorship' from the Core. Some resisted, though all yielded, in the end.\n\nGoloka was one such world that sought independence from corporate rule. Unlike most of the settled worlds, terraforming was never needed here; its abundant biomes and diverse ecosystems had been thriving perfectly well for millions of years without intervention from the human race. Its first colonists were so inspired by Goloka's pristine beauty, in fact, that they shredded their contracts, tore out their implants, and banded together to protect the natural resources of the virgin world from their corporate overseers.\n\nTheir resistance was sharp and endured for several generations, but ultimately pointless. Before their inevitable defeat, the insurgents sought refuge from Keth Corporation Enforcers within the vast jungles that once blanketed Goloka. They concealed themselves among the beasts of the world and used their knowledge of its ecosystems to remarkably dangerous effect--for a time, at least.\n\nBefore the forests were finally burned and flattened beneath the relentless march of industry, it was even whispered that some of the insurgents modified their genetic code to become like the creatures of those dark and primeval forests, to make themselves stronger, faster, to escape detection, as if they sought to become one with the land they had sworn to protect... But surely those reports were just unfounded rumors.\n\nAfter all, cross-splicing the human genome with non-human DNA always was a risky endeavor, prone to dangerous and unpredictable side effects, and such techniques were never perfected outside of the Core.\n\nBy the time she was captured, Nikano was already a veteran of countless skirmishes with the Enforcers, and the very last of her tribe to submit. The Keth Corporation spared her only because their stock holders wished to study her genome and psychology, to isolate the very qualities that had made the colonists disobedient in the first place. Of course, only once identified and understood, could such undesirable genes be purged from the worker caste forever...";
 		
-			array_push(char_bio_ar,"This character's bio hasn't been written yet.");
+			array_push(char_bio_ar,[char_bio]);
+			
+			char_class_snippet = "This woman's broad Asiatic features are marked with curious tribal tattoos encircling her left eye. She wears in her slumbering expression a weariness so deep that it cannot be cured by simple sleep. There's something else about her face, too, a sharpness in her features: a strange prominence in the heaviness of her brow, or her jutting cheek bones; it is almost as if the sterile lights of the cryogenic chamber have washed away some aspect of her humanity, to reveal the shadows of a beast.";
 		}
 		
 		else {
@@ -218,17 +245,5 @@ function scr_define_global_and_con_data(){
 	}
 	
 	#endregion
-	
-	/*
-
-		else:
-            total_chars_bio_list.append("This character's backstory is not yet defined.")
-        #Add stats string to total_char_stats_list
-        total_chars_stats_list.append(
-            f"{i}.) {temp_pc_char.name}: Primary role: {primary_role_str}. {char_class_snippet} Security: {temp_pc_char.security}; Engineering: {temp_pc_char.engineering}; Science: {temp_pc_char.science}; Stealth: {temp_pc_char.stealth}")
-        #De-reference (destroy) this instance:
-        temp_pc_char = -1
-	
-	*/
 	
 }

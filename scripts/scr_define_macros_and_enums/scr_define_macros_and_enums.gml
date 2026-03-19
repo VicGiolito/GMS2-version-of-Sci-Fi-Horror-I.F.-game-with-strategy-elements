@@ -17,30 +17,46 @@ function scr_define_macros_and_enums(){
 	}
 	
 	//These are mostly 'passive' type abilities and abilities that do NOT double as items:
-	enum ability_type {
+	enum passive_abil_type {
 		healing_factor, //+1 every other turn
 		thick_hide, //+1 armor
 		hardened_skin, //+1 armor
-		melee_specialist,
+		melee_specialist, //Not currently in use
 		child, //Increased stealth, low hp, can't use weapons or armor.
-		cragos,
+		giant, //Can't hide, increased melee dmg and melee accuracy
+		cybernetic, //50% res to most hazard and damage types, 50% weakness to electric
+		synthetic, //100% res to most hazard and damage types, 100% weakness to electric
+		
 		total_ability_types
 	}
 	
 	enum game_state {
+		
+		initializing_game,
 		main_menu,
 		display_intro,
 		choose_chars,
+		
 		main_game,
+		enemies_moving,
 		init_combat,
-		prep_combat,
-		assign_combat_command,
-		execute_combat_action,
 		access_inv,
-		choose_door_dir,
 		use_target_item,
-		combat_choose_attack,
-		combat_target_rank
+		passing_item,
+		choose_door_dir,
+		choose_pc_abil,
+		
+		combat_paused, 
+		combat_assign_pc_command,
+		combat_execute_action,
+		combat_choose_pc_wep,
+		combat_pc_target_rank
+	}
+	
+	enum combat_concluded_result {
+		enemies_won,
+		pcs_won,
+		combat_continues
 	}
 	
 	enum main_menu_options {
@@ -307,12 +323,12 @@ function scr_define_macros_and_enums(){
 	}
 	
 	enum rank_pos {
-		enemy_far,
+		enemy_far, //0
 		enemy_middle,
 		enemy_near,
 		pc_near,
 		pc_middle,
-		pc_far,
+		pc_far, //5
 		total_rank_pos
 	}
 	
@@ -373,8 +389,8 @@ function scr_define_macros_and_enums(){
 	
 	//Some stat type macros:
 	#macro AVG_ACC_VAL 7
-	#macro MIN_COMBAT_RAN_NUM 0
-	#macro MAX_COMBAT_RAN_NUM 9
+	#macro MIN_COMBAT_RAN_NUM 1
+	#macro MAX_COMBAT_RAN_NUM 10
 	#macro RAN_INITIATIVE_VAL 5
 	#macro ENERGENIZING_AP_BOOST 2
 	#macro SMOKE_GRENADE_EVADE_BUFF 1
@@ -383,7 +399,7 @@ function scr_define_macros_and_enums(){
 	#macro OGRE_MELEE_ACC_BUFF 1
 	#macro OGRE_MELEE_MAX_DMG_BUFF 5
 	#macro BASE_DOOR_HP 20
-	#macro BASE_WALL_HP 100
+	#macro BASE_WALL_HP 50
 	
 	//Some other status type or misc. macros:
 	#macro DOT_FIRE 5
@@ -396,4 +412,20 @@ function scr_define_macros_and_enums(){
 	#macro BASE_MAX_INFECTION 8
 	#macro PERSONAL_SHIELD_BONUS 1
 	#macro SMOKE_GRENADE_EVASION_BONUS 1
+	#macro MAX_RAN_SPD_VAL 6
+	
+	#macro UNVISITED_CELL 0
+	#macro VISITED_CELL 1
+	
+	#macro UNVISITED_STEP_VAL 999999999
+
+	#macro GRID_ENCODE 1000000  // must be larger than your max grid width; removes the need for creating structs to store separate grid_x and grid_y vars.
+
 }
+
+/*A note on 'heuristic tie-breaking'; ie: var dist_to_dest = scr_return_chebyshev_dist(checking_cell_x, checking_cell_y, dest_x, dest_y) * 1.001;
+When two nodes have the same f(n) value, A* has no preference between them and may explore both. In open areas this happens a lot — many cells will have identical f values, so A* fans out and explores a bunch of nodes that are all equally scored.
+Tie-breaking gives A* a slight preference so it picks one path and commits rather than exploring many equivalent options. The idea is to favor nodes with a higher g(n), because a higher g means you've traveled further from the start, which means you're closer to the goal. 
+Between two nodes with the same f, the one that's closer to the goal is more likely to be on the final path.
+The simplest way to implement it is to multiply your heuristic by a tiny factor just above 1: 
+*/

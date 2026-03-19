@@ -2,12 +2,14 @@
 
 randomize();
 
+global.unique_struct_id_num = 0;
+
 global.cell_size = 264;
 global.half_c = global.cell_size / 2;
 global.grid_offset_x = 0;
 global.grid_offset_y = 0;
 
-global.cur_game_state = game_state.main_menu;
+global.cur_game_state = game_state.initializing_game;
 cur_main_menu_option = main_menu_options.main;
 
 scr_define_macros_and_enums();
@@ -16,13 +18,12 @@ scr_define_structs();
 
 main_menu_str_ar = ["Start New Game\n", "Continue Game\n", "Options\n", "Exit\n"];
 
-party_limit = 3;
+party_limit = 8;
 
 global.pc_char_ar = [];
 global.enemy_char_ar = [];
 global.neutral_char_ar = [];
-
-global.cur_char_index = 0;
+global.enemy_mob_ar = []; //A nested array filled with arrays of enemies.
 
 //Fonts and colors:
 global.default_fnt = fnt_default_dialogue_screen;
@@ -42,27 +43,6 @@ spr_icon_offset_y = sprite_get_height(asset_get_index("spr_hazard_electrical"));
 spr_icon_w = sprite_get_width(asset_get_index("spr_hazard_electrical"));
 spr_icon_h = sprite_get_height(asset_get_index("spr_hazard_electrical"));
 
-
-#region ds_maps:
-
-//Defines cur_grid_w and h and specific grid ids:
-scr_build_map_from_csv_file(location.research_vessel);
-
-global.cur_grid = global.research_vessel_grid;
-
-global.cur_grid_w = ds_grid_width(global.cur_grid);
-global.cur_grid_h = ds_grid_height(global.cur_grid);
-
-//Our 'stasis room' where players spawn:
-global.origin_grid_x = 5;
-global.origin_grid_y = 8;
-
-global.tile_main_lay_id = layer_tilemap_get_id(layer_get_id("tile_main"));
-global.tile_doors_lay_id = layer_tilemap_get_id(layer_get_id("tile_doors"));
-global.tile_fow_lay_id = layer_tilemap_get_id(layer_get_id("tile_fow"));
-
-#endregion
-
 #region Cameras and views:
 
 global.cam_move_spd = 16;
@@ -79,6 +59,8 @@ global.left_win_w_percent = .25;
 global.top_win_h_percent = .4;
 
 global.left_window_x = global.win_w * global.left_win_w_percent; 
+global.left_window_width = global.win_w * global.left_win_w_percent;
+
 global.bottom_window_y = global.win_h * global.top_win_h_percent;
 global.top_win_h = global.win_h * global.top_win_h_percent;
 global.bottom_win_h = global.win_h * global.lower_win_h_percent;
@@ -97,8 +79,7 @@ global.left_window_text_offset_x = 64;
 global.left_window_text_offset_y = 64;
 
 global.max_abilities = 6;
-global.max_player_inv = 31 - global.max_abilities+1; //Most just a constraint of many lines I can fit in the left window
-
+global.max_player_inv = 12; //23; //Just my observation with this current font-window size etc. how many fit.
 
 d($"global.center_x_of_upper_window: {global.center_x_of_upper_window}, global.center_y_of_upper_window: {global.center_y_of_upper_window}");
 
@@ -171,15 +152,17 @@ player_input_str = "";
 
 #endregion
 
-scr_define_global_and_con_data();
+//scr_define_global_and_con_data(); //moved to alarm2
 
-global.cur_char = -1;
+global.acting_char_struct_id = -1;
 
-global.reset_full_screen_val = game_get_speed(gamespeed_fps) * 10;
+global.reset_full_screen_val = game_get_speed(gamespeed_fps) * 5;
  global.reset_full_screen_count =  global.reset_full_screen_val;
 d($"reset_full_screen_count: {global.reset_full_screen_count}");
 
-alarm[1] = 1; //center and zoom cam
+alarm[2] = 1; //Setup all of our 'initialization' data: grids, world maps, cur_grid variables, character selection data, etc.
+
+alarm[1] = 3; //center and zoom cam
 
 //Define a lot of 'content' type data like string arrays, etc.
 global.resources_food = 0;
@@ -187,17 +170,92 @@ global.resources_scrap = 0;
 global.resources_basic_tech = 0;
 global.resources_advanced_tech = 0;
 global.resources_engine_fuel = 0;
-global.resources_ammo = 0;
+global.resources_ammo = 25;
 
 global.wait = false;
-global.wait_time = 1;
+global.wait_time = 2;
 
 scr_reset_wait();
 
-//Add our first text to the left side window - we wait so that the step event has a chance to run, and several
-//positional vars get a chance to be updated:
-alarm[2] = 2;
+//A Star path finding vars:
 
+origin_x = -1;
+origin_y = -1;
+dest_x = -1;
+dest_y = -1;
+pather_x = -1;
+pather_y = -1;
 
+failsafe_val = 0;
+failsafe_max = 100000; //ds_grid_width(global.cur_grid)*ds_grid_height(global.cur_grid)+1;
 
+path_points_ar = [];
+
+directional_ar = [];
+for(var i = 0; i < 8; i++) {
+	if i == 0 {
+		array_push(directional_ar,{ check_dir_x : -1, check_dir_y : 0 }); //west	
+	}
+	else if i == 1 {
+		array_push(directional_ar,{ check_dir_x : 0, check_dir_y : -1 }); //north	
+	}
+	else if i == 2 {
+		array_push(directional_ar,{ check_dir_x : 1, check_dir_y : 0 }); //east	
+	}
+	else if i == 3 {
+		array_push(directional_ar,{ check_dir_x : 0, check_dir_y : 1 }); //south	
+	}
+	else if i == 4 {
+		array_push(directional_ar,{ check_dir_x : -1, check_dir_y : -1 }); //NW	
+	}
+	else if i == 5 {
+		array_push(directional_ar,{ check_dir_x : 1, check_dir_y : -1 }); //NE	
+	}
+	else if i == 6 {
+		array_push(directional_ar,{ check_dir_x : 1, check_dir_y : 1 }); //SE	
+	}
+	else if i == 7 {
+		array_push(directional_ar,{ check_dir_x : -1, check_dir_y : 1 }); //SW	
+	}
+}
+
+global.plotting_path = false;
+
+global.path_successful = false;
+
+cur_enemy_mob_index = 0;
+cur_enemy_mob_struct = -1;
+
+global.total_turn_counter = 1;
+
+//Combat vars:
+global.combat_rank_ar = -1; //A nested array
+global.combat_initiative_ar = -1;
+global.cur_combat_round = 0;
+global.cur_combat_char = -1;
+
+next_combat_game_state = -1;
+next_combat_char = -1;
+
+global.passing_item_boolean = false;
+
+prev_game_state = -1;
+
+global.combat_prep_phase = false;
+global.combat_begun = false;
+
+global.item_reference_table = []; //Contains an instantiated struct for each item; defined in alarm[2]; these item structs are mainly referenced in the char selection screen and when enemies are using their 'abilities' in combat.
+
+avail_weps_or_abils_list = -1; //Is used as an array
+global.fleeing_combat_char_id = -1;
+global.char_is_fleeing_bool = false;
+
+char_id_after_char_flees = -1;
+
+global.cur_combat_char_index = 0;
+
+char_spr_w = sprite_get_width(asset_get_index("spr_pc"));
+char_spr_h = sprite_get_height(asset_get_index("spr_pc"));
+
+max_char_sprites_per_room = 6;
 

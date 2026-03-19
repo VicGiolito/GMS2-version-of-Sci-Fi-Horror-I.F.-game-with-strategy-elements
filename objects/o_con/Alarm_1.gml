@@ -12,8 +12,8 @@ var center_of_upper_win_y = global.origin_grid_y*global.cell_size - (camera_get_
 scr_center_cam(false,-1,center_of_upper_win_x,center_of_upper_win_y,global.map_cam,"o_con create event: alarm 0: center cam for first time.");
 
 //Move up and to the right - you'll need to scale these 'cell_sizes' in order for this to work in different resolutions
-center_of_upper_win_y += global.cell_size*3;
-center_of_upper_win_x -= global.cell_size;
+center_of_upper_win_y += global.cell_size*2;
+//center_of_upper_win_x -= global.cell_size;
 scr_center_cam(false,-1,center_of_upper_win_x,center_of_upper_win_y,global.map_cam,"o_con create event: alarm 0: center cam for first time.");
 
 

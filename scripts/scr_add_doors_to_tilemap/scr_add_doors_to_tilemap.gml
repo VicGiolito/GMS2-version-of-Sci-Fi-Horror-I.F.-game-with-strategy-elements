@@ -26,7 +26,7 @@ function scr_add_doors_to_tilemap(tile_lay_id,grid_x,grid_y){
 			
 			//Add to tilemap:
 			if tilemap_set(tile_lay_id,door_tile_enum,grid_x+offset_cell_x,grid_y+offset_cell_y) == true {
-				d($"scr_add_doors_to_tilemap: success: set door tile with door_tile_enum: {door_tile_enum} for grid_cell_x: {grid_x}, y: {grid_y}; offset_cell_x = {offset_cell_x}, offset_cell_y = {offset_cell_y}");	
+				//d($"scr_add_doors_to_tilemap: success: set door tile with door_tile_enum: {door_tile_enum} for grid_cell_x: {grid_x}, y: {grid_y}; offset_cell_x = {offset_cell_x}, offset_cell_y = {offset_cell_y}");	
 			}
 			else {
 				d($"scr_add_doors_to_tilemap: FAILED to set door tile with door_tile_enum: {door_tile_enum} for grid_cell_x: {grid_x}, y: {grid_y}; offset_cell_x = {offset_cell_x}, offset_cell_y = {offset_cell_y}");	

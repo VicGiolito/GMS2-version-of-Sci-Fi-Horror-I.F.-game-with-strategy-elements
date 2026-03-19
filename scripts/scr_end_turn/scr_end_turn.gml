@@ -1,0 +1,31 @@
+
+/* 
+	Reset char_struct_id.participated_in_new_turn_battle to = false
+	Increment total turn counter.
+	Reduce food global resource
+	Apply starvation dmg, if applicable
+	Reset AP
+	Resolve hazard damage effects.
+*/
+
+function scr_end_turn(){
+	
+	global.total_turn_counter++;
+	
+	//Reduce global food:
+	global.resources_food--;
+	
+	//Check starvation damage:
+	
+	//Reset AP:
+	var ar_len = array_length(global.pc_char_ar);
+	for(var i = 0; i < ar_len; i++) {
+		global.pc_char_ar[i].cur_action_points = global.pc_char_ar[i].max_action_points;
+		global.pc_char_ar[i].move_points_cur = global.pc_char_ar[i].move_points_max;
+		global.pc_char_ar[i].already_fled_this_turn_boolean = false;
+		global.pc_char_ar[i].participated_in_new_turn_battle = false;
+	}
+	
+	//Resolve hazard damage effects:
+	
+}

@@ -38,6 +38,6 @@ function scr_drop_item_into_room(char_struct_id,item_struct_id,item_slot_index,r
 		array_delete(char_struct_id.inv_ar,item_slot_index,1);
 	}
 	
-	scr_add_str_to_dialogue_ar($"{char_struct_id.name} has dropped the {item_struct_id.item_name}. It can be retrieved from the room again using the 'SCAVENGE' command.\n");
 	scr_add_str_to_dialogue_ar("\n",true);
+	scr_add_str_to_dialogue_ar($"{char_struct_id.name} has dropped the {item_struct_id.item_name}. It can be retrieved from the room again using the 'SCAVENGE' command.\n");
 }

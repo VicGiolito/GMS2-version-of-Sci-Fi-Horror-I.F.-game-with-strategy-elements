@@ -28,6 +28,7 @@ function scr_return_chars_str_in_room(room_struct_id){
 					chars_in_room_str += entity_str;
 				}
 			}
+			chars_in_room_str +="\n"; //So there is an extra line between our lists of characters
 		}
 	}
 	
@@ -53,6 +54,7 @@ function scr_return_chars_str_in_room(room_struct_id){
 					chars_in_room_str += entity_str;
 				}
 			}
+			chars_in_room_str +="\n"; //So there is an extra line between our lists of characters
 		}
 	}
 	

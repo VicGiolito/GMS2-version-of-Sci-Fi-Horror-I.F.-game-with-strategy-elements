@@ -4,48 +4,12 @@
 //Edit: this isn't fixing the problem or doing anything at all (apparently)
 global.reset_full_screen_count--;
 if global.reset_full_screen_count <= 0 {
-	//window_set_fullscreen(true);
+	window_set_fullscreen(true);
 	global.reset_full_screen_count = global.reset_full_screen_val;
 	//show_debug_message("o_con Draw gui event: automatic timer: RESET WINDOW TO FULL.")
 }
 
 var win_w = window_get_width(), win_h = window_get_height();
-
-#region Draw grid lines - we do this here in draw_gui event to avoid any 'camera transformations' that
-
-/* arise from sub-pixel rendering issues. According to ai:
-This is a classic sub-pixel rendering issue with zooming! When your view is scaled, the grid lines end up 
-at fractional pixel positions on screen, causing them to flicker or disappear.
-*/
-
-/*
-
-var view_x = camera_get_view_x(global.map_cam);
-var view_y = camera_get_view_y(global.map_cam);
-var zoom_w = camera_get_view_width(global.map_cam);
-var zoom_h = camera_get_view_height(global.map_cam);
-
-// Calculate grid boundaries in screen space
-var grid_left = ((0 - view_x) / zoom_w) * display_get_gui_width();
-var grid_top = ((0 - view_y) / zoom_h) * display_get_gui_height();
-var grid_right = ((global.cur_grid_w * global.cell_size - view_x) / zoom_w) * display_get_gui_width();
-var grid_bottom = ((global.cur_grid_h * global.cell_size - view_y) / zoom_h) * display_get_gui_height();
-
-// Draw vertical lines
-for(var xx = 0; xx <= global.cur_grid_w; xx++){
-    var screen_x = ((xx * global.cell_size - view_x) / zoom_w) * display_get_gui_width();
-    draw_line(screen_x, grid_top, screen_x, grid_bottom);
-}
-
-// Draw horizontal lines
-for(var yy = 0; yy <= global.cur_grid_h; yy++){
-    var screen_y = ((yy * global.cell_size - view_y) / zoom_h) * display_get_gui_height();
-    draw_line(grid_left, screen_y, grid_right, screen_y);
-}
-
-*/
-
-#endregion
 
 //Draw our background color over the lsb monitor and lower monitor to mask the actual game room.
 var c = c_black;
@@ -63,7 +27,7 @@ if global.cur_game_state <= game_state.choose_chars {
 
 if global.cur_game_state == game_state.main_menu {
 	
-	draw_set_valign(fa_middle)
+	//draw_set_valign(fa_middle);
 	
 	//Draw in upper left so we can use some kind of transition effect to immediately start drawing our
 	//intro text in the middle of the screen, after we create an ellipse ... and the main game options
@@ -87,16 +51,16 @@ if global.cur_game_state == game_state.main_menu {
 		ar_to_draw = resolutions_str_ar;
 	}
 	
-	var y_offset = string_height(ar_to_draw[0])+4;
+	var cursor_offset_y = 12;
 	
 	for(var i = 0; i < array_length(ar_to_draw); i++) {
 		draw_text(origin_x,origin_y+(i * y_offset),string(ar_to_draw[i]) );
 	}
 	
 	//Draw cursor:
-	draw_sprite(spr_main_menu_cursor,0,origin_x-(sprite_get_width(asset_get_index("spr_main_menu_cursor"))), origin_y+(cursor_pos*y_offset) );
+	draw_sprite(spr_main_menu_cursor,0,origin_x-(sprite_get_width(asset_get_index("spr_main_menu_cursor"))), origin_y+cursor_offset_y+(cursor_pos*global.default_line_h) );
 
-	scr_reset_font_align();
+	//scr_reset_font_align();
 }
 
 #endregion
@@ -105,7 +69,7 @@ if global.cur_game_state == game_state.main_menu {
 
 else if global.cur_game_state == game_state.choose_chars {
 	
-	draw_set_valign(fa_middle)
+	//draw_set_valign(fa_middle);
 	
 	//Draw in upper left so we can use some kind of transition effect to immediately start drawing our
 	//intro text in the middle of the screen, after we create an ellipse ... and the main game options
@@ -113,23 +77,23 @@ else if global.cur_game_state == game_state.choose_chars {
 	var origin_x = global.left_window_text_offset_x;
 	var origin_y = global.left_window_text_offset_y;
 	
-	var y_offset = string_height(char_str_ar[0])+4;
+	var cursor_offset_y = 12;
 	var asterisk_string = "";
 	
 	//Draw a bit of an explanation of what the left side window is being used for:
 	draw_text(origin_x,origin_y,"BROWSE THE STASIS PODS:");
-	origin_y += y_offset*2;
+	origin_y += global.default_line_h*2;
 	
 	for(var i = 0; i < array_length(char_str_ar); i++) {
 		asterisk_string = ""
 		if scr_check_char_type_enum_in_ar(global.pc_char_ar,i) == true asterisk_string = "*";
-		draw_text(origin_x,origin_y+(i * y_offset),string(char_str_ar[i])+asterisk_string);
+		draw_text(origin_x,origin_y+(i * global.default_line_h),string(char_str_ar[i])+asterisk_string);
 	}
 	
 	//Draw cursor:
-	draw_sprite(spr_main_menu_cursor,0,origin_x-(sprite_get_width(asset_get_index("spr_main_menu_cursor"))), origin_y+(cursor_pos*y_offset) );
+	draw_sprite(spr_main_menu_cursor,0,origin_x-(sprite_get_width(asset_get_index("spr_main_menu_cursor"))), origin_y+cursor_offset_y+(cursor_pos*global.default_line_h) );
 
-	scr_reset_font_align();
+	//scr_reset_font_align();
 }
 
 #endregion
@@ -137,11 +101,13 @@ else if global.cur_game_state == game_state.choose_chars {
 #region Draw left window data for if game_state >= main: 
 
 else if global.cur_game_state >= game_state.main_game {
-
-	draw_set_valign(fa_middle)
 	
 	var origin_x = global.left_window_text_offset_x;
 	var origin_y = global.left_window_text_offset_y;
+	
+	var cur_char = global.acting_char_struct_id;
+	
+	if global.combat_begun cur_char = global.cur_combat_char;
 	
 	//Draw global resources:
 	draw_text(origin_x,origin_y,$"Food: {global.resources_food} Scrap: {global.resources_scrap} Engine Fuel: {global.resources_engine_fuel}");
@@ -150,79 +116,146 @@ else if global.cur_game_state >= game_state.main_game {
 	
 	draw_text(origin_x,origin_y, $"Basic Tech.: {global.resources_basic_tech} Advanced Tech.: {global.resources_advanced_tech}");
 	
-	if is_struct(global.cur_char) && global.cur_char.struct_type_enum == struct_type.Character {
+	origin_y += global.default_line_h;
+	
+	draw_text(origin_x,origin_y, $"Ammunition: {global.resources_ammo}");
+	
+	if is_struct(cur_char) && cur_char.struct_type_enum == struct_type.Character {
+		
+		var is_pc_char = true;
+		
+		if cur_char.char_team_enum != team_type.pc is_pc_char = false;
 		
 		origin_y += global.default_line_h*2;
 		
-		draw_text(origin_x,origin_y,$"Controlling: {global.cur_char.name}");
-	
-		origin_y += global.default_line_h*2;
-	
-		draw_text(origin_x,origin_y,$"HP: {global.cur_char.hp_cur}/{global.cur_char.hp_max} A.P.: {global.cur_char.ability_points_cur}/{global.cur_char.ability_points_max} Sanity: {global.cur_char.sanity_cur}/{global.cur_char.sanity_max}");
+		var controlling_str = "";
+		
+		if is_pc_char controlling_str = "Controlling: ";
+		
+		draw_text(origin_x,origin_y,$"{controlling_str}{cur_char.name}");
 	
 		origin_y += global.default_line_h*2;
 		
-		draw_text(origin_x,origin_y,$"Security: {global.cur_char.security} Engineering: {global.cur_char.engineering}");
+		var sanity_str = "", ability_points_str = "", mp_str = "";
+		
+		//Stats:
+		if is_pc_char {
+			ability_points_str = $" A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max}{sanity_str}";
+			sanity_str = $" Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max}";
+			mp_str = $"M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}";
+		}
+	
+		draw_text(origin_x,origin_y,$"HP: {cur_char.hp_cur}/{cur_char.hp_max}{ability_points_str}{sanity_str}");
+		origin_y += global.default_line_h;
+		draw_text(origin_x,origin_y,$"{mp_str}");
+		origin_y += global.default_line_h*2;
+		
+		//Skills:
+		if is_pc_char {
+		
+			draw_text(origin_x,origin_y,$"Security: {cur_char.security} Engineering: {cur_char.engineering}");
+		
+			origin_y += global.default_line_h;
+		
+			draw_text(origin_x,origin_y,$"Science: {cur_char.science} Stealth: {cur_char.stealth}");
+		
+			origin_y += global.default_line_h*2;
+		}
+		
+		//Resistences:
+		draw_text(origin_x,origin_y,$"Armor: {cur_char.armor} Evasion: {cur_char.evasion} Accuracy: {cur_char.accuracy}");
+		
+		origin_y += global.default_line_h*2;
+		
+		draw_text(origin_x,origin_y,$"Resistances: Fire: {cur_char.res_fire} Vacuum: {cur_char.res_vacuum}");
 		
 		origin_y += global.default_line_h;
 		
-		draw_text(origin_x,origin_y,$"Science: {global.cur_char.science} Stealth: {global.cur_char.stealth}");
-		
-		origin_y += global.default_line_h*2;
-		
-		draw_text(origin_x,origin_y,$"Armor: {global.cur_char.armor} Evasion: {global.cur_char.evasion}");
-		
-		origin_y += global.default_line_h*2;
-		
-		draw_text(origin_x,origin_y,$"Resistances: Fire: {global.cur_char.res_fire} Vacuum: {global.cur_char.res_vacuum}");
+		draw_text(origin_x,origin_y,$"Electric: {cur_char.res_electric} Poison: {cur_char.res_poison} Bleed: {cur_char.res_bleed}");
 		
 		origin_y += global.default_line_h;
 		
-		draw_text(origin_x,origin_y,$"Electric: {global.cur_char.res_electric} Poison: {global.cur_char.res_poison} Bleed: {global.cur_char.res_bleed}");
+		draw_text(origin_x,origin_y,$"Stun: {cur_char.res_stun} Infection: {cur_char.res_infect} Suppress: {cur_char.res_suppress}");
 		
 		origin_y += global.default_line_h;
 		
-		draw_text(origin_x,origin_y,$"Stun: {global.cur_char.res_stun} Infection: {global.cur_char.res_infect} Suppress: {global.cur_char.res_suppress}");
+		draw_text(origin_x,origin_y,$"Toxic Gas: {cur_char.res_gas}");
 		
 		origin_y += global.default_line_h*2;
 		
-		if is_array(global.cur_char.ability_ar) && array_length(global.cur_char.ability_ar) > 0 {
+		//Status effects:
+		var status_effect_str = scr_return_status_effects_str(cur_char);
+		
+		if status_effect_str != "None" {
+			
+			//d($"o_con draw gui event: left window drawing stats code: global.left_window_width == {global.left_window_width}, global.left_win_w_percent == {global.left_win_w_percent}, global.left_window_text_offset_x * 2 == {global.left_window_text_offset_x * 2}");
+			
+			var max_char_pixel_w = (global.left_window_width)-(global.left_window_text_offset_x * 2);
+			
+			draw_text_ext(origin_x,origin_y,status_effect_str,global.default_line_h, max_char_pixel_w);
+			
+			//Account for lines that the above draw function required:
+			var line_count = scr_return_str_line_count(string_width(status_effect_str), max_char_pixel_w);
+			
+			origin_y += global.default_line_h*line_count;
+			
+			//d($"o_con draw gui event: left window drawing stats code: line_count == {line_count}");
+			
+			//Account for space until 'abilities':
+			origin_y += global.default_line_h*2;
+		}
+		
+		//Active Abilities:
+		if is_array(cur_char.ability_ar) && array_length(cur_char.ability_ar) > 0 {
 			
 			draw_text(origin_x,origin_y,$"Abilities:"); 
 			origin_y += global.default_line_h;
 			
-			var ar_len = array_length(global.cur_char.ability_ar)
+			var ar_len = array_length(cur_char.ability_ar)
 		
-			var abil_struct_id;
+			var abil_enum;
 			for(var i = 0; i < ar_len; i++) {
 				
-				abil_struct_id = global.cur_char.ability_ar[i];
+				abil_enum = cur_char.ability_ar[i];
 				
-				if abil_struct_id != -1 {
+				if abil_enum != -1 {
 					
 					var abil_name = "undefined";
 					
-					if is_struct(abil_struct_id) && abil_struct_id.struct_type_enum == struct_type.Item {
-						abil_name = string(abil_struct_id.item_name)+" (combat)";
-					} else {
-						abil_name = scr_return_abil_enum_name(abil_struct_id);	
-					}
+					abil_name = global.item_reference_table[abil_enum].item_name;
 					
 					draw_text(origin_x,origin_y,$"{abil_name}");
 					origin_y += global.default_line_h;
 				}
 			}
-			
-			origin_y += global.default_line_h;
 		}
+		
+		//Passive abilities:
+		if is_array(cur_char.passive_abil_ar) && array_length(cur_char.passive_abil_ar) > 0 {
+			
+			var ar_len = array_length(cur_char.passive_abil_ar)
+		
+			var passive_abil_enum, abil_name_str;
+			for(var i = 0; i < ar_len; i++) {
+				
+				passive_abil_enum = cur_char.passive_abil_ar[i];
+					
+				abil_name_str = scr_return_passive_abil_enum_name(passive_abil_enum);
+					
+				draw_text(origin_x,origin_y,$"{abil_name_str} (passive)");
+				origin_y += global.default_line_h;
+			}
+		}
+		
+		origin_y += global.default_line_h;
 		
 		draw_text(origin_x,origin_y,$"Inventory:"); 
 		
 		origin_y += global.default_line_h;
 		
 		var accessory_name = "";
-		if is_struct(global.cur_char.inv_ar[equip_slot.accessory]) && global.cur_char.inv_ar[equip_slot.accessory].struct_type_enum == struct_type.Item {
-			accessory_name = global.cur_char.inv_ar[equip_slot.accessory].item_name;
+		if is_struct(cur_char.inv_ar[equip_slot.accessory]) && cur_char.inv_ar[equip_slot.accessory].struct_type_enum == struct_type.Item {
+			accessory_name = cur_char.inv_ar[equip_slot.accessory].item_name;
 		}
 		
 		draw_text(origin_x,origin_y,$"0.) Accessory: {accessory_name}"); 
@@ -230,8 +263,8 @@ else if global.cur_game_state >= game_state.main_game {
 		origin_y += global.default_line_h;
 		
 		var body_item_name = "";
-		if is_struct(global.cur_char.inv_ar[equip_slot.body]) && global.cur_char.inv_ar[equip_slot.body].struct_type_enum == struct_type.Item {
-			body_item_name = global.cur_char.inv_ar[equip_slot.body].item_name;
+		if is_struct(cur_char.inv_ar[equip_slot.body]) && cur_char.inv_ar[equip_slot.body].struct_type_enum == struct_type.Item {
+			body_item_name = cur_char.inv_ar[equip_slot.body].item_name;
 		}
 		
 		draw_text(origin_x,origin_y,$"1.) Body: {body_item_name}"); 
@@ -239,8 +272,8 @@ else if global.cur_game_state >= game_state.main_game {
 		origin_y += global.default_line_h;
 		
 		var item_name = "";
-		if is_struct(global.cur_char.inv_ar[equip_slot.rh]) && global.cur_char.inv_ar[equip_slot.rh].struct_type_enum == struct_type.Item {
-			item_name = global.cur_char.inv_ar[equip_slot.rh].item_name;
+		if is_struct(cur_char.inv_ar[equip_slot.rh]) && cur_char.inv_ar[equip_slot.rh].struct_type_enum == struct_type.Item {
+			item_name = cur_char.inv_ar[equip_slot.rh].item_name;
 		}
 		
 		draw_text(origin_x,origin_y,$"2.) Right Hand: {item_name}"); 
@@ -248,34 +281,34 @@ else if global.cur_game_state >= game_state.main_game {
 		origin_y += global.default_line_h;
 		
 		var item_name = "";
-		if is_struct(global.cur_char.inv_ar[equip_slot.lh]) && global.cur_char.inv_ar[equip_slot.lh].struct_type_enum == struct_type.Item {
-			item_name = global.cur_char.inv_ar[equip_slot.lh].item_name;
+		if is_struct(cur_char.inv_ar[equip_slot.lh]) && cur_char.inv_ar[equip_slot.lh].struct_type_enum == struct_type.Item {
+			item_name = cur_char.inv_ar[equip_slot.lh].item_name;
 		}
 		
 		draw_text(origin_x,origin_y,$"3.) Left Hand: {item_name}"); 
 		
-		origin_y += global.default_line_h*2;
+		if is_pc_char {
 		
-		draw_text(origin_x,origin_y,$"Carrying:"); 
+			origin_y += global.default_line_h*2;
 		
-		origin_y += global.default_line_h;
+			draw_text(origin_x,origin_y,$"Carrying:"); 
 		
-		var ar_len = array_length(global.cur_char.inv_ar)
+			origin_y += global.default_line_h;
 		
-		if ar_len > equip_slot.total_slots {
-			var item_struct_id;
-			for(var i = equip_slot.total_slots; i < ar_len; i++) {
-				item_struct_id = global.cur_char.inv_ar[i];
-				if is_struct(item_struct_id) && item_struct_id.struct_type_enum == struct_type.Item {
-					draw_text(origin_x,origin_y,$"{i}.) {item_struct_id.item_name}");
-					origin_y += global.default_line_h;
+			var ar_len = array_length(cur_char.inv_ar)
+		
+			if ar_len > equip_slot.total_slots {
+				var item_struct_id;
+				for(var i = equip_slot.total_slots; i < ar_len; i++) {
+					item_struct_id = cur_char.inv_ar[i];
+					if is_struct(item_struct_id) && item_struct_id.struct_type_enum == struct_type.Item {
+						draw_text(origin_x,origin_y,$"{i}.) {item_struct_id.item_name}");
+						origin_y += global.default_line_h;
+					}
 				}
 			}
 		}
 	}
-	
-	scr_reset_font_align();
-
 }
 
 #endregion
