@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_reverse_sort_combat_init_ar",
+  "name": "scr_return_opposite_team_occupied_ranks",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

@@ -1,5 +1,8 @@
 /// @description Setup ds_grids and initial enemy structs
 
+//switch to full screen:
+window_set_fullscreen(true);
+
 #region Setup our ds_grids for our world maps, and spawn initial enemy structs:
 
 //Defines cur_grid_w and h and specific grid ids:

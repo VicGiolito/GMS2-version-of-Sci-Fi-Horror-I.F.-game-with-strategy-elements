@@ -4,17 +4,14 @@
 /// @description Sorts an array using bubble sort in descending order.
 ///              Highest values bubble up to the top (index 0),
 ///              lowest values sink to the bottom (array_length - 1).
+///				 For our purposes, the arr should be shuffled first, so that chars with the same speed value will have randomized positions.
 
 
 function scr_reverse_sort_combat_init_ar(arr){
 	
 	var _len  = array_length(arr);
 	var _temp = 0;
-	
-	//First, assign each struct's ran_init_val:
-	for (var i = 0; i < _len; i++) {
-		arr[i].ran_init_val = irandom_range(0,MAX_RAN_SPD_VAL);
-	}
+
 	
 	// Outer pass — each pass guarantees the next smallest
 	// value has sunk to its correct position at the bottom
@@ -26,7 +23,7 @@ function scr_reverse_sort_combat_init_ar(arr){
 			
 			// If the current element is LESS than the next,
 			// swap them so the larger value moves toward index 0
-			if (arr[j].ran_init_val + arr[j].spd) < (arr[j + 1].ran_init_val + arr[j + 1].spd) {
+			if (arr[j].spd) < (arr[j + 1].spd) {
 				_temp = arr[j];
 				arr[j] = arr[j + 1];
 				arr[j + 1] = _temp;

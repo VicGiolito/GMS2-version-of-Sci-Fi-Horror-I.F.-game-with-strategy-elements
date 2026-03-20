@@ -17,7 +17,7 @@ function scr_define_structs(){
 		
 		char_sprite_inst_id = -1;
 		
-		char_ar_pos = undefined; //Currently only used for pcs, for identifying them and switching between them.
+		char_ar_pos = undefined; //Where is this defined? Let's get rid of it. Currently only used for pcs, for identifying them and switching between them.
 
         wep_loadout_int = wep_loadout_int; //Only a debug var used for certain enemies to change their wep loadout, for debug purposes
 

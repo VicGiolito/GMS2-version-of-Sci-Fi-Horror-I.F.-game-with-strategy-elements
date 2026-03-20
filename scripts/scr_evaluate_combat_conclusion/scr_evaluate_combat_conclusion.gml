@@ -19,12 +19,12 @@ function scr_evaluate_combat_conclusion(called_from_str){
 	
 	if is_undefined(called_from_str) throw("scr_evaluate_combat_conclusion: called_from_str was undefined");
 	
-	d($"\nEntering scr_evaluate_combat_conclusion now, it was called from: {called_from_str} g.cur_combat_char == {global.cur_combat_char.name}, next_combat_char == {next_combat_char.name} and g_cur_combat_char_index == {global.cur_combat_char_index}. Our g.combat_init_ar looks like this:...");
+	d($"\nEntering scr_evaluate_combat_conclusion now, it was called from: {called_from_str} g.cur_combat_char == {global.cur_combat_char.name}, next_combat_char == {next_combat_char.name} and g_cur_combat_char_index == {global.cur_combat_char_index}. Our g.combat_init_ar looks like this:...\n");
 	
 	var ar_len = array_length(global.combat_initiative_ar);
 	
 	for(var uu = 0; uu < ar_len; uu++) {
-		d($"... At index ({uu}): {global.combat_initiative_ar[uu].name}...");	
+		d($"... At index ({uu}): {global.combat_initiative_ar[uu].name}({global.combat_initiative_ar[uu].unique_id})...");	
 	}
 	
 	//Advance our g.cur_char:
@@ -42,14 +42,14 @@ function scr_evaluate_combat_conclusion(called_from_str){
 			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
 				valid_char_found = true;
 				next_combat_char = global.combat_initiative_ar[global.cur_combat_char_index];
-				d($"\nscr_evaluate_combat_conclusion: while ADVANCING the cur_combat_char_index, we found a valid char. next_combat_char = {next_combat_char.name}({next_combat_char.unique_id}), and cur_combat_char_index == {global.cur_combat_char_index}");
+				d($"\nscr_evaluate_combat_conclusion: while ADVANCING the cur_combat_char_index, we found a valid char. next_combat_char = {next_combat_char.name}({next_combat_char.unique_id}), and cur_combat_char_index == {global.cur_combat_char_index}\n");
 				break;
 			}
 			
-			d($"scr_evaluate_combat_conclusion: ADVANCING the char_index: For char_struct_id: {char_struct_id.name}, either its has_died_bool == true or its has_fled_combat_bool == true. cur_combat_char_index == {global.cur_combat_char_index}. We will continue to iterate in this do-until loop.");
+			d($"scr_evaluate_combat_conclusion: ADVANCING the char_index: For char_struct_id: {char_struct_id.name}, either its has_died_bool == true or its has_fled_combat_bool == true. cur_combat_char_index == {global.cur_combat_char_index}. We will continue to iterate in this do-until loop.\n");
 		}
 		else {
-			d($"\nscr_evaluate_combat_conclusion: while ADVANCING the cur_combat_char_index, our index ({global.cur_combat_char_index}) was >= our combat_init_ar ar_len ({ar_len}), therefore we are now resetting index to 0 and assigning -1 to next_combat_char.");
+			d($"\nscr_evaluate_combat_conclusion: while ADVANCING the cur_combat_char_index, our index ({global.cur_combat_char_index}) was >= our combat_init_ar ar_len ({ar_len}), therefore we are now resetting index to 0 and assigning -1 to next_combat_char.\n");
 			global.cur_combat_char_index = 0;
 			next_combat_char = -1;
 			
@@ -60,7 +60,7 @@ function scr_evaluate_combat_conclusion(called_from_str){
 	}
 	until(valid_char_found == true || failsafe_val >= failsafe_max);
 		
-	if failsafe_val >= failsafe_max throw("scr_return_next_combat_char_in_init_queue: failsafe_val >= failsafe_max after our do-until trying to determine our next_combat_char while advancing g.cur_combat_char_index -- this should never trigger");
+	if failsafe_val >= failsafe_max throw("scr_return_next_combat_char_in_init_queue: failsafe_val >= failsafe_max after our do-until trying to determine our next_combat_char while advancing g.cur_combat_char_index -- this should never trigger\n");
 	
 	var combat_has_concluded = false; //Reset
 	
@@ -81,7 +81,7 @@ function scr_evaluate_combat_conclusion(called_from_str){
 	//We move to the next char in the initiative queue:
 	if !combat_has_concluded {
 		
-		d($"scr_evaluate_combat_conclusion: combat has not concluded, therefore we are moving to either combat_assign_pc_command or combat_execute_action...");
+		d($"scr_evaluate_combat_conclusion: combat has not concluded, therefore we are moving to either combat_assign_pc_command or combat_execute_action...\n");
 		
 		//Check to see if our next_combat_char still == -1, which indicates that we reached the end of the g.combat_init_ar;
 		//In such a case, we advance g.cur_combat_round, reverse our combat_init_ar based upon speed, and manually g.cur_char index and i:
@@ -91,7 +91,7 @@ function scr_evaluate_combat_conclusion(called_from_str){
 			scr_add_str_to_dialogue_ar("\n");
 			scr_add_str_to_dialogue_ar($"Round {global.cur_combat_round} begins.");
 			
-			d($"\nscr_evaluate_combat_conclusion: next_combat_char == -1, so BEFORE we shuffle and perform a reverse sort on our g.combat_init_ar, it looks like:.... ");
+			d($"\nscr_evaluate_combat_conclusion: next_combat_char == -1, so BEFORE we shuffle and perform a reverse sort on our g.combat_init_ar, it looks like:.... \n");
 			for(var yy = 0; yy < array_length(global.combat_initiative_ar); yy++) {
 				d($"... at index: {yy}: {global.combat_initiative_ar[yy].name} with unique id: {global.combat_initiative_ar[yy].unique_id}");	
 			}
@@ -101,7 +101,7 @@ function scr_evaluate_combat_conclusion(called_from_str){
 				
 			global.combat_initiative_ar = scr_reverse_sort_combat_init_ar(global.combat_initiative_ar);
 			
-			d($"\nscr_evaluate_combat_conclusion: next_combat_char == -1, now AFTER we shuffled and performed a reverse sort on our g.combat_init_ar, now it looks like:.... ");
+			d($"\nscr_evaluate_combat_conclusion: next_combat_char == -1, now AFTER we shuffled and performed a reverse sort on our g.combat_init_ar, now it looks like:.... \n");
 			for(var yy = 0; yy < array_length(global.combat_initiative_ar); yy++) {
 				d($"... at index: {yy}: {global.combat_initiative_ar[yy].name} with unique id: {global.combat_initiative_ar[yy].unique_id}");	
 			}

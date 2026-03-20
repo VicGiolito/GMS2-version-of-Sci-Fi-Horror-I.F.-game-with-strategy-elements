@@ -3,7 +3,7 @@
 
 
 
-function scr_build_weps_or_abils_list(ar_to_pass, char_struct_id, build_weps_list_bool, in_combat_state_bool){
+function scr_build_weps_or_abils_list(ar_to_pass, char_struct_id, build_weps_list_bool){
 	
 	if build_weps_list_bool {
 		var item_struct_id;

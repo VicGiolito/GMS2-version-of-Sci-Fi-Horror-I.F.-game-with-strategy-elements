@@ -21,13 +21,16 @@ function scr_return_nearest_target_rank_pos(cur_combat_rank_pos, enemy_searching
 			
 			char_struct_id = global.combat_rank_ar[rank_i][char_i];
 			
-			if enemy_searching_bool && char_struct_id.char_team_enum == team_type.pc || char_struct_id.char_team_enum == team_type.neutral {
-				target_found = true;
-				return rank_i;
-			}
-			else if !enemy_searching_bool && char_struct_id.char_team_enum == team_type.enemy {
-				target_found = true;
-				return rank_i;
+			//Only check at all if the char has not died or has fled...
+			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
+				if enemy_searching_bool && char_struct_id.char_team_enum == team_type.pc || char_struct_id.char_team_enum == team_type.neutral {
+					target_found = true;
+					return rank_i;
+				}
+				else if !enemy_searching_bool && char_struct_id.char_team_enum == team_type.enemy {
+					target_found = true;
+					return rank_i;
+				}
 			}
 		}
 	}
@@ -44,15 +47,18 @@ function scr_return_nearest_target_rank_pos(cur_combat_rank_pos, enemy_searching
 			for(var char_i = 0; char_i < nested_ar_len; char_i++) {
 			
 				char_struct_id = global.combat_rank_ar[rank_i][char_i];
-			
-				if enemy_searching_bool && char_struct_id.char_team_enum == team_type.pc || char_struct_id.char_team_enum == team_type.neutral {
-					target_found = true;
-					return rank_i;
+				
+				//Only check at all if the char has not died or has fled...
+				if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
+					if enemy_searching_bool && char_struct_id.char_team_enum == team_type.pc || char_struct_id.char_team_enum == team_type.neutral {
+						target_found = true;
+						return rank_i;
+					}
+					else if !enemy_searching_bool && char_struct_id.char_team_enum == team_type.enemy {
+						target_found = true;
+						return rank_i;
+					} 
 				}
-				else if !enemy_searching_bool && char_struct_id.char_team_enum == team_type.enemy {
-					target_found = true;
-					return rank_i;
-				} 
 			}
 		}
 	}

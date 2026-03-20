@@ -1,7 +1,7 @@
 
 /* This script creates a NEW ARRAY that is different from the ar_to_check; it does NOT contain character
 struct ids. It contains custom structs with only 2 attributes: the corresponding name of the character,
-and how many of that particular character struct were in the ar_to_check (they are considered == if they share the same name).
+and how many of that particular character struct were in the ar_to_check (they are considered == if they share the char type enum).
 */
 
 function scr_return_grouped_chars_ar(ar_to_check){

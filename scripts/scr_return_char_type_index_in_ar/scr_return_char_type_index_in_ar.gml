@@ -1,6 +1,9 @@
 
-//Returns the index if its there, -1 if its not
+/*Returns the index of the FIRST char_struct with the matching char_enum if its there, -1 if its not;
 
+Obviously not to be used reliably if more than character of the same type exists in the array.
+
+*/
 
 function scr_return_char_type_index_in_ar(ar_id,char_enum){
 	

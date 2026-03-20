@@ -18,7 +18,7 @@ scr_define_structs();
 
 main_menu_str_ar = ["Start New Game\n", "Continue Game\n", "Options\n", "Exit\n"];
 
-party_limit = 8;
+party_limit = 5;
 
 global.pc_char_ar = [];
 global.enemy_char_ar = [];
@@ -161,8 +161,6 @@ global.reset_full_screen_val = game_get_speed(gamespeed_fps) * 5;
 d($"reset_full_screen_count: {global.reset_full_screen_count}");
 
 alarm[2] = 1; //Setup all of our 'initialization' data: grids, world maps, cur_grid variables, character selection data, etc.
-
-alarm[1] = 3; //center and zoom cam
 
 //Define a lot of 'content' type data like string arrays, etc.
 global.resources_food = 0;

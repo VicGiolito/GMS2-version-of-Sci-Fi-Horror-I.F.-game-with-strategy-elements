@@ -351,7 +351,7 @@ else if global.cur_game_state == game_state.choose_chars {
 					d($"g.cur_char.cur_grid_x: {global.acting_char_struct_id.cur_grid_x} g.cur_char.cur_grid_y: {global.acting_char_struct_id.cur_grid_y}");
 					
 					//Center on current char:
-					scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"o_con step event: choose_chars game state: player just finished adding last party memeber to party - starting game.");
+					scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"\n\no_con step event: choose_chars game state: player just finished adding last party memeber to party - starting game.");
 					
 					//Define initial starting items for all chars in the g.pc_char_ar
 					scr_setup_char_init_gear_and_abils();
@@ -510,6 +510,9 @@ else if global.cur_game_state == game_state.init_combat {
 			global.cur_combat_char_index = 0;
 			scr_add_str_to_dialogue_ar("\n");
 			scr_add_str_to_dialogue_ar("Press any key to enter the combat preparation phase.\n");
+			
+			//Center our cam (eventually pressing enter will give us a slow zoom before transitioning into the combat screen):
+			scr_center_map_window(global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y,global.map_cam,"\n\no_con step event: game_state == init_combat: combat begun == true: centering on the first pc in this group...")
 		}
 		else {
 			throw("o_con step event: game_state == init_combat: scr_check_combat_start did not return true or false, something went wrong.");
@@ -682,12 +685,23 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			//Build avail_weps_or_abils_ar:
 			avail_weps_or_abils_list = -1;
 			avail_weps_or_abils_list = [];
-			avail_weps_or_abils_list = scr_build_weps_or_abils_list(avail_weps_or_abils_list,global.cur_combat_char,true, true);
+			avail_weps_or_abils_list = scr_build_weps_or_abils_list(avail_weps_or_abils_list,global.cur_combat_char,true);
 			
-			d($"\ncombat_assign_pc_command 'F' chosen: avail_weps_or_abils_list == {avail_weps_or_abils_list}");
+			d($"\ncombat_assign_pc_command 'F' chosen: avail_weps_or_abils_list == {avail_weps_or_abils_list}\n");
 			
 			//Since a player can only have one applicable weapon equipped at a time, we can just chose the first index:
 			global.cur_combat_char.chosen_weapon = avail_weps_or_abils_list[0];
+			
+			//Automatically assign fists if we were trying to use a weapon that requires ammo and we don't have any:
+			if global.resources_ammo <= 0 && global.cur_combat_char.chosen_weapon.requires_ammo_boolean == true {
+				
+				var fists_item_struct_id = scr_return_fists_item_struct_id(global.cur_combat_char);
+				
+				global.cur_combat_char.chosen_weapon = fists_item_struct_id;
+				
+				scr_add_str_to_dialogue_ar("\n");
+				scr_add_str_to_dialogue_ar($"You're out of ammo! You have resorted to using your {global.cur_combat_char.chosen_weapon.item_name} instead!");
+			}
 			
 			//Check to see if there's an enemy in range:
 			var closest_enemy_rank = scr_return_nearest_target_rank_pos(global.cur_combat_char.cur_combat_rank,false);
@@ -698,15 +712,28 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			
 			//If there's an enemy in range and our max_range is greater than 0, then move to choose_pc_rank_target:
 			if dist_to_target <= wep_range {
+				
 				prev_game_state = global.cur_game_state;
-				if wep_range > 0 {
-					global.cur_game_state = game_state.combat_pc_target_rank;
-					scr_print_ranks_to_target(global.cur_combat_char);
-				}
-				//otherwise, define our chosen rank and move straight to execute_action:
-				else {
+				
+				/*To streamline the process even further, check to see if the enemy only occupies one rank in the entire combat_rank_ar;
+				if they do (we already know the enemy is within range), just automatically define our range 
+				based upon what rank it is in, then automatically move to execute action:
+				*/
+				if scr_return_opposite_team_occupied_ranks(global.cur_combat_char.char_team_enum) <= 1 {
 					global.cur_combat_char.targeted_rank = closest_enemy_rank;
-					global.cur_game_state = game_state.combat_execute_action;
+					global.cur_game_state = game_state.combat_execute_action;	
+				}
+				
+				else {
+					if wep_range > 0 {
+						global.cur_game_state = game_state.combat_pc_target_rank;
+						scr_print_ranks_to_target(global.cur_combat_char);
+					}
+					//otherwise, define our chosen rank and move straight to execute_action:
+					else if wep_range <= 0 {
+						global.cur_combat_char.targeted_rank = closest_enemy_rank;
+						global.cur_game_state = game_state.combat_execute_action;
+					}
 				}
 			}
 			else {
@@ -1294,7 +1321,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						attacker_id.combat_move_dir = 1;
 					}
 				}
-			} else {
+			}
+			else {
 				d($"\no_con step event: combat_execute_action: evaluating enemy ai: melee: we're here, but attacker_id.targeted_rank == {attacker_id.targeted_rank}, so something went wrong.");
 			}
 		}
@@ -1350,18 +1378,24 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		d($"\n o_con step event: game_state == combat_execute_action: {attacker_id.name} has chosen to fight. Its chosen_weapon.name == {attacker_id.chosen_weapon.item_name}, and it's aoe_count == {attacker_id.chosen_weapon.aoe_count}");
 		
 		var num_attacks = 1;
+		var attack_index = 0;
+		
+		//Create filtered list:
+		var filtered_ar = [];
+		filtered_ar = scr_return_ar_of_opposite_team(attacker_id, global.combat_rank_ar[attacker_id.targeted_rank]);
 		
 		//If applicable, assign num_attacks:
 		if attacker_id.will_overwatch_boolean == false && global.char_is_fleeing_bool == false {
-		
+			
 			//Hits entire rank:
-			if attacker_id.chosen_weapon.aoe_count == -1 { num_attacks = array_length(global.combat_rank_ar[attacker_id.targeted_rank]); }
+			if attacker_id.chosen_weapon.aoe_count == -1 { num_attacks = array_length(filtered_ar); }
 		
 			else {
 				num_attacks = irandom_range(1, attacker_id.chosen_weapon.aoe_count);
-			
-				if num_attacks > array_length(global.combat_rank_ar[attacker_id.targeted_rank]) {
-					num_attacks = array_length(global.combat_rank_ar[attacker_id.targeted_rank]);	
+				
+				//Cap num_attacks:
+				if num_attacks > array_length(filtered_ar) {
+					num_attacks = array_length(filtered_ar);	
 				}	
 			}
 		}
@@ -1369,88 +1403,88 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		repeat(num_attacks) {
 			d("\n o_con step event: game_state == combat_execute_action: Entering num_attacks repeat loop now...");
 			//Make sure we have ammunition:
-			if global.resources_ammo > 0 || attacker_id.char_team_enum != team_type.pc {
+			if global.resources_ammo > 0 || attacker_id.char_team_enum != team_type.pc || attacker_id.chosen_weapon.requires_ammo_boolean == false {
 				d("\n o_con step event: game_state == combat_execute_action: There was either sufficient ammo (> 0) or the attacker did not a pc, calculating attack now...");
-				//Make sure there's still an enemy here to target:
-					//Create filtered list:
-				var filtered_ar = [];
-				filtered_ar = scr_return_ar_of_opposite_team(attacker_id, global.combat_rank_ar[attacker_id.targeted_rank]);
+					
+				//Define defender_id:
+				var defender_id = filtered_ar[attack_index];
 				
-				if array_length(filtered_ar) > 0 {
+				//Increment attack index:
+				attack_index++;
 					
-					var ran_index = irandom_range(0,array_length(filtered_ar)-1);
-					var defender_id = filtered_ar[ran_index];
-					
-					//Manually assign defender_id instead:
-					if global.char_is_fleeing_bool == true {
-						defender_id = global.fleeing_combat_char_id;
-						d($"\n o_con step event: game_state == combat_execute_action: global.char_is_fleeing_bool == true, therefore we have manually assigned the defender id as the global.fleeing_combat_char_id; defender_id.name now == {defender_id.name}");
-					}
-					
-					var attacker_acc = attacker_id.accuracy;
-					var defender_evasion = defender_id.evasion;
-					var alternate_to_hit_str = "";
-					if defender_evasion < 0 {
-						alternate_to_hit_str = " Their accuracy was boosted by the defender's negative evasion value instead!";
-						var total_attack_val = attacker_acc + abs(defender_evasion);
-					}
-					else var total_attack_val = attacker_acc - defender_evasion;
-					
-					var ran_to_hit_val = irandom_range(MIN_COMBAT_RAN_NUM,MAX_COMBAT_RAN_NUM); //0-9
-					
-					scr_add_str_to_dialogue_ar("\n");
-					scr_add_str_to_dialogue_ar($"{attacker_id.name}({attacker_id.unique_id}) {attacker_id.chosen_weapon.item_verb} {attacker_id.chosen_weapon.item_name}.  Chance to hit: {attacker_acc} (accuracy) modified by {defender_evasion} (defender's evasion) = {total_attack_val}.{alternate_to_hit_str} Rolled: {ran_to_hit_val}.");
-					
-					//Reduce ammo:
-					global.resources_ammo--;
-					
-					//Hit:
-					if total_attack_val >= ran_to_hit_val {
-						
-						var dmg_roll = irandom_range(attacker_id.chosen_weapon.dmg_min,attacker_id.chosen_weapon.dmg_max);
-						
-						var total_dmg = dmg_roll - defender_id.armor;
-						//Cap:
-						if total_dmg < 0 total_dmg = 0;
-						
-						//Reduce target hp:
-						defender_id.hp_cur -= total_dmg;
-						
-						var negated_str = "";
-						if total_dmg <= 0 {
-							negated_str = $" The armor of {defender_id.name} has completed negated the damage.";
-						}
-						var capitalized_str = scr_string_capitalize(defender_id.name);
-						scr_add_str_to_dialogue_ar("\n");
-						scr_add_str_to_dialogue_ar($"{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.{negated_str}");	
-						
-						#region Delete defender from memory: from global array, from mob struct, combat_init_ar, combat_rank_ar, corresponding room struct enemies in room ar.
-						
-						if defender_id.hp_cur <= 0 {
-							
-							defender_killed = true;
-							
-							d($"THE {defender_id.name} with id:({defender_id.unique_id}) has been killed! Their bool var was flipped.");
-							
-							defender_id.has_died_bool = true;
-							
-							scr_add_str_to_dialogue_ar("\n");
-							scr_add_str_to_dialogue_ar($"{capitalized_str}({defender_id.unique_id}) has been killed!");	
-						}
-						
-						#endregion
-						
-					}
-					//Miss
-					else {
-						var capitalized_atk_str = scr_string_capitalize(attacker_id.name);
-						scr_add_str_to_dialogue_ar("\n");
-						var enemy_the_str = "";
-						if defender_id.char_team_enum != team_type.pc enemy_the_str = "the ";
-						scr_add_str_to_dialogue_ar($"{capitalized_atk_str}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!");
-					}
+				//Manually assign defender_id instead if this is an opportunity attacker:
+				if global.char_is_fleeing_bool == true {
+					defender_id = global.fleeing_combat_char_id;
+					d($"\n o_con step event: game_state == combat_execute_action: global.char_is_fleeing_bool == true, therefore we have manually assigned the defender id as the global.fleeing_combat_char_id; defender_id.name now == {defender_id.name}");
 				}
-				else break;
+				
+				//Manually assign defender_id instead if we're in overwatch:
+				
+				
+				//Define stats, perform combat calculations:
+				var attacker_acc = attacker_id.accuracy;
+				var defender_evasion = defender_id.evasion;
+				var alternate_to_hit_str = "";
+				if defender_evasion < 0 {
+					alternate_to_hit_str = " Their accuracy was boosted by the defender's negative evasion value instead!";
+					var total_attack_val = attacker_acc + abs(defender_evasion);
+				}
+				else var total_attack_val = attacker_acc - defender_evasion;
+					
+				var ran_to_hit_val = irandom_range(MIN_COMBAT_RAN_NUM,MAX_COMBAT_RAN_NUM); //0-9
+					
+				scr_add_str_to_dialogue_ar("\n");
+				scr_add_str_to_dialogue_ar($"{attacker_id.name}({attacker_id.unique_id}) {attacker_id.chosen_weapon.item_verb} {attacker_id.chosen_weapon.item_name}.  Chance to hit: {attacker_acc} (accuracy) modified by {defender_evasion} (defender's evasion) = {total_attack_val}.{alternate_to_hit_str} Rolled: {ran_to_hit_val}.");
+					
+				//Reduce ammo:
+				global.resources_ammo--;
+					
+				//Hit:
+				if total_attack_val >= ran_to_hit_val {
+						
+					var dmg_roll = irandom_range(attacker_id.chosen_weapon.dmg_min,attacker_id.chosen_weapon.dmg_max);
+						
+					var total_dmg = dmg_roll - defender_id.armor;
+					//Cap:
+					if total_dmg < 0 total_dmg = 0;
+						
+					//Reduce target hp:
+					defender_id.hp_cur -= total_dmg;
+						
+					var negated_str = "";
+					if total_dmg <= 0 {
+						negated_str = $" The armor of {defender_id.name} has completed negated the damage.";
+					}
+					var capitalized_str = scr_string_capitalize(defender_id.name);
+					scr_add_str_to_dialogue_ar("\n");
+					scr_add_str_to_dialogue_ar($"{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.{negated_str}");	
+						
+					#region Set defender's bool var to true:
+						
+					if defender_id.hp_cur <= 0 {
+							
+						defender_killed = true;
+							
+						d($"THE {defender_id.name} with id:({defender_id.unique_id}) has been killed! Their bool var was flipped.");
+							
+						defender_id.has_died_bool = true;
+							
+						scr_add_str_to_dialogue_ar("\n");
+						scr_add_str_to_dialogue_ar($"{capitalized_str}({defender_id.unique_id}) has been killed!");
+					}
+						
+					#endregion
+						
+				}
+				//Miss
+				else {
+					var capitalized_atk_str = scr_string_capitalize(attacker_id.name);
+					scr_add_str_to_dialogue_ar("\n");
+					var enemy_the_str = "";
+					if defender_id.char_team_enum != team_type.pc enemy_the_str = "the ";
+					scr_add_str_to_dialogue_ar($"{capitalized_atk_str}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!");
+				}
+				
 			}
 			else {
 				scr_add_str_to_dialogue_ar("\n");
@@ -2124,7 +2158,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					scr_update_char_sprite_position_vars(global.acting_char_struct_id);
 					
 					//Update camera:
-					scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"o_con step event: player just successfully moved a pc to another room.");
+					scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"\n\no_con step event: player just successfully moved a pc to another room.");
 				
 					//Add room to tilemap, if it hasn't already been done:
 					if global.acting_char_struct_id.cur_room_id.explored_boolean == false {
