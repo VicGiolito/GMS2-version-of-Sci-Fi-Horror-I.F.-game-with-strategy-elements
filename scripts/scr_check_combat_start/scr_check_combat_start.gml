@@ -78,7 +78,7 @@ function scr_check_combat_start(){
 				global.combat_initiative_ar = scr_reverse_sort_combat_init_ar(global.combat_initiative_ar);
 				
 				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar($"You are {char_struct_id.name}. There are enemies in the {cur_room_struct_id.room_name_str} that have discovered you and anyone else in the room that was not hidden. There's no choice now--you'll have to fight for your lives!\n")
+				scr_add_str_to_dialogue_ar($"You are {char_struct_id.name}. There are enemies in the {cur_room_struct_id.room_name_str} that have discovered you and anyone else in the room that was also not hidden. There's no choice now--you'll have to fight for your lives!\n")
 				
 				d($"scr_check_combat_start: after building g.combat_initiative_ar, it looks like this:\n");
 				for(var i = 0; i < array_length(global.combat_initiative_ar); i++) {

@@ -3,9 +3,11 @@
 
 also, if char_fled == true, after this script is called, we need to add them to the appropriate room team array.
 
+//Defunct - we no longer delete chars as we move along, we flag them then delete them all at once at the end of combat.
+
 */
 
-function scr_delete_char_from_combat_memory(char_struct_to_delete, char_fled = false){
+function scr_defunct_delete_char_from_combat_memory(char_struct_to_delete, char_fled = false){
 	
 	//Delete from init ar:
 	var combat_init_index = array_get_index(global.combat_initiative_ar,char_struct_to_delete);

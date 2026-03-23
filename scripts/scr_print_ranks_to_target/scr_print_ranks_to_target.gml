@@ -28,6 +28,27 @@ function scr_print_ranks_to_target(cur_char_struct_id){
 		
 		rank_str += combat_rank_str;
 		
+		//Having done that, now we need to check the corresponding nested struct ar for our overwatch string:
+			//PC overwatch array:
+		if is_array(global.overwatch_rank_ar[i].player_overwatch_ar) && array_length(global.overwatch_rank_ar[i].player_overwatch_ar) > 0 {
+			rank_str += " **FRIENDLY OVERWATCH**:";
+			for(var overwatch_i = 0; overwatch_i < array_length(global.overwatch_rank_ar[i].player_overwatch_ar); overwatch_i++) {
+				rank_str += $" {global.overwatch_rank_ar[i].player_overwatch_ar[overwatch_i].name}";
+				//Add comma:
+				if overwatch_i < array_length(global.overwatch_rank_ar[i].player_overwatch_ar)-1 {
+					rank_str += ";";	
+				}
+			}
+		}
+			//Enemy overwatch array:
+		if is_array(global.overwatch_rank_ar[i].enemy_overwatch_ar) && array_length(global.overwatch_rank_ar[i].enemy_overwatch_ar) > 0 {
+			rank_str += " **ENEMY OVERWATCH**:";
+			
+			var enemy_overwatch_str = scr_build_char_count_str_from_ar(global.overwatch_rank_ar[i].enemy_overwatch_ar);
+			
+			rank_str += enemy_overwatch_str;
+		}
+		
 		dist_from_rank = abs(cur_rank_int - i);
 		
 		if dist_from_rank > cur_range_int rank_str += " ** BEYOND WEAPON'S RANGE**";
@@ -36,5 +57,7 @@ function scr_print_ranks_to_target(cur_char_struct_id){
 	}
 	
 	scr_add_str_to_dialogue_ar("\n");
-	scr_add_str_to_dialogue_ar("Choose a rank to target for attack. You may also enter 'B' or 'BACKUP' to return to the previous screen.",true);
+	var game_state_str = "attack";
+	if global.overwatch_mode_enabled game_state_str = "overwatch";
+	scr_add_str_to_dialogue_ar($"Choose a rank to target for {game_state_str}. You may also enter 'B' or 'BACKUP' to return to the previous screen.",true);
 }

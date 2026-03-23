@@ -92,6 +92,8 @@ function scr_define_structs(){
 		using_item_struct_id = -1;
 		using_item_index = -1;
 		
+		filtered_abil_ar = -1; //Is used as an array filled the char's ability that are relevant to either the combat state, main game state, or both.
+		
 		char_sprite_room_x = 0; //updated by scr_update_char_sprite_position_vars
 		char_sprite_room_y = 0; //updated by scr_update_char_sprite_position_vars
 		
@@ -179,11 +181,11 @@ function scr_define_structs(){
         if char_type_enum == character.ogre {
 
             name = "Cragos, 'The Ogre'";
-			nick_name = "Ogre";
+			nick_name = "Cragos";
             hp_max = 16;
             hp_cur = 16;
-            ability_points_cur = 5;
-            ability_points_max = 5;
+            ability_points_cur = 8;
+            ability_points_max = 8;
             sanity_cur = 10;
             sanity_max = 10;
 
@@ -210,14 +212,14 @@ function scr_define_structs(){
             armor = 1;
             healing_factor_boolean = true;
             revived_dialogue_str_ar = [
-                $"*{name} dusts himself off, grumbling: 'How do you kill a dead man?'*",
-                $"*'Shit,' {name} mumbles. 'Must've died again.'",
-                $"{name} clambers to his feet, spitting a gob of blood from his mouth. It's congealed before it hits the ground. 'Now you've really pissed me off.'",
-                $"'I've still got a few debts left to pay,' {name} grumbles. He grins with a mouth full of jagged teeth, cracking his knuckles. 'And a few skulls left to split...'"
+                $"*{nick_name} dusts himself off, grumbling: 'How do you kill a dead man?'*",
+                $"*'Shit,' {nick_name} mumbles. 'Must've died again.'",
+                $"{nick_name} clambers to his feet, spitting a gob of blood from his mouth. It's congealed before it hits the ground. 'Now you've really pissed me off.'",
+                $"'I've still got a few debts left to pay,' {nick_name} grumbles. He grins with a mouth full of jagged teeth, cracking his knuckles. 'And a few skulls left to split...'"
             ];
 
-            accuracy = AVERAGE_ACCURACY_SCORE-1; //Worse than average accuracy, only hits about 50% of the time, on average
-            evasion = AVERAGE_EVASION_SCORE; //
+            accuracy = AVERAGE_ACCURACY_SCORE-CRAGOS_ACC_DEBUFF; //Worse than average accuracy, only hits about 50% of the time, on average
+            evasion = AVERAGE_EVASION_SCORE-CRAGOS_EVASION_DEBUFF; //
 		}
 
         else if char_type_enum == character.doctor {
@@ -362,7 +364,8 @@ function scr_define_structs(){
 		}
 
         else if char_type_enum == character.mercenary_cyborg {
-            name = "Torvald, 'The Cyborg'";
+            
+			name = "Torvald, 'The Cyborg'";
             hp_max = 12;
             hp_cur = 12;
             ability_points_cur = 8;
@@ -393,22 +396,6 @@ function scr_define_structs(){
             char_max_infection = BASE_MAX_INFECTION + 4;
             res_infect = 50;
             res_poison = 25;
-            res_suppress = 25;
-			
-			//debug only:
-			/*
-			infection_count = 1;
-	        burning_count = 1;
-	        poisoned_count = 1;
-	        bleeding_count = 1;
-	        inside_toxic_gas_boolean = true;
-	        inside_vacuum_boolean = true;
-	        healing_nanites_count = 1;
-	        adrenal_pen_count = 1;
-	        suppressed_count = 1;
-	        stun_count = 1;
-			*/
-			
 		}
 
         else if char_type_enum == character.security_guard {
@@ -435,7 +422,7 @@ function scr_define_structs(){
             spd = 2;
 		}
 
-        else if char_type_enum == character.biologist {
+        else if char_type_enum == character.physicist {
             name = "Darius, 'The Physicist'";
             hp_max = 6;
             hp_cur = 6;
@@ -962,10 +949,9 @@ function scr_define_structs(){
         melee_debuff_boolean = false;
         equippable_boolean = true;
         usable_boolean = false;
-        combat_usable_boolean = false; //Used in conjunction with items that can ALSO be used by characters in combat, like adrenal pen.
+        
         use_script  = -1; //For items or abilities that are 'used'
         use_requires_target_boolean = false; //For items or abilities that are 'used', usually destroyed after, and require a target- such as the medkit, adrenal pen, healing nanites, etc.
-        is_combat_abil_only_boolean = false; //For abilities only; determines whether or not an ability is displayed on our list in the main game state.
         abil_passes_turn_boolean = false; //And when I say 'passes turn', I mean the advance_cur_combat_char is immediately called after using it.
 
         is_shield_boolean = false; //Currently only used in scr_check_valid_item_equip()
@@ -974,9 +960,9 @@ function scr_define_structs(){
 
         ability_point_cost = 0;
         ability_cost_str = "";
-        non_attack_ability_boolean = false; //Torvald's shield, cooper's buffs, Avia's summons, etc.
-        abil_targets_enemies_boolean = true; //If this == false, then we move to USE_ITEM game state.
-
+        non_attack_ability_boolean = false; //Torvald's shield, cooper's buffs, Avia's summons, etc., all == true
+		
+		//Most status effect type vars:
         burn_chance = 0;
         poison_chance = 0;
         bleed_chance = 0;
@@ -984,7 +970,7 @@ function scr_define_structs(){
         infection_chance = 0;
         suppress_chance = 0;
 
-        always_checks_status_effect_boolean = false;
+        always_checks_status_effect_boolean = false; //If true - we roll to apply a status effect even if the attack misses.
 
         item_name = "Not defined";
         item_desc = "Not defined";
@@ -995,7 +981,11 @@ function scr_define_structs(){
         slot_designation_str = "";
         item_verb = "fires";
         aoe_count = 1; //indicates max targets item will hit; -1 indicates it hits the entire mob, flamers only
-
+		
+		use_context = abil_use_context.both; //Used with abilities and 'useable' items when determining where they can be used: in combat, outside of it, or in both scenarios
+		
+		melee_only = false; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
+		
         //region Define item stats for each item:
 
         if item_enum == item_type.flashlight {
@@ -1063,7 +1053,6 @@ function scr_define_structs(){
             item_dmg_str = "burned";
             aoe_count = -1;
             burn_chance = 75;
-            always_checks_status_effect_boolean = true;
 		}
         else if item_enum == item_type.hand_flamer { //Torvald ability
             dmg_min = 2;
@@ -1075,11 +1064,10 @@ function scr_define_structs(){
             item_dmg_str = "burned";
             aoe_count = -1;
             burn_chance = 75;
-            always_checks_status_effect_boolean = true;
             ability_point_cost = 3;
-            ability_cost_str = $"Spend {ability_point_cost} AP";
-            is_combat_abil_only_boolean = true;
+            ability_cost_str = ""; //Only defined for those abilities with their non_attack_ability_boolean == true (weapon type abilities); otherwise defined in scr_print_weapon_or_abil_list
             requires_ammo_boolean = false;
+			use_context = abil_use_context.combat_only;
 		}
 
         else if item_enum == item_type.wrist_rockets { //Torvald ability
@@ -1095,11 +1083,10 @@ function scr_define_structs(){
             bleed_chance = 25;
             suppress_chance = 50;
             stun_chance = 25;
-            always_checks_status_effect_boolean = true;
             ability_point_cost = 5;
-            ability_cost_str = $"Spend {ability_point_cost} AP";
-            is_combat_abil_only_boolean = true;
+            ability_cost_str = ""; //Only defined for those abilities with their non_attack_ability_boolean == true (weapon type abilities); otherwise defined in scr_print_weapon_or_abil_list
             requires_ammo_boolean = false;
+			use_context = abil_use_context.combat_only;
 		}
 
         else if item_enum == item_type.shocking_grasp { //Torvald ability
@@ -1111,13 +1098,12 @@ function scr_define_structs(){
             item_verb = "grabs with a";
             item_dmg_str = "burned";
             aoe_count = 1;
-            burn_chance = 10;
-            stun_chance = 75;
-            always_checks_status_effect_boolean = true;
-            ability_point_cost = 2;
-            ability_cost_str = $"Spend {ability_point_cost} AP";
-            is_combat_abil_only_boolean = true;
+            burn_chance = 25;
+            stun_chance = 50;
+            ability_point_cost = 1;
+            ability_cost_str = ""; //Only defined for those abilities with their non_attack_ability_boolean == true (weapon type abilities); otherwise defined in scr_print_weapon_or_abil_list
             requires_ammo_boolean = false;
+			use_context = abil_use_context.combat_only;
 		}
 
         else if item_enum == item_type.headbutt { //ogre
@@ -1132,9 +1118,8 @@ function scr_define_structs(){
             stun_chance = 75;
             ability_point_cost = 3;
             ability_cost_str = $"Spend {ability_point_cost} AP";
-            is_combat_abil_only_boolean = true;
             requires_ammo_boolean = false;
-            always_checks_status_effect_boolean = true;
+			use_context = abil_use_context.combat_only;
 		}
 
         else if item_enum == item_type.feral_bite { //ogre
@@ -1149,8 +1134,8 @@ function scr_define_structs(){
             bleed_chance = 100;
             ability_point_cost = 3;
             ability_cost_str = $"Spend {ability_point_cost} AP";
-            is_combat_abil_only_boolean = true;
             requires_ammo_boolean = false;
+			use_context = abil_use_context.combat_only;
 		}
 
         //This skill uses utils execute_non_attack_ability()
@@ -1160,16 +1145,16 @@ function scr_define_structs(){
             item_name = "PERSONAL SHIELD GENERATOR";
             max_range = 0;
             ability_point_cost = 3;
-            ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP to gain the following for 3 turns:";
             stat_boost_list[stat_boost.armor] = PERSONAL_SHIELD_BONUS;
             stat_boost_list[stat_boost.evasion] = PERSONAL_SHIELD_BONUS;
-            is_combat_abil_only_boolean = true;
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = false;
             requires_ammo_boolean = false;
+			use_context = abil_use_context.combat_only;
+			ability_cost_str = $"Spend {ability_point_cost} A.P.: clear the suppression status effect, and gain +{stat_boost_list[stat_boost.armor]} armor and +{stat_boost_list[stat_boost.evasion]} for 3 turns. This ability does not stack.";
 		}
 
-        // This skill uses utils execute_non_attack_ability()
+        // 
         else if item_enum == item_type.smoke_grenade {  // Cooper ability
             dmg_min = 0;
             dmg_max = 0;
@@ -1178,10 +1163,10 @@ function scr_define_structs(){
             ability_point_cost = 3;
             ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP and pass your turn: every friendly unit in your party gains the following for next 3 turns:";
             stat_boost_list[stat_boost.evasion] = SMOKE_GRENADE_EVASION_BONUS;
-            is_combat_abil_only_boolean = true;
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
+			use_context = abil_use_context.combat_only;
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1192,11 +1177,11 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 3;
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals 5 hit points and is cleared of the following status effects: burning, bleeding, poisoned.";
-            is_combat_abil_only_boolean = true;
-            non_attack_ability_boolean = false; //This abil requires a target, so we don't use the execute_non_attack_ability() script, we use the item_id.use_item() script after targeting a pc
+            non_attack_ability_boolean = false; //This abil requires a target
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
             use_requires_target_boolean = true;  // Brings us to the USE_ITEM game state if this ability is used from the combat game state CHOOSE_ATTACK
+			use_context = abil_use_context.both;
 		}
 		
         // This skill uses utils execute_non_attack_ability()
@@ -1208,10 +1193,10 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 4;
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a LIGHT SENTRY GUN at your position. Sentry guns do not move, fire at enemies within their range, and set overwatch when enemies are beyond their range.";
-            is_combat_abil_only_boolean = true;
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
+			use_context = abil_use_context.both;
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1222,24 +1207,24 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 6;
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy.";
-            is_combat_abil_only_boolean = true;
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
+			use_context = abil_use_context.both;
 		}
 
         // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.spawn_light_shotgun_droid {  // Engineer ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "SPINNING SCATTERSHOT DROID"
-            max_range = 0
-            ability_point_cost = 4
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "SPINNING SCATTERSHOT DROID";
+            max_range = 0;
+            ability_point_cost = 4;
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN."
-            is_combat_abil_only_boolean = true
-            non_attack_ability_boolean = true
-            abil_passes_turn_boolean = true
-            requires_ammo_boolean = false
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+			use_context = abil_use_context.both;
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1249,11 +1234,11 @@ function scr_define_structs(){
             item_name = "FUMIGATING FLAMER DROID"
             max_range = 0
             ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a FUMIGATING FLAMER DROID at your position. This fearless little droid would wheel itself through the gates of hell to protect you. It has been affixed with a FLAMETHROWER and is belching an unhealthy amount of smoke."
-            is_combat_abil_only_boolean = true
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a FUMIGATING FLAMER DROID at your position. This fearless little droid would wheel itself through the gates of hell to protect you. It has been affixed with a FLAMETHROWER and is belching a disconcerting amount of smoke.";
             non_attack_ability_boolean = true
             abil_passes_turn_boolean = true
             requires_ammo_boolean = false
+			use_context = abil_use_context.both;
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1264,10 +1249,10 @@ function scr_define_structs(){
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction..."
-            is_combat_abil_only_boolean = true
             non_attack_ability_boolean = true
             abil_passes_turn_boolean = true
             requires_ammo_boolean = false
+			use_context = abil_use_context.both;
 		}
         // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.energizing_stim_prick {  
@@ -1277,11 +1262,11 @@ function scr_define_structs(){
             max_range = 0
             ability_point_cost = 3
             ability_cost_str = $"Spend {ability_point_cost} AP: target player character gains 2 ability points."
-            is_combat_abil_only_boolean = true
-            non_attack_ability_boolean = false //This abil requires a target, so we don't use the execute_non_attack_ability() script, we use the item_id.use_item() script after targeting a pc
+            non_attack_ability_boolean = false 
             abil_passes_turn_boolean = false
             requires_ammo_boolean = false
             use_requires_target_boolean = true  // Brings us to the USE_ITEM game state if this ability is used from the combat game state CHOOSE_ATTACK
+			use_context = abil_use_context.both;
 		}
 		
         else if item_enum == item_type.rocket_launcher {
@@ -1298,53 +1283,57 @@ function scr_define_structs(){
             burn_chance = 75 //DEBUG
 		}
         else if item_enum == item_type.lead_pipe {
-            dmg_min = 1
-            dmg_max = 4
-            requires_ammo_boolean = false
-            item_name = "LEAD PIPE"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "swings the"
-            item_dmg_str = "blundgeoned"
-            max_range = 0
-            stun_chance = 50
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "LEAD PIPE";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "swings the";
+            item_dmg_str = "blundgeoned";
+            max_range = 0;
+            stun_chance = 50;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.monstrous_claw {
-            dmg_min = 4
-            dmg_max = 8
-            requires_ammo_boolean = false
-            item_name = "MONSTROUS CLAWS"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "swipes with"
-            item_dmg_str = "slashed"
-            max_range = 0
-            bleed_chance = 50
-            infection_chance = 10
+            dmg_min = 4;
+            dmg_max = 8;
+            requires_ammo_boolean = false;
+            item_name = "MONSTROUS CLAWS";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "swipes with";
+            item_dmg_str = "slashed";
+            max_range = 0;
+            bleed_chance = 50;
+            infection_chance = 10;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.writhing_tendril {
-            dmg_min = 1
-            dmg_max = 4
-            requires_ammo_boolean = false
-            item_name = "WRITHING TENDRIL"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "whips with a"
-            item_dmg_str = "slashed"
-            max_range = 0
-            stun_chance = 25
-            bleed_chance = 0
-            always_checks_status_effect_boolean = true
-            infection_chance = 10
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "WRITHING TENDRIL";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "whips with a";
+            item_dmg_str = "slashed";
+            max_range = 0;
+            stun_chance = 250; //25;
+            bleed_chance = 0;
+            always_checks_status_effect_boolean = false;
+            infection_chance = 10;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.desperate_claw {
-            dmg_min = 1
-            dmg_max = 4
-            requires_ammo_boolean = false
-            item_name = "DESPERATE CLAW"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh]  // Indicates either hand can equip
-            item_verb = "slashes with a"
-            item_dmg_str = "slashed"
-            max_range = 0
-            bleed_chance = 25
-            infection_chance = 10
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "DESPERATE CLAW";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh];  // Indicates either hand can equip
+            item_verb = "slashes with a";
+            item_dmg_str = "slashed";
+            max_range = 0;
+            bleed_chance = 25;
+            infection_chance = 10;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.infection_needle {
             dmg_min = 4;
@@ -1356,6 +1345,7 @@ function scr_define_structs(){
             item_dmg_str = "punctured";
             max_range = 0;
             infection_chance = 100;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.police_truncheon {
             dmg_min = 3;
@@ -1367,18 +1357,20 @@ function scr_define_structs(){
             item_dmg_str = "blundgeoned";
             max_range = 0;
             stun_chance = 25;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.stun_baton { //Has a 100% chance of stunning enemies, minus their electric_res
-            dmg_min = 1
-            dmg_max = 2
-            requires_ammo_boolean = false
-            item_name = "STUN BATON"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "thrusts the"
-            item_dmg_str = "zapped"
-            max_range = 0
-            stun_chance = 100
-            always_checks_status_effect_boolean = true
+            dmg_min = 1;
+            dmg_max = 2;
+            requires_ammo_boolean = false;
+            item_name = "STUN BATON";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "thrusts the";
+            item_dmg_str = "zapped";
+            max_range = 0;
+            stun_chance = 100;
+            always_checks_status_effect_boolean = false;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.fire_axe {
             dmg_min = 2;
@@ -1390,17 +1382,19 @@ function scr_define_structs(){
             item_dmg_str = "mauled";
             max_range = 0;
             bleed_chance = 25;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.crude_buzzsaw {
-            dmg_min = 5
-            dmg_max = 8
-            requires_ammo_boolean = false
-            item_name = "CRUDE BUZZSAW"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            item_verb = "spins the"
-            item_dmg_str = "eviscerated"
-            max_range = 0
-            bleed_chance = 75
+            dmg_min = 5;
+            dmg_max = 8;
+            requires_ammo_boolean = false;
+            item_name = "CRUDE BUZZSAW";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "spins the";
+            item_dmg_str = "eviscerated";
+            max_range = 0;
+            bleed_chance = 75;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.taser { //High stun chance, extra damage to characters with weak electric_res
             dmg_min = 1
@@ -1412,23 +1406,24 @@ function scr_define_structs(){
             item_dmg_str = "zapped"
             max_range = 1
             stun_chance = 100
-            always_checks_status_effect_boolean = true
+            always_checks_status_effect_boolean = false;
             ability_point_cost = 2
             ability_cost_str = $"Spend {ability_point_cost} AP"
-            is_combat_abil_only_boolean = true
             requires_ammo_boolean = false
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.assault_rifle {
-            dmg_min = 4
-            dmg_max = 6
-            item_name = "ASSAULT RIFLE"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 4
-            item_verb = "fires the"
-            item_dmg_str = "shot"
-            can_overwatch_boolean = true
-            bleed_chance = 25
-            can_overwatch_boolean = true
+            dmg_min = 4;
+            dmg_max = 6;
+            item_name = "ASSAULT RIFLE";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 4;
+            item_verb = "fires the";
+            item_dmg_str = "shot";
+            can_overwatch_boolean = true;
+            bleed_chance = 25;
+            can_overwatch_boolean = true;
+			aoe_count = 2;
 		}
         else if item_enum == item_type.light_mg { //Light sentry gun weapon.
             dmg_min = 3
@@ -1467,7 +1462,7 @@ function scr_define_structs(){
             can_overwatch_boolean = true
             poison_chance = 75
             infection_chance = 10
-            always_checks_status_effect_boolean = true
+            always_checks_status_effect_boolean = false;
 		}
         else if item_enum == item_type.acid_cloud {
             dmg_min = 1;
@@ -1508,12 +1503,12 @@ function scr_define_structs(){
             infection_chance = 10;
             poison_chance = 10;
             stun_chance = 20;
-            always_checks_status_effect_boolean = true;
+            always_checks_status_effect_boolean = false;
 		}
         else if item_enum == item_type.toxic_grenade_launcher {
             dmg_min = 1;
             dmg_max = 4;
-            item_name = "TOXIC GRENADE LAUNCHER";
+            item_name = "TOXIC G.L.";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 4; //Debug value
             item_verb = "fires the";
@@ -1525,26 +1520,26 @@ function scr_define_structs(){
         else if item_enum == item_type.frag_grenade_launcher {
             dmg_min = 5;
             dmg_max = 10;
-            item_name = "FRAGMENTAION GRENADE LAUNCHER";
+            item_name = "FRAGMENTAION G.L.";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 5; //Debug value
             item_verb = "fires the";
             item_dmg_str = "shredded";
             aoe_count = 4;
             burn_chance = 25;
-            always_checks_status_effect_boolean = true;
+            always_checks_status_effect_boolean = false;
 		}
         else if item_enum == item_type.concussion_grenade_launcher {
             dmg_min = 0;
             dmg_max = 1;
-            item_name = "CONCUSSION GRENADE LAUNCHER";
+            item_name = "CONCUSSION G.L.";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 4;
             item_verb = "fires the";
             item_dmg_str = "concussed";
             aoe_count = -1;
-            stun_chance = 75;
-            suppress_chance = 75;
+            stun_chance = 100; //75;
+            suppress_chance = 100; //75;
             always_checks_status_effect_boolean = true;
 		}
         
@@ -1575,16 +1570,16 @@ function scr_define_structs(){
             suppress_chance = 25
 		}
         else if item_enum == item_type.sniper_rifle {
-            dmg_min = 8
-            dmg_max = 12
-            melee_debuff_boolean = true
-            item_name = "SNIPER RIFLE"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 5
-            item_verb = "fires the"
-            item_dmg_str = "shot"
-            can_overwatch_boolean = true
-            bleed_chance = 50
+            dmg_min = 8;
+            dmg_max = 12;
+            melee_debuff_boolean = true;
+            item_name = "SNIPER RIFLE";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 5;
+            item_verb = "fires the";
+            item_dmg_str = "shot";
+            can_overwatch_boolean = true;
+            bleed_chance = 50;
 		}
         else if item_enum == item_type.pulse_rifle {
             dmg_min = 6
@@ -1605,6 +1600,7 @@ function scr_define_structs(){
             item_name = "MEDICAL KIT";
             equippable_boolean = false;
             combat_usable_boolean = true;
+			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.regen_nanites {
             single_use_boolean = true;
@@ -1612,12 +1608,14 @@ function scr_define_structs(){
             item_name = "PEN OF REGENERATION NANITES";
             equippable_boolean = false;
             combat_usable_boolean = true;
+			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.kiras_noisy_game {
             single_use_boolean = false
             usable_boolean = true
             item_name = "KIRA'S NOISY GAME"
             equippable_boolean = false
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_environmental {
             item_name = "HAZMAT SUIT";
@@ -1686,12 +1684,14 @@ function scr_define_structs(){
             item_name = "ADRENAL PEN"
             equippable_boolean = false
             combat_usable_boolean = true
+			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.dna_tester {
             single_use_boolean = false
             usable_boolean = true
             item_name = "DNA ANALYZER"
             equippable_boolean = false
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.access_targeting_hud {
             item_name = "TACTICAL MONOCLE";
@@ -1720,47 +1720,51 @@ function scr_define_structs(){
             is_shield_boolean = true
 		}
         else if item_enum == item_type.fists_adult {
-            dmg_min = 1
-            dmg_max = 2
-            requires_ammo_boolean = false
-            item_name = "FIST"
-            equip_slot_list = [equip_slot.rh, equip_slot.lh] //Indicates either hand can equip
-            item_verb = "punches with their"
-            item_dmg_str = "battered"
-            max_range = 0
+            dmg_min = 1;
+            dmg_max = 2;
+            requires_ammo_boolean = false;
+            item_name = "FIST";
+            equip_slot_list = [equip_slot.rh, equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "punches with their";
+            item_dmg_str = "battered";
+            max_range = 0;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.fists_child {
-            dmg_min = 0
-            dmg_max = 1
-            requires_ammo_boolean = false
-            item_name = "CHILD FIST"
-            equip_slot_list = [equip_slot.rh, equip_slot.lh] //Indicates either hand can equip
-            item_verb = "punches with their"
-            item_dmg_str = "battered"
-            max_range = 0
+            dmg_min = 0;
+            dmg_max = 1;
+            requires_ammo_boolean = false;
+            item_name = "CHILD FIST";
+            equip_slot_list = [equip_slot.rh, equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "punches with their";
+            item_dmg_str = "battered";
+            max_range = 0;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.fists_giant {
-            dmg_min = 2
-            dmg_max = 4
-            requires_ammo_boolean = false
-            item_name = "GIANT FIST"
-            equip_slot_list = [equip_slot.rh, equip_slot.lh] //Indicates either hand can equip
-            item_verb = "punches with their"
-            item_dmg_str = "battered"
-            max_range = 0
-            stun_chance = 25
+            dmg_min = 2;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "GIANT FIST";
+            equip_slot_list = [equip_slot.rh, equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "punches with their";
+            item_dmg_str = "battered";
+            max_range = 0;
+            stun_chance = 25;
+			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
 
         else if item_enum == item_type.plasma_torch {
-            dmg_min = 1
-            dmg_max = 4
-            requires_ammo_boolean = false
-            item_name = "PLASMA TORCH"
-            equip_slot_list = [equip_slot.rh, equip_slot.lh] //Indicates either hand can equip
-            item_verb = "blazes the"
-            item_dmg_str = "burns"
-            max_range = 0
-            burn_chance = 75
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "PLASMA TORCH";
+            equip_slot_list = [equip_slot.rh, equip_slot.lh]; //Indicates either hand can equip
+            item_verb = "blazes the";
+            item_dmg_str = "burns";
+            max_range = 0;
+            burn_chance = 75;
+			use_context = abil_use_context.both;
 		}
 
         //Define slot_designation_str - currently only using the Accessory string, print_inv gets too cluttered otherwise

@@ -136,49 +136,35 @@ else if global.cur_game_state >= game_state.main_game {
 	
 		origin_y += global.default_line_h*2;
 		
-		var sanity_str = "", ability_points_str = "", mp_str = "";
-		
-		//Stats:
+		//PC Stats - AP, MP, Sanity, and skills:
 		if is_pc_char {
-			ability_points_str = $" A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max}{sanity_str}";
-			sanity_str = $" Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max}";
-			mp_str = $"M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}";
-		}
-	
-		draw_text(origin_x,origin_y,$"HP: {cur_char.hp_cur}/{cur_char.hp_max}{ability_points_str}{sanity_str}");
-		origin_y += global.default_line_h;
-		draw_text(origin_x,origin_y,$"{mp_str}");
-		origin_y += global.default_line_h*2;
-		
-		//Skills:
-		if is_pc_char {
-		
+			//AP, Sanity, MP:
+			draw_text(origin_x,origin_y,$"A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max} Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max} M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}");
+			
+			origin_y += global.default_line_h*2;
+
+			//Skills:
 			draw_text(origin_x,origin_y,$"Security: {cur_char.security} Engineering: {cur_char.engineering}");
-		
 			origin_y += global.default_line_h;
-		
 			draw_text(origin_x,origin_y,$"Science: {cur_char.science} Stealth: {cur_char.stealth}");
 		
 			origin_y += global.default_line_h*2;
 		}
 		
-		//Resistences:
-		draw_text(origin_x,origin_y,$"Armor: {cur_char.armor} Evasion: {cur_char.evasion} Accuracy: {cur_char.accuracy}");
+		//Universal stats - HP, Armor, Evasion, Accuracy, Speed:
+		draw_text(origin_x,origin_y,$"HP: {cur_char.hp_cur}/{cur_char.hp_max} Armor: {cur_char.armor} Evasion: {cur_char.evasion}");
+		origin_y += global.default_line_h;
+		draw_text(origin_x,origin_y,$"Accuracy: {cur_char.accuracy} Speed: {cur_char.spd}");
 		
 		origin_y += global.default_line_h*2;
 		
+		//Universal - Resistences:
 		draw_text(origin_x,origin_y,$"Resistances: Fire: {cur_char.res_fire} Vacuum: {cur_char.res_vacuum}");
-		
 		origin_y += global.default_line_h;
-		
 		draw_text(origin_x,origin_y,$"Electric: {cur_char.res_electric} Poison: {cur_char.res_poison} Bleed: {cur_char.res_bleed}");
-		
 		origin_y += global.default_line_h;
-		
 		draw_text(origin_x,origin_y,$"Stun: {cur_char.res_stun} Infection: {cur_char.res_infect} Suppress: {cur_char.res_suppress}");
-		
 		origin_y += global.default_line_h;
-		
 		draw_text(origin_x,origin_y,$"Toxic Gas: {cur_char.res_gas}");
 		
 		origin_y += global.default_line_h*2;
@@ -205,6 +191,7 @@ else if global.cur_game_state >= game_state.main_game {
 			origin_y += global.default_line_h*2;
 		}
 		
+		
 		//Active Abilities:
 		if is_array(cur_char.ability_ar) && array_length(cur_char.ability_ar) > 0 {
 			
@@ -230,25 +217,28 @@ else if global.cur_game_state >= game_state.main_game {
 			}
 		}
 		
-		//Passive abilities:
-		if is_array(cur_char.passive_abil_ar) && array_length(cur_char.passive_abil_ar) > 0 {
+		//Passive abilities - PCS only:
+		if cur_char.char_team_enum == team_type.pc {
+			if is_array(cur_char.passive_abil_ar) && array_length(cur_char.passive_abil_ar) > 0 {
 			
-			var ar_len = array_length(cur_char.passive_abil_ar)
+				var ar_len = array_length(cur_char.passive_abil_ar)
 		
-			var passive_abil_enum, abil_name_str;
-			for(var i = 0; i < ar_len; i++) {
+				var passive_abil_enum, abil_name_str;
+				for(var i = 0; i < ar_len; i++) {
 				
-				passive_abil_enum = cur_char.passive_abil_ar[i];
+					passive_abil_enum = cur_char.passive_abil_ar[i];
 					
-				abil_name_str = scr_return_passive_abil_enum_name(passive_abil_enum);
+					abil_name_str = scr_return_passive_abil_enum_name(passive_abil_enum);
 					
-				draw_text(origin_x,origin_y,$"{abil_name_str} (passive)");
-				origin_y += global.default_line_h;
+					draw_text(origin_x,origin_y,$"{abil_name_str} (passive)");
+					origin_y += global.default_line_h;
+				}
 			}
 		}
 		
 		origin_y += global.default_line_h;
 		
+		//Start drawing inventory:
 		draw_text(origin_x,origin_y,$"Inventory:"); 
 		
 		origin_y += global.default_line_h;

@@ -18,7 +18,7 @@ scr_define_structs();
 
 main_menu_str_ar = ["Start New Game\n", "Continue Game\n", "Options\n", "Exit\n"];
 
-party_limit = 5;
+party_limit = 2;
 
 global.pc_char_ar = [];
 global.enemy_char_ar = [];
@@ -246,7 +246,7 @@ global.item_reference_table = []; //Contains an instantiated struct for each ite
 
 avail_weps_or_abils_list = -1; //Is used as an array
 global.fleeing_combat_char_id = -1;
-global.char_is_fleeing_bool = false;
+global.char_is_fleeing_bool = false; //where is this reset?
 
 char_id_after_char_flees = -1;
 
@@ -257,3 +257,11 @@ char_spr_h = sprite_get_height(asset_get_index("spr_pc"));
 
 max_char_sprites_per_room = 6;
 
+//Overwatch vars:
+global.target_id_of_overwatch_fire = -1;
+global.overwatch_mode_enabled = false;
+overwatch_attackers_ar = [];
+global.overwatch_rank_ar = [];
+global.overwatch_attacker_index = -1;
+overwatch_attackers_ar = -1;
+scr_reset_global_overwatch_ar();

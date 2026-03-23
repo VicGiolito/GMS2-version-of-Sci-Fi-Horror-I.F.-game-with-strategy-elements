@@ -1,7 +1,9 @@
 
-//if build_weps_list_bool == false, we build from their ability_ar.
+/*if build_weps_list_bool == false, we build from their ability_ar.
 
 
+
+*/
 
 function scr_build_weps_or_abils_list(ar_to_pass, char_struct_id, build_weps_list_bool){
 	

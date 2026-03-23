@@ -1,5 +1,5 @@
 
-
+//Currently only used in combat_execute_action game_state and that should be considered when using this script:
 
 function scr_return_ar_of_opposite_team(acting_char_struct_id, ar_to_check){
 	
@@ -14,7 +14,9 @@ function scr_return_ar_of_opposite_team(acting_char_struct_id, ar_to_check){
 		if char_id.has_died_bool == false && char_id.has_fled_combat_bool == false {
 			
 			if acting_char_team == team_type.enemy {
-				if char_id.char_team_enum == team_type.pc || char_id.char_team_enum == team_type.neutral {
+				//Enemies don't target unconscious players; neutrals will never be unconscious.
+				if char_id.unconscious_bool == false && 
+				(char_id.char_team_enum == team_type.pc || char_id.char_team_enum == team_type.neutral) {
 					array_push(ar_to_return,char_id);		
 				}
 			}

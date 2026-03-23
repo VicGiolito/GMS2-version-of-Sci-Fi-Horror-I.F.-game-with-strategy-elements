@@ -68,13 +68,11 @@ function scr_evaluate_combat_conclusion(called_from_str){
 		
 	//Provide messages for cases where combat has ended:
 	if combat_concluded_enum == combat_concluded_result.pcs_won {
-		scr_add_str_to_dialogue_ar("\n");
-		scr_add_str_to_dialogue_ar($"All enemies have either fled or been killed. You have lived to fight another day. Press any key to continue.");	
+		scr_add_str_to_dialogue_ar($"\nAll enemies have either fled or been killed. You have lived to fight another day. Press any key to continue.");	
 		combat_has_concluded = true;
 	}
 	else if combat_concluded_enum == combat_concluded_result.enemies_won {
-		scr_add_str_to_dialogue_ar("\n");
-		scr_add_str_to_dialogue_ar($"All playable characters in this room have either fleed or been killed. The enemies cavort and slaver in the wake of their victory. Press any key to continue.");	
+		scr_add_str_to_dialogue_ar($"\nAll playable characters in this room have either fleed or been killed. The enemies cavort and slaver in the wake of their victory. Press any key to continue.");	
 		combat_has_concluded = true;
 	}
 	
@@ -88,8 +86,7 @@ function scr_evaluate_combat_conclusion(called_from_str){
 		if next_combat_char == -1 {
 			global.cur_combat_round++;
 			
-			scr_add_str_to_dialogue_ar("\n");
-			scr_add_str_to_dialogue_ar($"Round {global.cur_combat_round} begins.");
+			scr_add_str_to_dialogue_ar($"\nRound {global.cur_combat_round} begins.");
 			
 			d($"\nscr_evaluate_combat_conclusion: next_combat_char == -1, so BEFORE we shuffle and perform a reverse sort on our g.combat_init_ar, it looks like:.... \n");
 			for(var yy = 0; yy < array_length(global.combat_initiative_ar); yy++) {
@@ -135,9 +132,6 @@ function scr_evaluate_combat_conclusion(called_from_str){
 			if failsafe_val >= failsafe_max throw("scr_evaluate_combat_conclusion: failsafe_val >= failsafe_max after our do-until trying to determine our next_combat_char after next_combat_char returned == -1 -- this should never trigger");
 		}
 		
-		//The next_combat_char should now be a struct, reset or reduce some of their combat vars:
-		scr_mid_combat_reset_or_reduce_char_combat_vars(next_combat_char);
-		
 		//Then we decide if we need to move to assign pc command or execute action next:
 		if next_combat_char.char_team_enum == team_type.pc {
 				
@@ -156,8 +150,7 @@ function scr_evaluate_combat_conclusion(called_from_str){
 			d($"\nscr_evaluate_combat_conclusion: we will be advancing to execute_action...");
 		}
 		
-		scr_add_str_to_dialogue_ar("\n");
-		scr_add_str_to_dialogue_ar($"... Press any key to continue to the next character in the initiative queue...");
+		scr_add_str_to_dialogue_ar($"\n... Press any key to continue to the next character in the initiative queue...");
 	}
 	
 	else if combat_has_concluded {

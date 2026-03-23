@@ -35,12 +35,13 @@ function scr_equip_or_unequip_item(char_struct_id, item_struct_id, equip_slot_en
 		
 		if equipped_during_creation_boolean == false {
 			var item_name = item_struct_id.item_name;
-			scr_add_str_to_dialogue_ar("\n");
-			scr_add_str_to_dialogue_ar($"{char_struct_id.name} has equipped the {item_name}.\n");
+			scr_add_str_to_dialogue_ar($"\network_config_enable_multicast{char_struct_id.name} has equipped the {item_name}.");
 		}
 		
-		//Remove from its corresponding backpack location:
-		array_delete(char_struct_id.inv_ar,equip_slot_enum,1);
+		//Remove from its corresponding backpack location, if applicable:
+		if char_struct_id.inv_ar[equip_slot_enum] != -1 {
+			array_delete(char_struct_id.inv_ar,equip_slot_enum,1);
+		}
 	}
 	
 	else {
@@ -60,8 +61,7 @@ function scr_equip_or_unequip_item(char_struct_id, item_struct_id, equip_slot_en
 		//Print unequip results:
 		if equipped_during_creation_boolean == false {
 			var item_name = item_struct_id.item_name;
-			scr_add_str_to_dialogue_ar("\n",true);
-			scr_add_str_to_dialogue_ar($"{char_struct_id.name} has removed the {item_name}.\n");	
+			scr_add_str_to_dialogue_ar($"\n{char_struct_id.name} has removed the {item_name}.",true);	
 		}
 	}
 	

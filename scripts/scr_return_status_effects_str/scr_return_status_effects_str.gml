@@ -12,7 +12,7 @@ function scr_return_status_effects_str(char_struct_id){
 	with(char_struct_id) {	
 		if infection_count > 0 {
 			status_effect_found = true;	
-			status_effects_str += $"Infected({infection_count})";
+			status_effects_str += $"Infected({infection_count}/{char_max_infection})";
 		}
 		if burning_count > 0 {
 			status_effect_found = true;	

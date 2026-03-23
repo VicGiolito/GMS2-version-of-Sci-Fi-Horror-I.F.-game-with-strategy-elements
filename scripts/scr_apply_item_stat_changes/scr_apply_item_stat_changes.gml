@@ -56,7 +56,7 @@ function scr_apply_item_stat_changes(char_struct_id, item_struct_id, equip_boole
 				
 					var stat_boost_str = scr_return_stat_boost_str(i);
 				
-					scr_add_str_to_dialogue_ar($"{char_struct_id.name} had their {stat_boost_str} modified by {stat_boost_val*equip_val} from the {item_struct_id.item_name}.\n");
+					scr_add_str_to_dialogue_ar($"\n{char_struct_id.name} had their {stat_boost_str} modified by {stat_boost_val*equip_val} from the {item_struct_id.item_name}.");
 				}
 			}
 		}

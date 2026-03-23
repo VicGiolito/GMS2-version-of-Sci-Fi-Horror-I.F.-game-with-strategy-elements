@@ -237,8 +237,9 @@ function scr_define_macros_and_enums(){
 		service_droid,
 		janitor,
 		playboy,
-		biologist,
-		security_guard,
+		physicist,
+		security_guard, //should be considered the last pc character for purposes of defining the char_bio_ar in scr_define_global_and_con_data()
+		
 		neutral_infected_scientist,
 		neutral_jittering_buzzsaw,
 		neutral_whipstitch_sentinel,
@@ -387,7 +388,14 @@ function scr_define_macros_and_enums(){
 		total_stats
 	}
 	
-	//Some stat type macros:
+	//For activatable abilities (items) to distinguish what game states they can be used in.
+	enum abil_use_context {
+		combat_only,
+		main_game_only,
+		both
+	}
+	
+	//Some stat type macros/misc. macros:
 	#macro AVG_ACC_VAL 7
 	#macro MIN_COMBAT_RAN_NUM 1
 	#macro MAX_COMBAT_RAN_NUM 10
@@ -395,24 +403,36 @@ function scr_define_macros_and_enums(){
 	#macro ENERGENIZING_AP_BOOST 2
 	#macro SMOKE_GRENADE_EVADE_BUFF 1
 	#macro PERSONAL_SHIELD_BUFF 1
-	#macro ADRENAL_PEN_BUFF 2
+	#macro ADRENAL_PEN_SPD_BUFF 2
+	#macro ADRENAL_PEN_ACC_BUFF 1
 	#macro OGRE_MELEE_ACC_BUFF 1
 	#macro OGRE_MELEE_MAX_DMG_BUFF 5
 	#macro BASE_DOOR_HP 20
 	#macro BASE_WALL_HP 50
-	
-	//Some other status type or misc. macros:
 	#macro DOT_FIRE 5
 	#macro DOT_POISON 3
 	#macro BASE_UNCONSCIOUS_COUNT 4
 	#macro SUPPRESSED_EVASION_DEBUFF 2
-	#macro SUPPRESSED_SPEED_DEBUFF 2
+	#macro SUPPRESSED_SPEED_DEBUFF 6
+	#macro SUPPRESS_DURATION 2
 	#macro AVERAGE_EVASION_SCORE 0
 	#macro AVERAGE_ACCURACY_SCORE 7
 	#macro BASE_MAX_INFECTION 8
 	#macro PERSONAL_SHIELD_BONUS 1
 	#macro SMOKE_GRENADE_EVASION_BONUS 1
 	#macro MAX_RAN_SPD_VAL 6
+	#macro POISON_PERCENT_VAL .2
+	#macro BLEED_PERCENT_VAL .25
+	#macro HEALING_FACTOR_HEAL_VAL 1
+	#macro HEALING_FACTOR_CD_VAL 1
+	#macro REGEN_NANITES_HEAL_VAL 3
+	#macro EVADE_BONUS 1
+	#macro FIRE_DURATION 3
+	#macro BLEED_DURATION 2
+	#macro POISON_DURATION 2
+	#macro CRAGOS_ACC_DEBUFF 2
+	#macro CRAGOS_EVASION_DEBUFF 1
+	#macro GIANT_MELEE_DMG_BUFF 3
 	
 	#macro UNVISITED_CELL 0
 	#macro VISITED_CELL 1

@@ -101,7 +101,7 @@ function scr_print_inv_detailed_list(char_struct_id){
 						item_str += $"Fire Res.: {fire_res} ";	
 					}
 					if vacuum_res > 0 {
-						item_str += $"Toxic Gas Res.: {vacuum_res}";	
+						item_str += $"Vacuum Res.: {vacuum_res}";	
 					}
 				}
 				//Accessory
@@ -119,7 +119,7 @@ function scr_print_inv_detailed_list(char_struct_id){
 				//Weapon:
 				else {
 					if min_dmg >= 0 {
-						item_str += $"Dmg.Min-Max: {min_dmg} ";	
+						item_str += $"Damage Min-Max: {min_dmg}";	
 					}
 					if max_dmg >= 0 {
 						item_str += $"-{max_dmg} ";
@@ -127,9 +127,15 @@ function scr_print_inv_detailed_list(char_struct_id){
 					if range >= 0 {
 						item_str += $"Range: {range} ";	
 					}
-					if shots_per_attack > 0 {
-						item_str += $"Shots per attack: Up to {shots_per_attack}% ";	
-					} 
+					
+					var total_targets_str = "";
+					if shots_per_attack == -1 total_targets_str = "all enemies";
+					else if shots_per_attack > 0 total_targets_str = shots_per_attack;
+					
+					if total_targets_str != "" {
+						item_str += $"Total targets: {total_targets_str} ";	
+					}
+					
 					if bleed_mod > 0 {
 						item_str += $"Bleed: {bleed_mod}% ";	
 					}

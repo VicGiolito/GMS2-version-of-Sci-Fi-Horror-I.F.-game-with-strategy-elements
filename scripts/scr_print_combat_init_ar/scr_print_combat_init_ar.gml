@@ -13,7 +13,7 @@ function scr_print_combat_init_ar(){
 		
 		if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
 		
-			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}.");
+			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}({char_struct_id.unique_id}).");
 		}
 	}
 }

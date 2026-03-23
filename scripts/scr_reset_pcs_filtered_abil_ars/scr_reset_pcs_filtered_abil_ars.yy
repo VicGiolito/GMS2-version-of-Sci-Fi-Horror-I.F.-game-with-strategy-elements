@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_delete_char_from_combat_memory",
+  "name": "scr_reset_pcs_filtered_abil_ars",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

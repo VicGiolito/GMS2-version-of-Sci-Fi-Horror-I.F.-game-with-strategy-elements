@@ -17,7 +17,7 @@ function scr_delete_combat_chars(){
 		
 		char_struct_to_delete = global.combat_initiative_ar[i];
 		
-		//Delete from corresponding room ar and corresponding global array:
+		//If its dead, delete from corresponding room ar and corresponding global array:
 		if char_struct_to_delete.has_died_bool == true {
 			
 			if char_struct_to_delete.char_team_enum == team_type.enemy {
@@ -52,4 +52,6 @@ function scr_delete_combat_chars(){
 	global.combat_initiative_ar = [];
 	global.combat_rank_ar = -1;
 	global.combat_rank_ar = [];
+	scr_reset_global_overwatch_ar(); //Reset our global overwatch array.
+	scr_reset_pcs_filtered_abil_ars();
 }

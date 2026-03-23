@@ -1,7 +1,7 @@
 
 
 
-function scr_add_passive_ability(char_struct_id,passive_abil_enum, called_from_str){
+function scr_add_passive_ability(char_struct_id, passive_abil_enum, called_from_str){
 	
 	if is_undefined(called_from_str) throw("scr_add_passive_ability: called_from_str == undefined");
 	

@@ -15,7 +15,7 @@ function scr_add_remove_char_from_global_ar(char_struct_id,add_or_remove_boolean
 			array_push(global.pc_char_ar,char_struct_id);
 		} 
 		else {
-			var val_deleted = scr_delete_val_from_ar(global.pc_char_ar,char_struct_id);
+			global.pc_char_ar = scr_add_remove_val_from_ar(global.pc_char_ar,char_struct_id,true,false);
 		}
 	}
 	
@@ -27,7 +27,7 @@ function scr_add_remove_char_from_global_ar(char_struct_id,add_or_remove_boolean
 			array_push(global.enemy_char_ar,char_struct_id);
 		} 
 		else {
-			var val_deleted = scr_delete_val_from_ar(global.enemy_char_ar,char_struct_id);
+			global.enemy_char_ar = scr_add_remove_val_from_ar(global.enemy_char_ar,char_struct_id,true,false);
 		}
 	}
 	
@@ -39,10 +39,7 @@ function scr_add_remove_char_from_global_ar(char_struct_id,add_or_remove_boolean
 			array_push(global.neutral_char_ar,char_struct_id);
 		} 
 		else {
-			var val_deleted = scr_delete_val_from_ar(global.neutral_char_ar,char_struct_id);
+			global.neutral_char_ar = scr_add_remove_val_from_ar(global.neutral_char_ar,char_struct_id,true,false);
 		}
 	}
-
-	if !add_or_remove_boolean && !val_deleted d($"scr_add_remove_char_room_ar: scr_delete_val_from_ar return false, which means we could not find the char_struct_id: {char_struct_id.name} in the corresponding global array.");
-
 }

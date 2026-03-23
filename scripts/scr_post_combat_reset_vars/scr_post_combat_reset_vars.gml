@@ -20,6 +20,8 @@ function scr_post_combat_reset_vars(){
 				char_id = global_ar[i];
 				
 				if char_id.has_fled_combat_bool == true char_id.has_fled_combat_bool = false;
+				
+				scr_reset_status_effects(char_id);
 			}
 		}
 		
