@@ -56,8 +56,7 @@ function scr_print_ranks_to_target(cur_char_struct_id){
 		scr_add_str_to_dialogue_ar(rank_str);
 	}
 	
-	scr_add_str_to_dialogue_ar("\n");
 	var game_state_str = "attack";
 	if global.overwatch_mode_enabled game_state_str = "overwatch";
-	scr_add_str_to_dialogue_ar($"Choose a rank to target for {game_state_str}. You may also enter 'B' or 'BACKUP' to return to the previous screen.",true);
+	scr_add_str_to_dialogue_ar($"\nChoose a rank to target for {game_state_str}. You may also enter 'B' or 'BACKUP' to return to the previous screen.",true);
 }

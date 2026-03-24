@@ -1,5 +1,12 @@
 /// @description o_con step event
 
+// Proposed solution to stop program from accepting input while the game is minimized or has lost focus (test this):
+if (!window_has_focus()) {
+    keyboard_lastkey = 0;
+    keyboard_lastchar = "";
+    exit;
+}
+
 //Always store our win_w and win_h:
 var win_mouse_y = window_mouse_get_y(), win_mouse_x = window_mouse_get_x();
 
@@ -282,7 +289,7 @@ else if global.cur_game_state == game_state.choose_chars {
 	
 	#region Logic for left side window:
 	
-	if keyboard_check_released(vk_up) || keyboard_check_released(vk_down) && global.wait {
+	if (keyboard_check_released(vk_up) || keyboard_check_released(vk_down)) && global.wait {
 		
 		scr_reset_wait();
 		
@@ -329,7 +336,7 @@ else if global.cur_game_state == game_state.choose_chars {
 		
 		#region Add character, check start game:
 		
-		else if player_input_str == "A" || player_input_str == "ADD" {
+		else if (player_input_str == "A" || player_input_str == "ADD") {
 			
 			if scr_check_char_type_enum_in_ar(global.pc_char_ar,cursor_pos) == false {
 			
@@ -508,8 +515,7 @@ else if global.cur_game_state == game_state.init_combat {
 			global.combat_prep_phase = true;
 			
 			global.cur_combat_char_index = 0;
-			scr_add_str_to_dialogue_ar("\n");
-			scr_add_str_to_dialogue_ar("Press any key to enter the combat preparation phase.\n");
+			scr_add_str_to_dialogue_ar("\nPress any key to enter the combat preparation phase.\n");
 			
 			//Center our cam (eventually pressing enter will give us a slow zoom before transitioning into the combat screen):
 			scr_center_map_window(global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y,global.map_cam,"\n\no_con step event: game_state == init_combat: combat begun == true: centering on the first pc in this group...")
@@ -521,8 +527,7 @@ else if global.cur_game_state == game_state.init_combat {
 	
 	else if !pc_found {
 		
-		scr_add_str_to_dialogue_ar("\n");
-		scr_add_str_to_dialogue_ar("All playable characters have been killed! You have lost this time, but hopefully you have gained some invaluable knowledge for your next playthrough...");
+		scr_add_str_to_dialogue_ar("\nAll playable characters have been killed! You have lost this time, but hopefully you have gained some invaluable knowledge for your next playthrough...");
 		
 		//Wipe/reset all relevant data:
 		global.research_vessel_grid = -1;
@@ -549,7 +554,7 @@ else if global.cur_game_state == game_state.combat_paused && global.wait {
 	
 	if keyboard_check_released(vk_anykey) && global.wait {
 		
-		d($"o_con step event: game_state ==combat_paused, any key press detected...");
+		d($"o_con step event: game_state == combat_paused, any key press detected...");
 		
 		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
 			//global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str); //unnecessary for this game state.
@@ -697,7 +702,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			else {
 				var plural_str = "";
 				if global.cur_combat_char.suppressed_count > 1 plural_str = "s";
-				scr_add_str_to_dialogue_ar($"\nYou're currently suppressed for {global.cur_combat_char.suppressed_count} more turn{plural_str} and can't move from your current position.", true);	
+				scr_add_str_to_dialogue_ar($"\nYou're currently suppressed for {global.cur_combat_char.suppressed_count} more turn{plural_str} and can't move from your current position!", true);	
 			}
 		}
 		
@@ -879,8 +884,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			
 			global.combat_prep_phase = false;
 			global.cur_combat_round = 1; //reset
-			scr_add_str_to_dialogue_ar("\n");
-			scr_add_str_to_dialogue_ar($"Round {global.cur_combat_round} of combat has begun.\n");
+			scr_add_str_to_dialogue_ar($"\nRound {global.cur_combat_round} of combat has begun.\n");
 			
 			global.cur_combat_char_index = 0;
 			global.cur_combat_char = global.combat_initiative_ar[0];
@@ -1258,8 +1262,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 				}
 				else {
 					multi_word_str_failed = true;
-					scr_add_str_to_dialogue_ar("\n");
-					scr_add_str_to_dialogue_ar("There are no other playable characters in this room to give the item to.");	
+					scr_add_str_to_dialogue_ar("\nThere are no other playable characters in this room to give the item to.");	
 				}
 			}
 			
@@ -1288,16 +1291,14 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 					}
 					else {
 						multi_word_str_failed = true;
-						scr_add_str_to_dialogue_ar("\n");
-						scr_add_str_to_dialogue_ar($"You can't equip the {item_struct_id.item_name}, make sure the corresponding equipment slot is free first.",true);
+						scr_add_str_to_dialogue_ar($"\nYou can't equip the {item_struct_id.item_name}, make sure the corresponding equipment slot is free first.",true);
 					}
 				}
 			}
 			
 			else if !valid_item_index && !valid_flee_command {
 				multi_word_str_failed = true;
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar("That is an invalid combat command, try again.",true);	
+				scr_add_str_to_dialogue_ar("\nThat is an invalid combat command, try again.",true);	
 			}
 			
 			#endregion
@@ -1307,8 +1308,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 		#endregion
 		
 		else if multi_word_str_failed == false {
-			scr_add_str_to_dialogue_ar("\n");
-			scr_add_str_to_dialogue_ar("That is an invalid combat command, try again.", true);
+			scr_add_str_to_dialogue_ar("\nThat is an invalid combat command, try again.", true);
 		}
 		
 		//Reset our player_input_str:
@@ -1379,6 +1379,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		#region AI type: melee only:
 		
 		if ai_type_enum == enemy_combat_ai.melee {
+			
+			//Those that use this ai act like berserkers - they simply move toward the nearest valid targets and engage in melee.
+			
 			//d($"ENTERING ENEMY AI MELEE NOW!!");
 			//All of this enemy's attacks are melee, choose one at random:
 			var chosen_wep_enum = attacker_id.ability_ar[irandom_range(0,array_length(attacker_id.ability_ar)-1)];
@@ -1419,20 +1422,502 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						var capitalized = scr_string_capitalize(attacker_id.name);
 						var plural_str = "";
 						if attacker_id.suppressed_count > 1 plural_str = "s";
-						scr_add_str_to_dialogue_ar($"\n{capitalized} wants to move closer to their target but they can't - they are suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");
+						scr_add_str_to_dialogue_ar($"\n{capitalized} wants to move closer to their target but they can't - they're suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");
 					}
 				}
 			}
 			else {
-				d($"\no_con step event: combat_execute_action: evaluating enemy ai: attacker_id.targeted_rank == {attacker_id.targeted_rank}, which indicates that there was no valid targets for the {attacker_id.name}({attacker_id.unique_id}). This can happen if all neutrals and all pcs unconscious. We'll just show a message and move on.");
+				d($"\no_con step event: combat_execute_action: evaluating enemy melee_only ai: attacker_id.targeted_rank == {attacker_id.targeted_rank}, which indicates that there was no valid targets for the {attacker_id.name}({attacker_id.unique_id}). This can happen if all neutrals and pcs are dead, fled, or unconscious. We'll just show a message and move on.");
 				scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) can only take stock of the devastated battlefield and wait. (All valid targets are dead, fled, or unconscious.)");
 			}
 		}
 		
-		d($"\n o_con step event: game_state == combat_execute_action: After evaluating its ai, enemy_ai_move_boolean == {attacker_id.enemy_ai_move_boolean}, and enemy_ai_fight_boolean == {attacker_id.enemy_ai_fight_boolean}.")
+		#endregion
+		
+		#region AI type: ranged coward:
+		
+		else if ai_type_enum == enemy_combat_ai.ranged_coward {
+			
+			//Always retreats (either north or south) if nearest != their max_range, UNLESS their is overwatch in the rank they want to retreat to;
+			//naturally, due to the nature of this particularly combat system, they will generally retreat north.
+			
+			//Create a temporary array of all of this enemy's available weapons from its abil_ar:
+			var temp_abil_ar = [], item_enum;
+			for(var i = 0; i < array_length(attacker_id.ability_ar); i++) {
+				item_enum = attacker_id.ability_ar[i];
+				array_push(temp_abil_ar, global.item_reference_table[item_enum]);
+			}
+			
+			//Need to shuffle the array first so that those positions with == values will be randomized:
+			var sorted_by_range_abil_ar = scr_shuffle_ar(temp_abil_ar);
+			
+			//Actually reverse sort:
+			sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar,"max_range");
+			
+			if sorted_by_range_abil_ar != -1 {
+				
+				var highest_range_item_id = sorted_by_range_abil_ar[0];
+				attacker_id.chosen_weapon = highest_range_item_id;
+				var wep_range = highest_range_item_id.max_range;
+			
+				//Assign the rank
+				var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			
+				if nearest_valid_rank_int != -1 {
+			
+					//Determine the dist to to the nearest_valid_target, store as dist_to_nearest_valid_target:
+					var dist_to_nearest_valid_target = abs(attacker_id.cur_combat_rank - nearest_valid_rank_int);
+			
+					//Attack - this is our ideal range:
+					if dist_to_nearest_valid_target == wep_range {
+				
+						attacker_id.targeted_rank = nearest_valid_rank_int;
+						attacker_id.enemy_ai_fight_boolean = true;
+					}
+			
+					//Backup if we're not suppressed, there's room to do so, and we won't walk into over watch fire; otherwise, attack
+					else if dist_to_nearest_valid_target < wep_range {
+				
+						//Move 'north':
+						if attacker_id.cur_combat_rank-1 >= 0 && attacker_id.suppressed_count <= 0 && scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank-1) == -1 {
+							attacker_id.combat_move_dir = -1;
+							attacker_id.enemy_ai_move_boolean = true;
+						}
+						//We're unable to move because of any of those conditions, just attack:
+						else {
+							//Choose an 'inferior' melee weapon if the player has cornered us into melee; this 'rewards' the player by being aggressive, in much
+							//the same way that enemies use weaker melee attacks in Darkest Dungeon when forced into the front ranks; this generally can only 
+							//happen if the enemy was suppressed, cornered by overwatch fire, or backed into the final rank:
+							if dist_to_nearest_valid_target == 0 {
+								attacker_id.chosen_weapon = global.item_reference_table[item_type.desperate_claw];
+							}
+							attacker_id.targeted_rank = nearest_valid_rank_int;
+							attacker_id.enemy_ai_fight_boolean = true;
+						}
+					}
+			
+					else if dist_to_nearest_valid_target > wep_range {
+				
+						if attacker_id.suppressed_count <= 0 {
+							//Determine the direction of our target - we don't need to worry about out-of-bounds 
+							//here because we are using our target's array position as our reference:
+							attacker_id.enemy_ai_move_boolean = true;
+							//Determine whether the target is north or south of us:
+					
+							/*
+							The ONLY case in which the enemy would need to move 'up' again (which is normally their 'retreat' direction) is if they were movement locked by suppression or because a pc had overwatched the rank behind them, and another pc slipped behind them to one of the deep enemy ranks.
+
+							We also don't care if the rank they are moving into is over watched at this point because it's still better than causing a frozen game state where the enemies refuse to move and the player refuses to stop overwatching.
+							*/
+					
+								//Nearest target is north of us:
+							if attacker_id.cur_combat_rank > nearest_valid_rank_int {
+								//So move north:
+								attacker_id.combat_move_dir = -1;
+							}
+								//Nearest target us south of us:
+							else {
+								//So move south:
+								attacker_id.combat_move_dir = 1;
+							}
+						}
+						else {
+							var capitalized = scr_string_capitalize(attacker_id.name);
+							var plural_str = "";
+							if attacker_id.suppressed_count > 1 plural_str = "s";
+							scr_add_str_to_dialogue_ar($"\n{capitalized} wants to move closer to their target but they can't - they're suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");	
+						}
+					}
+				}
+				else {
+					d($"\no_con step event: combat_execute_action: evaluating ranged coward enemy ai: nearest_valid_rank_int == {nearest_valid_rank_int}, which indicates that there was no valid targets for the {attacker_id.name}({attacker_id.unique_id}). This can happen if all neutrals and pcs are dead, fled, or unconscious. We'll just show a message and move on.");
+					scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) can only take stock of the devastated battlefield and wait. (All valid targets are dead, fled, or unconscious.)");	
+				}
+			}
+			else {
+				throw($"o_con step event: combat_execute_action game state: evaluating ranged_stationary enemy ai: sorted_by_range_abil_ar == {sorted_by_range_abil_ar}, something went wrong.");	
+			}
+		}
 		
 		#endregion
 		
+		#region AI type: ranged stationary:
+		
+		else if ai_type_enum == enemy_combat_ai.ranged_stationary {
+			
+			//This ai type never retreats; otherwise is identical to ranged_coward.
+			
+			//Create a temporary array of all of this enemy's available weapons from its abil_ar:
+			var temp_abil_ar = [], item_enum;
+			for(var i = 0; i < array_length(attacker_id.ability_ar); i++) {
+				item_enum = attacker_id.ability_ar[i];
+				array_push(temp_abil_ar, global.item_reference_table[item_enum]);
+			}
+			
+			//Need to shuffle the array first so that those positions with == values will be randomized:
+			var sorted_by_range_abil_ar = scr_shuffle_ar(temp_abil_ar);
+			
+			//Actually reverse sort:
+			sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar,"max_range");
+			
+			if sorted_by_range_abil_ar != -1 {
+				
+				var highest_range_item_id = sorted_by_range_abil_ar[0];
+				attacker_id.chosen_weapon = highest_range_item_id;
+				var wep_range = highest_range_item_id.max_range;
+				
+				//Assign nearest valid rank int:
+				var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			
+				if nearest_valid_rank_int != -1 {
+					
+					//Determine the dist to to the nearest_valid_target, store as dist_to_nearest_valid_target:
+					var dist_to_nearest_valid_target = abs(attacker_id.cur_combat_rank - nearest_valid_rank_int);
+				
+					if dist_to_nearest_valid_target <= wep_range {
+					
+						//Attack:
+						attacker_id.targeted_rank = nearest_valid_rank_int;
+						attacker_id.enemy_ai_fight_boolean = true;
+					
+						//Switch to 'superior' melee wep if we're in melee range of our nearest target; this type of enemy does not mind engaging in melee:
+						if dist_to_nearest_valid_target == 0 {
+							var melee_wep_item_id = global.item_reference_table[item_type.monstrous_claw];	
+							attacker_id.chosen_weapon = melee_wep_item_id;
+						}
+					}
+					
+					//Move closer:
+					else if dist_to_nearest_valid_target > wep_range {
+						
+						if attacker_id.suppressed_count <= 0 {
+							//Determine the direction of our target - we don't need to worry about out-of-bounds 
+							//here because we are using our target's array position as our reference:
+							attacker_id.enemy_ai_move_boolean = true;
+							//Determine whether the target is north or south of us:
+					
+							/*
+							The ONLY case in which the enemy would need to move 'up' again (which is normally their 'retreat' direction) is if they were movement locked by suppression or because a pc had overwatched the rank behind them, and another pc slipped behind them to one of the deep enemy ranks.
+
+							We also don't care if the rank they are moving into is over watched at this point because it's still better than causing a frozen game state where the enemies refuse to move and the player refuses to stop overwatching.
+							*/
+					
+								//Nearest target is north of us:
+							if attacker_id.cur_combat_rank > nearest_valid_rank_int {
+								//So move north:
+								attacker_id.combat_move_dir = -1;
+							}
+								//Nearest target us south of us:
+							else {
+								//So move south:
+								attacker_id.combat_move_dir = 1;
+							}
+						}
+						else {
+							var capitalized = scr_string_capitalize(attacker_id.name);
+							var plural_str = "";
+							if attacker_id.suppressed_count > 1 plural_str = "s";
+							scr_add_str_to_dialogue_ar($"\n{capitalized} wants to move closer to their target but they can't - they're suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");	
+						}
+					}
+				}
+				else {
+					d($"\no_con step event: combat_execute_action: evaluating ranged stationary enemy ai: nearest_valid_rank_int == {nearest_valid_rank_int}, which indicates that there was no valid targets for the {attacker_id.name}({attacker_id.unique_id}). This can happen if all neutrals and pcs are dead, fled, or unconscious. We'll just show a message and move on.");
+					scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) can only take stock of the devastated battlefield and wait. (All valid targets are dead, fled, or unconscious.)");	
+				}
+				
+			}
+			else {
+				throw($"o_con step event: combat_execute_action game state: evaluating ranged_stationary enemy ai: sorted_by_range_abil_ar == {sorted_by_range_abil_ar}, something went wrong.");	
+			}
+			
+		}
+		
+		#endregion
+		
+		#region AI type: stationary overwatch:
+		
+		else if ai_type_enum == enemy_combat_ai.stationary_overwatch {
+			
+			//This ai type never retreats, fires upon enemies within its range, and sets overwatch on its max range when targets are outside of it;
+			//Should have a weapon with at least a range of 1.
+			
+			//Create a temporary array of all of this enemy's available weapons from its abil_ar:
+			var temp_abil_ar = [], item_enum;
+			for(var i = 0; i < array_length(attacker_id.ability_ar); i++) {
+				item_enum = attacker_id.ability_ar[i];
+				array_push(temp_abil_ar, global.item_reference_table[item_enum]);
+			}
+			
+			//Need to shuffle the array first so that those positions with == values will be randomized:
+			var sorted_by_range_abil_ar = scr_shuffle_ar(temp_abil_ar);
+			
+			//Actually reverse sort:
+			sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar,"max_range");
+			
+			if sorted_by_range_abil_ar != -1 {
+				var highest_range_item_id = sorted_by_range_abil_ar[0];
+				attacker_id.chosen_weapon = highest_range_item_id;
+				var wep_range = highest_range_item_id.max_range;
+				
+				//Assign nearest valid rank int:
+				var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			
+				if nearest_valid_rank_int != -1 {
+					
+					//Determine the dist to to the nearest_valid_target, store as dist_to_nearest_valid_target:
+					var dist_to_nearest_valid_target = abs(attacker_id.cur_combat_rank - nearest_valid_rank_int);
+					
+					//Attack:
+					if dist_to_nearest_valid_target <= wep_range {
+						//Attack:
+						attacker_id.targeted_rank = nearest_valid_rank_int;
+						attacker_id.enemy_ai_fight_boolean = true;
+					}
+					//Set overwatch:
+					else if dist_to_nearest_valid_target > wep_range {
+						
+						//We need to determine what rank our maximum weapon range falls upon:
+							//Target is 'south' of us:
+						var maximum_targeted_rank;
+						if nearest_valid_rank_int > attacker_id.cur_combat_rank { maximum_targeted_rank = attacker_id.cur_combat_rank + wep_range; }
+							//Target is 'north' of us
+						else if nearest_valid_rank_int < attacker_id.cur_combat_rank { maximum_targeted_rank = attacker_id.cur_combat_rank - wep_range; }
+						//else if nearest_valid_rank_int == attacker_id.cur_combat_rank, then dist_to_nearest_valid_target would not be greater than wep_range, which has a minimum wep_range of 0, so this will never trigger.
+						
+						//Cap - technically not necessary, but just in case:
+						if maximum_targeted_rank < 0 maximum_targeted_rank = 0;
+						if maximum_targeted_rank >= array_length(global.combat_rank_ar) maximum_targeted_rank = array_length(global.combat_rank_ar)-1; 
+						
+						//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars:
+						attacker_id.targeted_rank = maximum_targeted_rank;
+					
+						//Add to corresponding nested struct array:
+						var ar_to_use;
+						if attacker_id.char_team_enum == team_type.enemy {
+							ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].enemy_overwatch_ar;	
+						}
+						else { ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].player_overwatch_ar; }
+						
+						array_push(ar_to_use, attacker_id);
+					
+						//Display result message:
+						scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) aims the {attacker_id.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn.");
+					
+						//No other actionable vars have been set for this char, the should just skip the rest of this game state's code.
+					}
+				}
+				else {
+					d($"\no_con step event: combat_execute_action: evaluating stationary overwatch ai: nearest_valid_rank_int == {nearest_valid_rank_int}, which indicates that there was no valid targets for the {attacker_id.name}({attacker_id.unique_id}). This can happen if all neutrals and pcs are dead, fled, or unconscious. We'll just show a message and move on.");
+					scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) can only take stock of the devastated battlefield and wait. (All valid targets are dead, fled, or unconscious.)");	
+				}
+			}
+			else {
+				throw($"o_con step event: combat_execute_action game state: evaluating ranged_stationary enemy ai: sorted_by_range_abil_ar == {sorted_by_range_abil_ar}, something went wrong.");	
+			}
+		}
+		
+		#endregion
+		
+		#region AI type: overwatch (coward):
+		
+		else if ai_type_enum == enemy_combat_ai.overwatch_coward {
+			
+			//Create a temporary array of all of this enemy's available weapons from its abil_ar:
+			var temp_abil_ar = [], item_enum;
+			for(var i = 0; i < array_length(attacker_id.ability_ar); i++) {
+				item_enum = attacker_id.ability_ar[i];
+				array_push(temp_abil_ar, global.item_reference_table[item_enum]);
+			}
+			
+			//Need to shuffle the array first so that those positions with == values will be randomized:
+			var sorted_by_range_abil_ar = scr_shuffle_ar(temp_abil_ar);
+			
+			//Actually reverse sort:
+			sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar,"max_range");
+			
+			if sorted_by_range_abil_ar != -1 {
+				var highest_range_item_id = sorted_by_range_abil_ar[0];
+				attacker_id.chosen_weapon = highest_range_item_id;
+				var wep_range = highest_range_item_id.max_range;
+				
+				//Assign nearest valid rank int:
+				var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			
+				if nearest_valid_rank_int != -1 {
+					
+					var longest_range_in_opposite_team = scr_return_min_max_opposite_team_range(attacker_id, true);
+					
+					d($"o_con step event: game_state == combat_execute_action: evaluating enemy ai for overwatch coward: scr_return_min_max_opposite_team_range returned: {longest_range_in_opposite_team}");
+					
+					var we_have_ranged_advantage = true;
+					
+					if longest_range_in_opposite_team > wep_range we_have_ranged_advantage = false;
+					
+					//Determine the dist to to the nearest_valid_target, store as dist_to_nearest_valid_target:
+					var dist_to_nearest_valid_target = abs(attacker_id.cur_combat_rank - nearest_valid_rank_int);
+					
+					#region Set overwatch - they will be forced to come to us through our overwatch fire:
+					
+					if we_have_ranged_advantage && dist_to_nearest_valid_target > wep_range {
+						//We need to determine what rank our maximum weapon range falls upon:
+							//Target is 'south' of us:
+						var maximum_targeted_rank;
+						if nearest_valid_rank_int > attacker_id.cur_combat_rank { maximum_targeted_rank = attacker_id.cur_combat_rank + wep_range; }
+							//Target is 'north' of us
+						else if nearest_valid_rank_int < attacker_id.cur_combat_rank { maximum_targeted_rank = attacker_id.cur_combat_rank - wep_range; }
+						//else if nearest_valid_rank_int == attacker_id.cur_combat_rank, then dist_to_nearest_valid_target would not be greater than wep_range, which has a minimum wep_range of 0, so this will never trigger.
+						
+						//Cap - technically not necessary, but just in case:
+						if maximum_targeted_rank < 0 maximum_targeted_rank = 0;
+						if maximum_targeted_rank >= array_length(global.combat_rank_ar) maximum_targeted_rank = array_length(global.combat_rank_ar)-1; 
+						
+						//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars
+						//(which itself calls scr_remove_char_from_overwatch_arrays):
+						attacker_id.targeted_rank = maximum_targeted_rank;
+					
+						//Add to corresponding nested struct array:
+						var ar_to_use;
+						if attacker_id.char_team_enum == team_type.enemy {
+							ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].enemy_overwatch_ar;	
+						}
+						else { ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].player_overwatch_ar; }
+						
+						array_push(ar_to_use, attacker_id);
+					
+						//Display result message:
+						scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) aims the {attacker_id.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn.");
+					
+						//No other actionable vars have been set for this char, the should just skip the rest of this game state's code.
+					}
+					
+					#endregion
+					
+					#region Advance, if able; otherwise, set overwatch:
+					
+					else if we_have_ranged_advantage == false && dist_to_nearest_valid_target > wep_range {
+						
+						//Set over watch anyway, it's better than doing nothing while suppressed:
+						if attacker_id.suppressed_count > 0 {
+							//We need to determine what rank our maximum weapon range falls upon:
+							//Target is 'south' of us:
+							var maximum_targeted_rank;
+							if nearest_valid_rank_int > attacker_id.cur_combat_rank { maximum_targeted_rank = attacker_id.cur_combat_rank + wep_range; }
+								//Target is 'north' of us
+							else if nearest_valid_rank_int < attacker_id.cur_combat_rank { maximum_targeted_rank = attacker_id.cur_combat_rank - wep_range; }
+							//else if nearest_valid_rank_int == attacker_id.cur_combat_rank, then dist_to_nearest_valid_target would not be greater than wep_range, which has a minimum wep_range of 0, so this will never trigger.
+						
+							//Cap - technically not necessary, but just in case:
+							if maximum_targeted_rank < 0 maximum_targeted_rank = 0;
+							if maximum_targeted_rank >= array_length(global.combat_rank_ar) maximum_targeted_rank = array_length(global.combat_rank_ar)-1; 
+						
+							//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars
+							//(which itself calls scr_remove_char_from_overwatch_arrays):
+							attacker_id.targeted_rank = maximum_targeted_rank;
+					
+							//Add to corresponding nested struct array:
+							var ar_to_use;
+							if attacker_id.char_team_enum == team_type.enemy {
+								ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].enemy_overwatch_ar;	
+							}
+							else { ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].player_overwatch_ar; }
+						
+							array_push(ar_to_use, attacker_id);
+					
+							//Display result message:
+							scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) aims the {attacker_id.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn.");
+					
+							//No other actionable vars have been set for this char, the should just skip the rest of this game state's code.
+						}
+						
+						//Adavance, we don't have the ranged advantage, so setting over watch would be potentially useless; we also don't care if we're moving
+						//through overwatch fire - it's still better than potentially causing a frozen game state:
+						else {
+							//Set boolean var:
+							attacker_id.enemy_ai_move_boolean = true;
+							//Determine whether the target is north or south of us:
+								//Nearest target is north of us:
+							if attacker_id.cur_combat_rank > nearest_valid_rank_int {
+								//So move north:
+								attacker_id.combat_move_dir = -1;
+							}
+								//Nearest target us south of us:
+							else {
+								//So move south:
+								attacker_id.combat_move_dir = 1;
+							}
+						}
+					}
+					
+					#endregion
+					
+					#region Withdraw, if able, to potentially setup overwatch fire the next turn; if unable to withdraw, simply attack:
+					
+					else if we_have_ranged_advantage && dist_to_nearest_valid_target <= wep_range {
+						
+						//Determine withdraw direction - the OPPOSITE DIRECTION of wherever our opponent is located;
+						//determine whether the target is north or south of us:
+						var move_south;
+							//Nearest target is north of us - so move south to WITHDRAW and get away from them:
+						if attacker_id.cur_combat_rank > nearest_valid_rank_int {
+							
+							move_south = true;
+						}
+							//Nearest target us south of us - so move north to WITHDRAW and get away from them::
+						else if attacker_id.cur_combat_rank <= nearest_valid_rank_int{
+							
+							move_south = false;
+						}
+						
+						var array_bounds_allow = false;
+						
+						if move_south && attacker_id.cur_combat_rank + 1 < array_length(global.combat_rank_ar) array_bounds_allow = true;
+						
+						else if !move_south && attacker_id.cur_combat_rank - 1 >= 0 array_bounds_allow = true;
+						
+						//Withdraw, if able:
+						if array_bounds_allow && attacker_id.suppressed_count <= 0 && scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank-1) == -1 {
+							//Withdraw:
+								//Set boolean var:
+							attacker_id.enemy_ai_move_boolean = true;
+							if move_south attacker_id.combat_move_dir = 1;
+							else attacker_id.combat_move_dir = -1;
+						}
+						//Just attack - they're in range, anyway:
+						else {
+							attacker_id.targeted_rank = nearest_valid_rank_int;
+							attacker_id.enemy_ai_fight_boolean = true;
+						}
+					}
+					
+					#endregion
+					
+					#region Just fire on the enemy - they have the ranged advantage and they're within our weapon's range:
+					
+					//We might as well fire on our opponent, withdrawing potentially wouldn't do us any good, as the enemy ultimately 
+					//has the ranged advantage over us anyway, and they could just back us up into the most distant position, or fire on us as we're withdrawing:
+					else if !we_have_ranged_advantage && dist_to_nearest_valid_target <= wep_range {
+						attacker_id.targeted_rank = nearest_valid_rank_int;
+						attacker_id.enemy_ai_fight_boolean = true;	
+					}
+					
+					#endregion
+					
+				}
+				else {
+					d($"\no_con step event: combat_execute_action: evaluating overwatch coward ai: nearest_valid_rank_int == {nearest_valid_rank_int}, which indicates that there was no valid targets for the {attacker_id.name}({attacker_id.unique_id}). This can happen if all neutrals and pcs are dead, fled, or unconscious. We'll just show a message and move on.");
+					scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) can only take stock of the devastated battlefield and wait. (All valid targets are dead, fled, or unconscious.)");	
+				}
+				
+			}
+			else {
+				throw($"o_con step event: combat_execute_action game state: evaluating ranged_coward ai: sorted_by_range_abil_ar == {sorted_by_range_abil_ar}, something went wrong.");	
+			}
+		}
+		
+		#endregion
+		
+		d($"\n o_con step event: game_state == combat_execute_action: After evaluating its ai, enemy_ai_move_boolean == {attacker_id.enemy_ai_move_boolean}, and enemy_ai_fight_boolean == {attacker_id.enemy_ai_fight_boolean}.");
 	}
 	
 	#endregion
@@ -1471,11 +1956,10 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		scr_add_str_to_dialogue_ar($"\n{attacker_capitalized_str}({attacker_id.unique_id}) {move_str}.");
 		
 		//Now check and see if they have triggered overwatch fire:
-		var overwatch_ar_to_check;
-		if attacker_id.char_team_enum == team_type.enemy overwatch_ar_to_check = global.overwatch_rank_ar[attacker_id.cur_combat_rank].player_overwatch_ar;
-		else overwatch_ar_to_check = global.overwatch_rank_ar[attacker_id.cur_combat_rank].enemy_overwatch_ar;
+		var overwatch_ar_to_check = scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank);
 		
-		if is_array(overwatch_ar_to_check) && array_length(overwatch_ar_to_check) > 0 {
+		if overwatch_ar_to_check != -1 {
+		
 			global.overwatch_mode_enabled = true;
 			global.target_id_of_overwatch_fire = attacker_id;
 			global.overwatch_attacker_index = 0;
@@ -1522,7 +2006,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		if global.overwatch_mode_enabled global.overwatch_attacker_index++;
 		
 		//Reduce AP (if applicable) only once:
-		if attacker_id.chosen_weapon.ability_point_cost > 0 attacker_id.ability_points_cur -= attacker_id.chosen_weapon.ability_point_cost;
+		if attacker_id.chosen_weapon.ability_point_cost > 0 { attacker_id.ability_points_cur -= attacker_id.chosen_weapon.ability_point_cost; }
 		
 		repeat(num_attacks) {
 			d("\n o_con step event: game_state == combat_execute_action: Entering num_attacks repeat loop now...");
@@ -1578,13 +2062,13 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				if total_attack_val >= ran_to_hit_val {
 						
 					var dmg_roll = irandom_range(attacker_id.chosen_weapon.dmg_min,attacker_id.chosen_weapon.dmg_max);
-						
-					var total_dmg = dmg_roll - defender_id.armor;
 					
 					//Apply 'giant' melee bonuses:
 					if attacker_id.chosen_weapon.melee_only == true && scr_return_passive_enum_in_ar(attacker_id.passive_abil_ar, passive_abil_type.giant) == true {
-						total_dmg += GIANT_MELEE_DMG_BUFF;
+						dmg_roll += GIANT_MELEE_DMG_BUFF;
 					}
+					
+					var total_dmg = dmg_roll - defender_id.armor;
 					
 					//Cap:
 					if total_dmg < 0 total_dmg = 0;
@@ -1593,11 +2077,13 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					defender_id.hp_cur -= total_dmg;
 						
 					var negated_str = "";
+					//Edit: not actually using this negated string for now - it feels redundant - the player can figure it out easily enough just by reading;
+					//the combat text is already bloated enough.
 					if total_dmg <= 0 && dmg_roll > 0 {
-						negated_str = $" The armor of {defender_id.name} has completed negated the damage.";
+						//negated_str = $" The armor of {defender_id.name} has completed negated the damage.";
 					}
 					var capitalized_str = scr_string_capitalize(defender_id.name);
-					attack_result_str += $" **{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.{negated_str}**";	
+					attack_result_str += $"\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.{negated_str}**";	
 						
 					#region Set defender's bool var to true:
 						
@@ -1614,6 +2100,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						//Render unconscious instead:
 						else {
 							defender_id.unconscious_bool = true;
+							//Reset all of their DOTs - we don't chars to continue taking DOT while unconscious:
+							scr_reset_status_effects(defender_id);
 							attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has collapsed!**";
 						}
 					}
@@ -1626,7 +2114,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					var capitalized_atk_str = scr_string_capitalize(attacker_id.name);
 					var enemy_the_str = "";
 					if defender_id.char_team_enum != team_type.pc enemy_the_str = "the ";
-					attack_result_str += $" --{capitalized_atk_str}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!--";
+					attack_result_str += $"\n--//{capitalized_atk_str}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!//--";
 				}
 				
 				//Whether it was a hit or miss, or whether damage was applied or not, we need to print our attack_result_str now:
@@ -2039,12 +2527,12 @@ else if global.cur_game_state == game_state.combat_pc_target_rank && global.wait
 					//Add to corresponding nested struct array:
 					array_push(global.overwatch_rank_ar[index_int].player_overwatch_ar,global.cur_combat_char);
 					
-					//Reset:
+					//Reset - technically very extraneous here - we would never be in this game if we were currently in overwatch mode:
 					global.overwatch_mode_enabled = false;
 					
 					//Display result message:
 					scr_add_str_to_dialogue_ar("\n");
-					scr_add_str_to_dialogue_ar($"{global.cur_combat_char.name} aims the {global.cur_combat_char.chosen_weapon.item_name} at the targeted position. They will automatically fire upon any enemy moving into that position until the start of their next turn."); 
+					scr_add_str_to_dialogue_ar($"{global.cur_combat_char.name}({global.cur_combat_char.unique_id}) aims the {global.cur_combat_char.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn."); 
 					
 					//Advances cur_char, game state, checks combat end conditions:
 					scr_evaluate_combat_conclusion($"\no_con step event: game_state == pc_targets_rank: successfully overwatched target rank: {index_int} and added to corresponding nested struct array in g.overwatch_rank_ar. global.overwatch_mode_enabled == true\n");
@@ -2165,15 +2653,13 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 							//Add item to first empty backpack slot of character:
 							array_push(item_target_char_struct_id.inv_ar,cur_char.passing_item_struct_id);
 							
-							scr_add_str_to_dialogue_ar("\n");
-							scr_add_str_to_dialogue_ar($"{item_target_char_struct_id.name} has picked up the {cur_char.passing_item_struct_id.item_name}",true);
+							scr_add_str_to_dialogue_ar($"\n{item_target_char_struct_id.name} has picked up the {cur_char.passing_item_struct_id.item_name}",true);
 							
 							//Return to prev game state: main or assign pc combat command.
 							global.cur_game_state = prev_game_state;
 						}
 						else {
-							scr_add_str_to_dialogue_ar("\n");
-							scr_add_str_to_dialogue_ar($"{item_target_char_struct_id.name} is already carrying too many items! They will need to drop or pass an item before receiving this one.");
+							scr_add_str_to_dialogue_ar($"\n{item_target_char_struct_id.name} is already carrying too many items! They will need to drop or pass an item before receiving this one.");
 							//Send us back to our prev game state, it's less confusing this way:
 							global.cur_game_state = prev_game_state;
 							if global.cur_game_state == game_state.main_game {
@@ -2185,8 +2671,7 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 						}
 					}
 					else {
-						scr_add_str_to_dialogue_ar("\n");
-						scr_add_str_to_dialogue_ar("You already possess this item; you cannot give it to yourself.",true);
+						scr_add_str_to_dialogue_ar("\nYou already possess this item; you cannot give it to yourself.",true);
 						//Send us back to our prev game state, it's less confusing this way:
 						global.cur_game_state = prev_game_state;
 						if global.cur_game_state == game_state.main_game {
@@ -2217,8 +2702,7 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 				}	
 			}
 			else if !valid_char_index { //A valid number, but not a valid character selection:
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar($"That is not a valid character selection, try again.",true);
+				scr_add_str_to_dialogue_ar($"\nThat is not a valid character selection, try again.",true);
 				//Send us back to our prev game state, it's less confusing this way:
 				global.cur_game_state = prev_game_state;
 				if global.cur_game_state == game_state.main_game {
@@ -2492,11 +2976,11 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					scr_print_char_new_room_text(global.acting_char_struct_id);
 				}
 				else {
-					scr_add_str_to_dialogue_ar("You don't have enough move points.",true);	
+					scr_add_str_to_dialogue_ar("\nYou don't have enough move points.",true);	
 				}
 			}
 			else{
-				scr_add_str_to_dialogue_ar("You cannot move in that direction, try again.",true);	
+				scr_add_str_to_dialogue_ar("\nYou cannot move in that direction, try again.",true);	
 			}
 			
 		}
@@ -2644,16 +3128,14 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					}
 					else {
 						multi_word_str_failed = true;
-						scr_add_str_to_dialogue_ar("\n");
-						scr_add_str_to_dialogue_ar($"You can't equip the {item_struct_id.item_name}, make sure the corresponding equipment slot is free first.",true);
+						scr_add_str_to_dialogue_ar($"\nYou can't equip the {item_struct_id.item_name}, make sure the corresponding equipment slot is free first.",true);
 					}
 				}
 			}
 			
 			else if !valid_item_index {
 				multi_word_str_failed = true;
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar("That is an invalid command, try again.",true);	
+				scr_add_str_to_dialogue_ar("\nThat is an invalid command, try again.",true);	
 			}
 			
 			#endregion
@@ -2662,7 +3144,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		#endregion
 		
 		else if multi_word_str_failed == false {
-			scr_add_str_to_dialogue_ar("That is an invalid command, try again.",true);
+			scr_add_str_to_dialogue_ar("\nThat is an invalid command, try again.",true);
 		}
 		
 		//Reset our player_input_str:

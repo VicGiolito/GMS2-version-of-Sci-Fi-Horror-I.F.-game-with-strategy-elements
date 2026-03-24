@@ -51,24 +51,33 @@ function scr_check_combat_start(){
 				//Add pcs in this room to the last combat rank, switch their participated_in_new_turn_battle var:
 				var pc_struct_id;
 				for(var pc_i = 0; pc_i < array_length(cur_room_struct_id.pcs_in_room_ar); pc_i++) {
+					
 					pc_struct_id = cur_room_struct_id.pcs_in_room_ar[pc_i];
-					array_push(global.combat_rank_ar[5],pc_struct_id);
+					
+					var starting_combat_rank = rank_pos.pc_far;
+					array_push(global.combat_rank_ar[starting_combat_rank],pc_struct_id);
 					//d($"scr_check_combat_start: At nested array at index 5, pc_struct_id.name == {pc_struct_id.name}");
+					
 					array_push(global.combat_initiative_ar,pc_struct_id);
 					pc_struct_id.participated_in_new_turn_battle = true; //reset
 					pc_struct_id.has_fled_combat_bool = false; //reset
-					pc_struct_id.cur_combat_rank = rank_pos.pc_far;
+					pc_struct_id.cur_combat_rank = starting_combat_rank;
 					d($"scr_check_combat_start: {pc_struct_id.name} cur_combat_rank == {pc_struct_id.cur_combat_rank}");
 				}
 				
 				//Add all enemies in this room to the first combat rank:
 				var enemy_struct_id;
 				for(var enemy_i = 0; enemy_i < array_length(cur_room_struct_id.enemies_in_room_ar); enemy_i++) {
+					
 					enemy_struct_id = cur_room_struct_id.enemies_in_room_ar[enemy_i];
-					array_push(global.combat_rank_ar[0],enemy_struct_id);
+					
+					var starting_combat_rank = rank_pos.enemy_far; //unless some unique story case calls for it, should be enemy_far
+					array_push(global.combat_rank_ar[starting_combat_rank],enemy_struct_id);
 					//d($"scr_check_combat_start: At nested array at index 0, enemy_struct_id.name == {enemy_struct_id.name}");
+					
 					array_push(global.combat_initiative_ar,enemy_struct_id);
-					enemy_struct_id.cur_combat_rank = rank_pos.enemy_far;
+					
+					enemy_struct_id.cur_combat_rank = starting_combat_rank;
 					enemy_struct_id.has_fled_combat_bool = false; //reset
 				}
 				
@@ -77,8 +86,7 @@ function scr_check_combat_start(){
 				
 				global.combat_initiative_ar = scr_reverse_sort_combat_init_ar(global.combat_initiative_ar);
 				
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar($"You are {char_struct_id.name}. There are enemies in the {cur_room_struct_id.room_name_str} that have discovered you and anyone else in the room that was also not hidden. There's no choice now--you'll have to fight for your lives!\n")
+				scr_add_str_to_dialogue_ar($"\nYou are {char_struct_id.name}. There are enemies in the {cur_room_struct_id.room_name_str} that have discovered you and anyone else in the room that was also not hidden. There's no choice now--you'll have to fight for your lives!\n")
 				
 				d($"scr_check_combat_start: after building g.combat_initiative_ar, it looks like this:\n");
 				for(var i = 0; i < array_length(global.combat_initiative_ar); i++) {

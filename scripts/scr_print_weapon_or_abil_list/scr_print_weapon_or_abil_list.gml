@@ -3,14 +3,12 @@
 
 function scr_print_weapon_or_abil_list(print_weapon_list_bool, cur_char_id){
 	
-	scr_add_str_to_dialogue_ar("\n");
-	
 	if print_weapon_list_bool {
-		scr_add_str_to_dialogue_ar("You have the following weapon's equipped:");
+		scr_add_str_to_dialogue_ar("\nYou have the following weapon's equipped:");
 	}
 	
 	else {
-		scr_add_str_to_dialogue_ar("You have access to the following skills and abilities:\n");	
+		scr_add_str_to_dialogue_ar("\nYou have access to the following skills and abilities:\n");	
 	}
 	
 	if is_array(cur_char_id.filtered_abil_ar) && array_length(cur_char_id.filtered_abil_ar) > 0 {
@@ -79,6 +77,5 @@ function scr_print_weapon_or_abil_list(print_weapon_list_bool, cur_char_id){
 		scr_add_str_to_dialogue_ar("None.");	
 	}
 	
-	scr_add_str_to_dialogue_ar("\n");
-	scr_add_str_to_dialogue_ar("Enter the corresponding weapon or ability number, or enter 'B' or 'BACKUP' to return to the previous game state.", true);
+	scr_add_str_to_dialogue_ar("\nEnter the corresponding weapon or ability number, or enter 'B' or 'BACKUP' to return to the previous game state.", true);
 }

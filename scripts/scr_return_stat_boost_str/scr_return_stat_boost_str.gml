@@ -42,6 +42,8 @@ function scr_return_stat_boost_str(stat_boost_enum){
 				
 	else if stat_boost_enum== stat_boost.electric_res stat_boost_str = "electric resistence";
 	
+	else if stat_boost_enum== stat_boost.spd stat_boost_str = "speed";
+	
 	return stat_boost_str;
 	
 }

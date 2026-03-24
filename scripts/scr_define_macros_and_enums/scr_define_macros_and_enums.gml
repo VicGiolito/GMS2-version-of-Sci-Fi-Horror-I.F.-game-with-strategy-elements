@@ -317,8 +317,9 @@ function scr_define_macros_and_enums(){
 	enum enemy_combat_ai {
 		melee,
 		ranged_coward,
-		suppressor,
-		overwatch,
+		ranged_stationary,
+		suppressor, //not currently in use
+		overwatch_coward,
 		stationary_overwatch,
 		total_enemy_combat_ai_types
 	}
@@ -385,6 +386,7 @@ function scr_define_macros_and_enums(){
 		gas_res,
 		vacuum_res,
 		electric_res,
+		spd,
 		total_stats
 	}
 	
@@ -411,7 +413,7 @@ function scr_define_macros_and_enums(){
 	#macro BASE_WALL_HP 50
 	#macro DOT_FIRE 5
 	#macro DOT_POISON 3
-	#macro BASE_UNCONSCIOUS_COUNT 4
+	#macro UNCONSCIOUS_DURATION 4
 	#macro SUPPRESSED_EVASION_DEBUFF 2
 	#macro SUPPRESSED_SPEED_DEBUFF 6
 	#macro SUPPRESS_DURATION 2
@@ -433,6 +435,7 @@ function scr_define_macros_and_enums(){
 	#macro CRAGOS_ACC_DEBUFF 2
 	#macro CRAGOS_EVASION_DEBUFF 1
 	#macro GIANT_MELEE_DMG_BUFF 3
+	#macro AVERAGE_CHAR_SPEED 3
 	
 	#macro UNVISITED_CELL 0
 	#macro VISITED_CELL 1

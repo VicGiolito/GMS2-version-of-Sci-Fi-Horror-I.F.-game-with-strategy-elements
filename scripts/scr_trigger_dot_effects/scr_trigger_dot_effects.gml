@@ -22,7 +22,7 @@ function scr_trigger_dot_effects(char_struct_id){
 		
 		if char_struct_id.stun_count > 1 plural_str = "s";
 		
-		dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) is reeling in pain while stunned!...**\n";
+		dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) is stunned, reeling in pain...**\n";
 		
 		char_struct_id.stun_count--;
 		
@@ -166,11 +166,7 @@ function scr_trigger_dot_effects(char_struct_id){
 			dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has collapsed!**\n";
 			char_struct_id.unconscious_bool = true;
 			//Reset all of their revelant status effect counts - pcs do not continue to take dot damage after collapsing:
-			char_struct_id.poisoned_count = 0;
-			char_struct_id.stun_count = 0;
-			char_struct_id.burning_count = 0;
-			char_struct_id.bleeding_count = 0;
-			char_struct_id.suppressed_count = 0;
+			scr_reset_status_effects(char_struct_id);
 		}
 		else {
 			dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has died!**\n";
@@ -185,7 +181,7 @@ function scr_trigger_dot_effects(char_struct_id){
 		char_struct_id.unconscious_count++;
 		
 		//Switch boolean, show death message:
-		if char_struct_id.unconscious_count >= 4 {
+		if char_struct_id.unconscious_count >= UNCONSCIOUS_DURATION {
 			dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has gasped their last breath!**\n";
 			char_struct_id.has_died_bool = true;
 			char_still_alive_bool = false;

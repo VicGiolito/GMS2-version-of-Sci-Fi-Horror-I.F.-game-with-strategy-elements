@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_sort_combat_initiative_ar",
+  "name": "scr_reverse_sort_ar_by_struct_var",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

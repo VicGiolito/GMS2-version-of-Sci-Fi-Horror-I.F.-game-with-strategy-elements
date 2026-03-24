@@ -1,6 +1,8 @@
 
 
-function scr_sort_combat_initiative_ar(arr){
+//This script is defunct - I don't use it for sorting the combat init ar
+
+function scr_defunct_sort_combat_initiative_ar(arr){
 	
     var swapped, size = array_length(arr);
     
@@ -28,5 +30,4 @@ function scr_sort_combat_initiative_ar(arr){
     }
     
     return arr;
-
 }

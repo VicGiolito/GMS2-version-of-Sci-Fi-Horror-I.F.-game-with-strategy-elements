@@ -10,5 +10,4 @@ function scr_reset_pcs_filtered_abil_ars(){
 	for(var i = 0; i < array_length(global.pc_char_ar); i++) {
 		global.pc_char_ar[i].filtered_abil_ar = -1;	
 	}
-	
 }

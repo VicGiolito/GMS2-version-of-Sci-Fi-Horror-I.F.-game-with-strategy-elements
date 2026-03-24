@@ -12,7 +12,6 @@ function scr_reverse_sort_combat_init_ar(arr){
 	var _len  = array_length(arr);
 	var _temp = 0;
 
-	
 	// Outer pass — each pass guarantees the next smallest
 	// value has sunk to its correct position at the bottom
 	for (var i = 0; i < _len - 1; i++) {

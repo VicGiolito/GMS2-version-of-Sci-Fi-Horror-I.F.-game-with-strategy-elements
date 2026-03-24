@@ -18,5 +18,4 @@ function scr_reset_certain_char_combat_vars(char_struct_id){
 	
 	//If applicable, remove this char from the corresponding position in the global.overwatch_rank_ar and instance scope overwatch_attackers_ar:
 	scr_remove_char_from_overwatch_arrays(char_struct_id);
-	
 }

@@ -2,6 +2,8 @@
 
 removes the char_struct_id from global ar and instance ar, if applicable
 
+requires their .targeted_rank var to be defined and accurate.
+
 */
 
 function scr_remove_char_from_overwatch_arrays(char_struct_id){

@@ -17,7 +17,7 @@ function scr_build_char_count_str_from_ar(ar_to_pass){
 		if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
 	
 			if array_length(char_ar) == 0 {
-				array_push(char_ar, { char_struct_name: char_struct_id.name, char_count: 1} );
+				array_push(char_ar, { char_struct_name: char_struct_id.name, char_count: 1, collapsed_bool: char_struct_id.unconscious_bool, collapsed_count: char_struct_id.unconscious_count } );
 			} else {
 				//We iterate through our char_ar, and if its not there, we add it; 
 				//if it, we simply increase the corresponding char_count:
@@ -30,7 +30,7 @@ function scr_build_char_count_str_from_ar(ar_to_pass){
 					}
 				}
 				if !duplicate_found {
-					array_push(char_ar, { char_struct_name: char_struct_id.name, char_count: 1 } );	
+					array_push(char_ar, { char_struct_name: char_struct_id.name, char_count: 1, collapsed_bool: char_struct_id.unconscious_bool, collapsed_count: char_struct_id.unconscious_count } );	
 				}
 			}
 		}
@@ -40,10 +40,22 @@ function scr_build_char_count_str_from_ar(ar_to_pass){
 	var char_count_str = "";
 	
 	for(var i = 0; i < array_length(char_ar); i++) {
+		
+		//Show char name:
 		char_count_str += $" {char_ar[i].char_struct_name}";
+		
+		//Show char count:
 		if char_ar[i].char_count > 1 {
 			char_count_str += $" ({char_ar[i].char_count})";		
 		}
+		
+		//If they're unconscious, show that:
+		if char_ar[i].collapsed_bool == true {
+			var plural_str = "";
+			if UNCONSCIOUS_DURATION - char_ar[i].collapsed_count > 1 plural_str = "s";
+			char_count_str += $" (unconscious for {UNCONSCIOUS_DURATION - char_ar[i].collapsed_count} more turn{plural_str})";	
+		}
+		
 		//Add semi-colon unless its the last index:
 		if i != array_length(char_ar)-1 {
 			char_count_str += ";"

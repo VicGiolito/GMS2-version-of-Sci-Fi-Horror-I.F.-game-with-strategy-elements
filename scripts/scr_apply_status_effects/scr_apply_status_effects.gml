@@ -15,7 +15,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 				d("THIS STATUS EFFECT WAS APPLIED!");
 				//Apply effect, add message:
 				target_char_id.burning_count = FIRE_DURATION; //Does not stack, but can be reapplied
-				status_effect_result_str += $"{target_char_id.name}({target_char_id.unique_id}) has caught fire! ({DOT_FIRE} damage per turn, does not stack.)\n";
+				status_effect_result_str += $"**{target_char_id.name}({target_char_id.unique_id}) has caught fire! ({DOT_FIRE} damage per turn, does not stack.)**\n";
 			}
 		}		
 	}
@@ -32,7 +32,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 				//Apply effect, add message:
 				target_char_id.poisoned_count += POISON_DURATION; //Can stack
 				var poison_percent_str = string(POISON_PERCENT_VAL*100);
-				status_effect_result_str += $"{target_char_id.name}({target_char_id.unique_id}) has been poisoned! ({poison_percent_str}% of maximum hit points as damage per turn, can stack.)\n";
+				status_effect_result_str += $"**{target_char_id.name}({target_char_id.unique_id}) has been poisoned! ({poison_percent_str}% of maximum hit points as damage per turn, can stack.)**\n";
 			}
 		}		
 	}
@@ -49,7 +49,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 				//Apply effect, add message:
 				target_char_id.bleeding_count += BLEED_DURATION; //Can stack
 				var bleed_percent_str = BLEED_PERCENT_VAL*100;
-				status_effect_result_str += $"{target_char_id.name}({target_char_id.unique_id}) is bleeding! ({bleed_percent_str}% of maximum hit points as damage per turn, can stack.)\n";
+				status_effect_result_str += $"**{target_char_id.name}({target_char_id.unique_id}) is bleeding! ({bleed_percent_str}% of maximum hit points as damage per turn, can stack.)**\n";
 			}
 		}		
 	}
@@ -68,7 +68,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 					d("THIS STATUS EFFECT WAS APPLIED!");
 					//Apply effect, add message:
 					target_char_id.stun_count = 1; //Does not stack
-					status_effect_result_str += $"{target_char_id.name}({target_char_id.unique_id}) has been stunned! (Skips next turn, does not stack.)\n";
+					status_effect_result_str += $"**{target_char_id.name}({target_char_id.unique_id}) has been stunned! (Skips next turn, does not stack.)**\n";
 					//Cancel dodge, overwatch, cooper's smoke bomb, things like that, etc.:
 					if target_char_id.evading_boolean == true {
 						target_char_id.evading_boolean = false;
@@ -104,7 +104,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 					
 					var plural_str = "";
 					if SUPPRESS_DURATION > 1 plural_str = "s";
-					status_effect_result_str += $"{target_char_id.name}({target_char_id.unique_id}) has been suppressed! (Can't move, -{SUPPRESSED_EVASION_DEBUFF} evasion, -{SUPPRESSED_SPEED_DEBUFF} speed for {SUPPRESS_DURATION} turn{plural_str}. Does not stack.)\n";
+					status_effect_result_str += $"**{target_char_id.name}({target_char_id.unique_id}) has been suppressed! (Can't move, -{SUPPRESSED_EVASION_DEBUFF} evasion, -{SUPPRESSED_SPEED_DEBUFF} speed for {SUPPRESS_DURATION} turn{plural_str}. Does not stack.)**\n";
 				}
 			}
 		}		
@@ -121,7 +121,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 				d("THIS STATUS EFFECT WAS APPLIED!");
 				//Apply effect, add message:
 				target_char_id.infection_count += 1; //Can stack
-				status_effect_result_str += $"{target_char_id.name}({target_char_id.unique_id}) has been infected! (If their current infection of {target_char_id.infection_count} becomes greater than or equal to {target_char_id.char_max_infection}, they will transform into an enemy at the start of their next turn. Outside of combat, infection increases by 1 each turn.)\n";
+				status_effect_result_str += $"**{target_char_id.name}({target_char_id.unique_id}) has been infected! (If their current infection of {target_char_id.infection_count} becomes greater than or equal to {target_char_id.char_max_infection}, they will transform into an enemy at the start of their next turn. Outside of combat, infection increases by 1 each turn.)**\n";
 			}
 		}		
 	}

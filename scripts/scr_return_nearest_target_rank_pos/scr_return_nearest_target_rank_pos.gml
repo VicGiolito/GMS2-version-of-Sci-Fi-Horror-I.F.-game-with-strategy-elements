@@ -27,16 +27,13 @@ function scr_return_nearest_target_rank_pos(cur_combat_rank_pos, enemy_searching
 			
 			char_struct_id = global.combat_rank_ar[iterating_down_index][char_i];
 			
-			//Only check at all if the char has not died or has fled...
-			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
+			//Only check at all if the char has not died, fled, or is not unconscious... Stunned characters can be targeted for attack:
+			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false && char_struct_id.unconscious_bool == false {
 				
 				if enemy_searching_bool && (char_struct_id.char_team_enum == team_type.pc || char_struct_id.char_team_enum == team_type.neutral) {
-					//Enemies cannot target pcs that are already unconscious (neutrals will never be unconscious, they die instantly)
-					if char_struct_id.unconscious_bool == false {
-						return iterating_down_index;
-					}
+					return iterating_down_index;	
 				}
-				//PCs and neutrals can target enemies that are already stunned:
+				//PCs and neutrals could theoretically target enemies that are already unconscious - but enemies and neutrals never become unconscious - they die instantly:
 				else if !enemy_searching_bool && char_struct_id.char_team_enum == team_type.enemy {
 					return iterating_down_index;
 				}
@@ -54,16 +51,13 @@ function scr_return_nearest_target_rank_pos(cur_combat_rank_pos, enemy_searching
 			
 			char_struct_id = global.combat_rank_ar[iterating_up_index][char_i];
 			
-			//Only check at all if the char has not died or has fled...
-			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
+			//Only check at all if the char has not died, fled, or is not unconscious... Stunned characters can be targeted for attack:
+			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false && char_struct_id.unconscious_bool == false  {
 				
 				if enemy_searching_bool && (char_struct_id.char_team_enum == team_type.pc || char_struct_id.char_team_enum == team_type.neutral) {
-					//Enemies cannot target pcs that are already unconscious (neutrals will never be unconscious, they die instantly)
-					if char_struct_id.unconscious_bool == false {
-						return iterating_up_index;
-					}
+					return iterating_up_index;
+					
 				}
-				//PCs and neutrals can target enemies that are already stunned:
 				else if !enemy_searching_bool && char_struct_id.char_team_enum == team_type.enemy {
 					return iterating_up_index;
 				}
@@ -88,6 +82,6 @@ function scr_return_nearest_target_rank_pos(cur_combat_rank_pos, enemy_searching
 		if !valid_dir_found break;
 	}
 	
-	return -1; //No index position found
+	return -1; //No index position found; a valid char could not be found. For enemies, this means that all valid targets are probably unconscious; this should never trigger for pcs, as enemies and neutrals (with the exception of Nikano) generally do not become unconscious when they 'die'
 
 }

@@ -52,6 +52,8 @@ function scr_apply_item_stat_changes(char_struct_id, item_struct_id, equip_boole
 				
 				else if i == stat_boost.electric_res char_struct_id.res_electric += stat_boost_val*equip_val;
 				
+				else if i == stat_boost.spd char_struct_id.spd += stat_boost_val*equip_val;
+				
 				if !equipped_during_creation_boolean {
 				
 					var stat_boost_str = scr_return_stat_boost_str(i);

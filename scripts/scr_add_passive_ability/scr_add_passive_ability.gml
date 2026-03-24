@@ -16,5 +16,7 @@ function scr_add_passive_ability(char_struct_id, passive_abil_enum, called_from_
 	if passive_abil_enum == passive_abil_type.hardened_skin {
 		char_struct_id.armor += 1;	
 	}
-	
+	else if passive_abil_enum == passive_abil_type.thick_hide {
+		char_struct_id.armor += 1;	
+	}
 }

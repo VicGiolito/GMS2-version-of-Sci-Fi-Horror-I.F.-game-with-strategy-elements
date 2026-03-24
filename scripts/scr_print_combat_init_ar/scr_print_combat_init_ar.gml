@@ -12,8 +12,16 @@ function scr_print_combat_init_ar(){
 		char_struct_id = global.combat_initiative_ar[i];
 		
 		if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
-		
-			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}({char_struct_id.unique_id}).");
+			
+			var collapsed_str = "";
+			var plural_str = "";
+			
+			if char_struct_id.unconscious_bool == true {
+				if UNCONSCIOUS_DURATION - char_struct_id.unconscious_count > 1 plural_str = "s";
+				collapsed_str = $" (unconscious for {UNCONSCIOUS_DURATION - char_struct_id.unconscious_count} more turn{plural_str})";
+			}
+			
+			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}({char_struct_id.unique_id}){collapsed_str}.");
 		}
 	}
 }

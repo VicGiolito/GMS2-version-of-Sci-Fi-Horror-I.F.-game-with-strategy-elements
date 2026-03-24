@@ -28,7 +28,7 @@ function scr_define_structs(){
         dexterity = 0;
         accuracy = AVERAGE_ACCURACY_SCORE;
         stealth = 0; //When you consider that rooms add or subtract to this value based upon their cover amount, the average here can be lower than 7
-        spd = 0; //9 is current max, so a char with with 9 base spd would have to roll a 0, and a character with a base spd of 0 would have to roll a 9 to beat them.
+        spd = AVERAGE_CHAR_SPEED; //9 is current max, so a char with with 9 base spd would have to roll a 0, and a character with a base spd of 0 would have to roll a 9 to beat them.
 
         ran_init_val = 0; //A random value assigned that helps determine when characters act in combat
 
@@ -209,7 +209,7 @@ function scr_define_structs(){
             res_poison = 25;
             res_suppress = 25;
 
-            armor = 1;
+            armor = 0; //thick hide will give him +1 armor
             healing_factor_boolean = true;
             revived_dialogue_str_ar = [
                 $"*{nick_name} dusts himself off, grumbling: 'How do you kill a dead man?'*",
@@ -219,7 +219,7 @@ function scr_define_structs(){
             ];
 
             accuracy = AVERAGE_ACCURACY_SCORE-CRAGOS_ACC_DEBUFF; //Worse than average accuracy, only hits about 50% of the time, on average
-            evasion = AVERAGE_EVASION_SCORE-CRAGOS_EVASION_DEBUFF; //
+            evasion = AVERAGE_EVASION_SCORE-CRAGOS_EVASION_DEBUFF; //Worse than average evasion
 		}
 
         else if char_type_enum == character.doctor {
@@ -243,7 +243,7 @@ function scr_define_structs(){
             intelligence = 8;
             wisdom = 6;
             dexterity = 2;
-            spd = 2;
+            spd = AVERAGE_CHAR_SPEED;
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
@@ -270,7 +270,7 @@ function scr_define_structs(){
             intelligence = 6;
             wisdom = 6;
             dexterity = 6;
-            spd = 4;
+            spd = AVERAGE_CHAR_SPEED+1;
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
@@ -297,7 +297,7 @@ function scr_define_structs(){
             intelligence = 6;
             wisdom = 6;
             dexterity = 1;
-            spd = 3;
+            spd = AVERAGE_CHAR_SPEED;
 
 
 		}
@@ -323,7 +323,7 @@ function scr_define_structs(){
             intelligence = 4;
             wisdom = 4;
             dexterity = 2;
-            spd = 4;
+            spd = AVERAGE_CHAR_SPEED+1;
 
 		}
 
@@ -348,7 +348,7 @@ function scr_define_structs(){
             intelligence = 7;
             wisdom = 7;
             dexterity = 3;
-            spd = 5;
+            spd = AVERAGE_CHAR_SPEED;
             //Base 'half-mechanical' resistences
             res_fire = 50;
             res_vacuum = 50;
@@ -385,7 +385,7 @@ function scr_define_structs(){
             intelligence = 3;
             wisdom = 3;
             dexterity = 3;
-            spd = 4;
+            spd = AVERAGE_CHAR_SPEED+1;
 
             armor = 0; //Is set from passive
             //Base 'half-mechanical' resistences:
@@ -419,7 +419,7 @@ function scr_define_structs(){
             intelligence = 1;
             wisdom = 2;
             dexterity = 2;
-            spd = 2;
+            spd = AVERAGE_CHAR_SPEED-1;
 		}
 
         else if char_type_enum == character.physicist {
@@ -443,7 +443,7 @@ function scr_define_structs(){
             intelligence = 9;
             wisdom = 9;
             dexterity = 2;
-            spd = 3;
+            spd = AVERAGE_CHAR_SPEED-1;
 
 		};
 
@@ -469,7 +469,7 @@ function scr_define_structs(){
             intelligence = 0;
             wisdom = 0;
             dexterity = 4;
-            spd = 7;
+            spd = AVERAGE_CHAR_SPEED+2;
 
             evasion = AVERAGE_EVASION_SCORE + 1;  // Better than average at evading
 
@@ -496,7 +496,7 @@ function scr_define_structs(){
             intelligence = 4;
             wisdom = 8;
             dexterity = 2;
-            spd = 2;
+            spd = AVERAGE_CHAR_SPEED+1;
             //Base 'mechanical' resistences
             res_fire = 100;
             res_vacuum = 100;
@@ -529,7 +529,7 @@ function scr_define_structs(){
             intelligence = 3;
             wisdom = 4;
             dexterity = 2;
-            spd = 4;
+            spd = AVERAGE_CHAR_SPEED;
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
@@ -557,7 +557,7 @@ function scr_define_structs(){
             intelligence = 2;
             wisdom = 1;
             dexterity = 7;
-            spd = 5;
+            spd = AVERAGE_CHAR_SPEED+1;
 
             evasion = AVERAGE_EVASION_SCORE+1; //Better than average at evading
 
@@ -586,7 +586,7 @@ function scr_define_structs(){
             intelligence = 2;
             wisdom = 1;
             dexterity = 5;
-            spd = 4;
+            spd = AVERAGE_CHAR_SPEED+1;
 		}
 
         else if char_type_enum == character.neutral_infected_scientist {
@@ -610,7 +610,7 @@ function scr_define_structs(){
             intelligence = 8;
             wisdom = 8;
             dexterity = 2;
-            spd = 2;
+            spd = AVERAGE_CHAR_SPEED+2;
 
             combat_ai_preference = enemy_combat_ai.ranged_coward;
 
@@ -650,7 +650,7 @@ function scr_define_structs(){
             ability_points_max = 3;
             sanity_cur = 20;
             sanity_max = 20;
-            spd = 4;
+            spd = AVERAGE_CHAR_SPEED+1;
 			
 			nick_name = "Buzzsaw";
 
@@ -726,11 +726,11 @@ function scr_define_structs(){
             ability_points_max = 3;
             sanity_cur = 20;
             sanity_max = 20;
-            spd = 3;
+            spd = AVERAGE_CHAR_SPEED;
 			
 			nick_name = "Sentinel";
 
-            combat_ai_preference =  enemy_combat_ai.overwatch;
+            combat_ai_preference =  enemy_combat_ai.overwatch_coward;
 
             armor = 0;
             evasion = 0;
@@ -748,8 +748,6 @@ function scr_define_structs(){
             name = "Light Sentry Drone";
             hp_max = 4;
             hp_cur = hp_max;
-            ability_points_cur = 3;
-            ability_points_max = 3;
             sanity_cur = 20;
             sanity_max = 20;
             spd = 10;
@@ -767,15 +765,14 @@ function scr_define_structs(){
             res_poison = 500;
             res_infect = 500;
             res_bleed = 500;
-
+			
+			scr_add_ability(self,item_type.light_mg);
 		}
 
         else if char_type_enum == character.enemy_lumbering_carrier {
             name = "Lumbering Carrier";
             hp_max = irandom_range(16,20);
             hp_cur = hp_max;
-            ability_points_cur = 3;
-            ability_points_max = 3;
             sanity_cur = 20;
             sanity_max = 20;
 			
@@ -799,94 +796,131 @@ function scr_define_structs(){
 
             spd = -1
 
-			scr_add_ability(self,item_type.monstrous_claw);
+			scr_add_ability(self, item_type.monstrous_claw);
 		}
 
         else if char_type_enum == character.enemy_spined_spitter {
-            name = "Spined Spitter"
-            hp_max = irandom_range(9,11)
-            hp_cur = hp_max
-            ability_points_cur = 3
-            ability_points_max = 3
-            sanity_cur = 20
-            sanity_max = 20
+            name = "Spined Spitter";
+            hp_max = irandom_range(9,11);
+            hp_cur = hp_max;
+            sanity_cur = 20;
+            sanity_max = 20;
 			
 			nick_name = "Spitter";
 
-            armor = 1
-            evasion = 0
-            res_fire = 0
-            res_vacuum = 100
-            res_gas = 100
-            res_electric = 0
+            armor = 1;
+            evasion = 0;
+            res_fire = 0;
+            res_vacuum = 100;
+            res_gas = 100;
+            res_electric = 0;
 			
 			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
             combat_ai_preference = enemy_combat_ai.ranged_coward;
 
-            spd = 3
+            spd = AVERAGE_CHAR_SPEED+1;
 
-
+			scr_add_ability(self, item_type.spine_projectile);	
 		}
 
         else if char_type_enum == character.enemy_transmogrified_soldier {
-            name = "Transmogrified Soldier"
-            hp_max = irandom_range(10,13)
-            hp_cur = hp_max
-            ability_points_cur = 3
-            ability_points_max = 3
-            sanity_cur = 20
-            sanity_max = 20
+            name = "Transmogrified Soldier";
+            hp_max = irandom_range(10,13);
+            hp_cur = hp_max;
+            sanity_cur = 20;
+            sanity_max = 20;
 			
 			nick_name = "TransformedSldr.";
 			
-			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
+			accuracy = AVG_ACC_VAL+2; //Most enemies have better accuracy than most pcs
 
-            armor = 0
-            evasion = -1
-            res_fire = 0
-            res_vacuum = 100
-            res_gas = 100
-            res_electric = 0
+            armor = 0;
+            evasion = -1;
+            res_fire = 0;
+            res_vacuum = 100;
+            res_gas = 100;
+            res_electric = 0;
 
-            combat_ai_preference = enemy_combat_ai.overwatch;
+            combat_ai_preference = enemy_combat_ai.overwatch_coward;
 
-            spd = 2
-
+            spd = AVERAGE_CHAR_SPEED+1;
+			
+			scr_add_passive_ability(self,passive_abil_type.giant,"constructor event for transmogrified soldier char");
+			
+			scr_add_ability(self,item_type.sniper_rifle);
+			
+			/* //Exclude for now while testing overwatch:
+			
+			var ran_equip_int = irandom_range(1,6);
+			
+			if ran_equip_int == 1 {
+				scr_add_ability(self, item_type.pulse_rifle);	
+			}
+			else if ran_equip_int == 2 {
+				scr_add_ability(self, item_type.assault_rifle);	
+				accuracy++;
+			}
+			else if ran_equip_int == 3 {
+				scr_add_ability(self, item_type.shotgun);	
+				armor += 2;
+				evasion++;
+				combat_ai_preference = enemy_combat_ai.ranged_stationary;
+			}
+			else if ran_equip_int == 4 {
+				scr_add_ability(self, item_type.pulse_pistol);	
+				armor++;
+				accuracy++;
+				combat_ai_preference = enemy_combat_ai.ranged_coward;
+			}
+			else if ran_equip_int == 5 {
+				scr_add_ability(self, item_type.machine_pistol);	
+				armor += 2;
+				accuracy++;
+				evasion++;
+				combat_ai_preference = enemy_combat_ai.ranged_coward;
+			}
+			else if ran_equip_int == 6 {
+				scr_add_ability(self, item_type.fire_axe);	
+				scr_add_ability(self, item_type.lead_pipe);
+				armor += 3;
+				accuracy += 2;
+				evasion += 2;
+				combat_ai_preference = enemy_combat_ai.melee;
+			}
+			*/
 		}
 
         else if char_type_enum == character.enemy_sodden_shambler {
-            name = "Sodden Shambler"
-            hp_max = irandom_range(8,10)
-            hp_cur = hp_max
-            ability_points_cur = 3
-            ability_points_max = 3
-            sanity_cur = 20
-            sanity_max = 20
+            name = "Sodden Shambler";
+            hp_max = irandom_range(8,10);
+            hp_cur = hp_max;
+            sanity_cur = 20;
+            sanity_max = 20;
 			
 			nick_name = "Shambler";
 			
 			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
-            armor = 0
-            evasion = 0
-            res_fire = 0
-            res_vacuum = 100
-            res_gas = 100
-            res_electric = 0
+            armor = 0;
+            evasion = 0;
+            res_fire = 0;
+            res_vacuum = 100;
+            res_gas = 100;
+            res_electric = 0;
 
             combat_ai_preference = enemy_combat_ai.ranged_coward;
 
-            spd = 0
-
+            spd = 0;
+			
+			scr_add_ability(self,item_type.acid_cloud);
+			scr_add_ability(self,item_type.acid_spit);
 		}
 
         else if char_type_enum == character.enemy_chittering_lurker {
             name = "Chittering Lurker"
             hp_max = irandom_range(7,9)
             hp_cur = hp_max
-            ability_points_cur = 3
-            ability_points_max = 3
             sanity_cur = 20
             sanity_max = 20
 			
@@ -904,8 +938,10 @@ function scr_define_structs(){
             ai_is_suppressor_boolean = true
             combat_ai_preference = enemy_combat_ai.ranged_coward
 
-            spd = 8
-
+            spd = 7;
+			
+			scr_add_ability(self,item_type.filament_spray);
+			scr_add_ability(self,item_type.sticky_slime);
 		}
 		
 		#endregion End region for defining char stats
@@ -1104,6 +1140,7 @@ function scr_define_structs(){
             ability_cost_str = ""; //Only defined for those abilities with their non_attack_ability_boolean == true (weapon type abilities); otherwise defined in scr_print_weapon_or_abil_list
             requires_ammo_boolean = false;
 			use_context = abil_use_context.combat_only;
+			melee_only = true;
 		}
 
         else if item_enum == item_type.headbutt { //ogre
@@ -1120,6 +1157,7 @@ function scr_define_structs(){
             ability_cost_str = $"Spend {ability_point_cost} AP";
             requires_ammo_boolean = false;
 			use_context = abil_use_context.combat_only;
+			melee_only = true;
 		}
 
         else if item_enum == item_type.feral_bite { //ogre
@@ -1136,6 +1174,7 @@ function scr_define_structs(){
             ability_cost_str = $"Spend {ability_point_cost} AP";
             requires_ammo_boolean = false;
 			use_context = abil_use_context.combat_only;
+			melee_only = true;
 		}
 
         //This skill uses utils execute_non_attack_ability()
@@ -1316,15 +1355,15 @@ function scr_define_structs(){
             item_verb = "whips with a";
             item_dmg_str = "slashed";
             max_range = 0;
-            stun_chance = 250; //25;
+            stun_chance = 25; //25;
             bleed_chance = 0;
             always_checks_status_effect_boolean = false;
-            infection_chance = 10;
+            infection_chance = 15;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.desperate_claw {
             dmg_min = 1;
-            dmg_max = 4;
+            dmg_max = 3;
             requires_ammo_boolean = false;
             item_name = "DESPERATE CLAW";
             equip_slot_list = [equip_slot.rh,equip_slot.lh];  // Indicates either hand can equip
@@ -1417,7 +1456,7 @@ function scr_define_structs(){
             dmg_max = 6;
             item_name = "ASSAULT RIFLE";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
-            max_range = 4;
+            max_range = 3;
             item_verb = "fires the";
             item_dmg_str = "shot";
             can_overwatch_boolean = true;
@@ -1426,42 +1465,42 @@ function scr_define_structs(){
 			aoe_count = 2;
 		}
         else if item_enum == item_type.light_mg { //Light sentry gun weapon.
-            dmg_min = 3
-            dmg_max = 6
-            item_name = "LIGHT MACHINE GUN"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 4
-            item_verb = "fires the"
-            item_dmg_str = "shot"
-            can_overwatch_boolean = true
-            bleed_chance = 25
-            suppress_chance = 33
+            dmg_min = 3;
+            dmg_max = 6;
+            item_name = "MACHINE GUN";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 2; //4;
+            item_verb = "fires the";
+            item_dmg_str = "shot";
+            can_overwatch_boolean = true;
+            bleed_chance = 25;
+            suppress_chance = 33;
+			aoe_count = 2;
 		}
         else if item_enum == item_type.spine_projectile {
-            dmg_min = 3
-            dmg_max = 6
-            item_name = "SHOOTING SPINE"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 3
-            item_verb = "fires a"
-            item_dmg_str = "shot"
-            bleed_chance = 25
-            infection_chance = 10
-            poison_chance = 25
+            dmg_min = 3;
+            dmg_max = 6;
+            item_name = "BARBED SPINE";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 3; //3;
+            item_verb = "fires from its mouth a";
+            item_dmg_str = "shot";
+            bleed_chance = 25;
+            infection_chance = 10;
+            poison_chance = 25;
 		}
-        
         else if item_enum == item_type.acid_spit {
-            dmg_min = 4
-            dmg_max = 8
-            item_name = "ACID BILE"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 2
-            item_verb = "spits with"
-            item_dmg_str = "melted"
-            aoe_count = 3
-            can_overwatch_boolean = true
-            poison_chance = 75
-            infection_chance = 10
+            dmg_min = 4;
+            dmg_max = 8;
+            item_name = "ACID BILE";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 2;
+            item_verb = "spits with";
+            item_dmg_str = "melted";
+            aoe_count = 3;
+            can_overwatch_boolean = true;
+            poison_chance = 75;
+            infection_chance = 10;
             always_checks_status_effect_boolean = false;
 		}
         else if item_enum == item_type.acid_cloud {
@@ -1494,16 +1533,16 @@ function scr_define_structs(){
         else if item_enum == item_type.filament_spray {
             dmg_min = 0;
             dmg_max = 1;
-            item_name = "FILAMENT SPRAY";
+            item_name = "CAUSTIC FILAMENTS";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 5;
-            item_verb = "spits a massive";
+            item_verb = "spits a web of";
             item_dmg_str = "melted";
             aoe_count = -1;
             infection_chance = 10;
             poison_chance = 10;
             stun_chance = 20;
-            always_checks_status_effect_boolean = false;
+            always_checks_status_effect_boolean = true;
 		}
         else if item_enum == item_type.toxic_grenade_launcher {
             dmg_min = 1;
@@ -1582,17 +1621,17 @@ function scr_define_structs(){
             bleed_chance = 50;
 		}
         else if item_enum == item_type.pulse_rifle {
-            dmg_min = 6
-            dmg_max = 9
-            requires_ammo_boolean = false
-            melee_debuff_boolean = true
-            item_name = "PULSE RIFLE"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 4
-            item_verb = "fires the"
-            item_dmg_str = "burned"
-            can_overwatch_boolean = true
-            burn_chance = 25
+            dmg_min = 6;
+            dmg_max = 9;
+            requires_ammo_boolean = false;
+            melee_debuff_boolean = true;
+            item_name = "PULSE RIFLE";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 4;
+            item_verb = "fires the";
+            item_dmg_str = "burned";
+            can_overwatch_boolean = true;
+            burn_chance = 25;
 		}
         else if item_enum == item_type.medkit {
             single_use_boolean = true;
@@ -1652,15 +1691,16 @@ function scr_define_structs(){
             stat_boost_list[stat_boost.evasion] = 1
 		}
         else if item_enum == item_type.suit_civilian_jumpsuit {
-            item_name = "CIVILIAN JUMPSUIT"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.evasion] = 1
+            item_name = "CIVILIAN JUMPSUIT";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.evasion] = 1;
 		}
         else if item_enum == item_type.suit_flak_armor {
-            item_name = "FLAK ARMOR"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.armor] = 2
-            stat_boost_list[stat_boost.evasion] = 0
+            item_name = "FLAK ARMOR";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.armor] = 2;
+            stat_boost_list[stat_boost.evasion] = 0;
+			stat_boost_list[stat_boost.spd] = -3;
 		}
         else if item_enum == item_type.suit_security_vest {
             item_name = "SECURITY VEST"
@@ -1671,12 +1711,13 @@ function scr_define_structs(){
         else if item_enum == item_type.suit_marine {
             item_name = "MARINE ARMOR"
             equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.armor] = 4
-            stat_boost_list[stat_boost.electric_res] = 100
-            stat_boost_list[stat_boost.evasion] = -2
-            stat_boost_list[stat_boost.vacuum_res] = 50
-            stat_boost_list[stat_boost.gas_res] = 100
-            stat_boost_list[stat_boost.fire_res] = 100
+            stat_boost_list[stat_boost.armor] = 4;
+            stat_boost_list[stat_boost.electric_res] = 100;
+            stat_boost_list[stat_boost.evasion] = -2;
+            stat_boost_list[stat_boost.vacuum_res] = 50;
+            stat_boost_list[stat_boost.gas_res] = 100;
+            stat_boost_list[stat_boost.fire_res] = 100;
+			stat_boost_list[stat_boost.spd] = -6;
 		}
         else if item_enum == item_type.adrenal_pen {
             single_use_boolean = true
@@ -1706,11 +1747,12 @@ function scr_define_structs(){
             is_shield_boolean = true
 		}
         else if item_enum == item_type.shield_flak {
-            item_name = "FLAK SHIELD"
-            equip_slot_list = [equip_slot.rh, equip_slot.lh]  // Indicates either hand can equip
-            stat_boost_list[stat_boost.armor] = 2
-            stat_boost_list[stat_boost.evasion] = 2
-            is_shield_boolean = true
+            item_name = "FLAK SHIELD";
+            equip_slot_list = [equip_slot.rh, equip_slot.lh];  // Indicates either hand can equip
+            stat_boost_list[stat_boost.armor] = 2;
+            stat_boost_list[stat_boost.evasion] = 2;
+			stat_boost_list[stat_boost.spd] = -1;
+            is_shield_boolean = true;
 		}
         else if item_enum == item_type.shield_phase {
             item_name = "PHASE SHIELD"
