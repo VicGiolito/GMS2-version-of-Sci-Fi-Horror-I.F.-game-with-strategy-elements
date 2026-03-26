@@ -1,5 +1,8 @@
 
-/* With this script we do the following:
+/* 
+This script adds to the array you pass in mob struct ids
+
+With this script we do the following:
 Iterate through our enemy_mob_ar:
 	if the mobs within have the same cur_grid_x and y as that which we feed into this script, then they get added to the ar_to_pass
 */

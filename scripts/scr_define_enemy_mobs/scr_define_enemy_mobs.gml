@@ -23,10 +23,10 @@ function scr_define_enemy_mobs(spawn_grid) {
 			if is_struct(room_struct_id) && room_struct_id.struct_type_enum == struct_type.Room {
 				if is_array(room_struct_id.enemies_in_room_ar) && array_length(room_struct_id.enemies_in_room_ar) > 0 {
 					
-					array_push(global.enemy_mob_ar, { mob_cur_grid: spawn_grid, enemies_in_mob_ar : [], mob_grid_x : xx, mob_grid_y : yy, chosen_path_grid: -1, mob_dest_grid_x: -1, mob_dest_grid_y: -1 } )
+					array_push(global.enemy_mob_ar, { mob_cur_grid: spawn_grid, enemies_in_mob_ar : [], mob_grid_x : xx, mob_grid_y : yy, chosen_path_grid: -1, mob_dest_grid_x: -1, mob_dest_grid_y: -1 } );
 					
+					//Iterate through enemies_in_room at this grid cell, add to newly created mob_struct:
 					var ar_len = array_length(room_struct_id.enemies_in_room_ar);
-					
 					var char_struct_id;
 					for(var i = 0; i < ar_len; i++) {
 						char_struct_id = room_struct_id.enemies_in_room_ar[i];

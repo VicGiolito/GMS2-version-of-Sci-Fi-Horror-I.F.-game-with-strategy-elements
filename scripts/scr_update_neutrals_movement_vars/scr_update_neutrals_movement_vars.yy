@@ -1,11 +1,11 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_use_item",
+  "name": "scr_update_neutrals_movement_vars",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Item and Abilities",
-    "path": "folders/Scripts/Item and Abilities.yy",
+    "name": "Convenience",
+    "path": "folders/Scripts/Convenience.yy",
   },
 }

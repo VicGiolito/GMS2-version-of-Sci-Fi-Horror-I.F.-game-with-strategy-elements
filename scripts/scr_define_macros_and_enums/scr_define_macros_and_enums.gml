@@ -70,37 +70,38 @@ function scr_define_macros_and_enums(){
 		
 	}
 	
+	//It goes without saying the all of the rooms here must be 'powered' in order to 'operate' them and perform their function:
 	enum research_vessel_room { //These must match the same order in which they are placed in their corresponding tileset
 		nothing, //0
-		stasis_chamber, //1 done
+		stasis_chamber, //1 done; where the initial chars are spawned; can recruit more pcs here at the cost of advanced technology resource.
 		sc_corridor_east, //2 done
 		sc_corridor_west, //3 done 
 		basic_corridor_ew, //4 done
 		basic_corridor_ns, //5 done
-		commissary, //6 done
-		barracks, //7 done
-		armory, //8 done
-		control_room, //9 done
-		bridge, //10 done
-		environmental_control, //11 done
+		commissary, //6 done: can spend credits here to obtain food; can spend food here to restore sanity.
+		barracks, //7 done: can find useful weapons, armor, and equipment here. Contains tier 1 or 2 level items.
+		armory, //8 done: similar to barracks but contains tier 3 level items. Also contains explosives to change locked or jammed doors into destroyed doors; has a small chance of creating a hull breach and therefore vacuum in a room afterwards.
+		control_room, //9 done: replaced by the operations of the bridge, should be removed.
+		bridge, //10 done: from here the player can unlock or lock doors that are not jammed or destroyed, so long as the room is powered. For locked doors that are unlocked for the first time, the pc must first pass a difficult science-skill test to represent 'hacking the power system' open. The bridge must also be powered in order to use the engine_room, and therefore power the rest of the ship. The player will need to install a portable power cell here first in order to use the bridge, which is initially found in the engine room. The power cell automatically powers a room - the player does not need assign power here again during their turn by operating the engine room. So for now, the bridge intially allows the player to power rooms, and afterwards, allows the player to open and close doors. It also allows for certain game-critical events to unfold, like communicating with the pirates.
+		environmental_control, //11 done: create presurrize or de-pressurize other powered rooms, which either creates or removes the vacuum room hazard, which in turn removes any fire or toxic gas hazard in this location (if vacuum was applied and the room is not a contant toxic gas generator)
 		airlock, //12 - not in use
-		medbay, //13 done
-		engine_room, //14 done
-		shuttle_bay, //15 done
-		engineer_bay, //16 done
-		crew_quarters, //17 done
-		supply_closet, //18 done
-		hydroponics_lab, //19 done
+		medbay, //13 done: Spend M.P. and/or AP and/or resources like scrap: The character operating in this room can heal a certain amount of H.P. based upon their science skill, or create a medkit item, or create 'The Cure' item, which clears a character of all infection. 
+		engine_room, //14 done: Costs 1 movement point: can spend fuel here to power rooms each turn. The amount of rooms and fuel you can spend here with each movement point in order to power rooms is == to your engineering skill.
+		shuttle_bay, //15 done: this is the primary point from which the pcs will escape and beat the game. Requires advanced component resources to build, and chars with high engineering skills to pass the skill tests. Resources are not wasted if the pc fails the skill check.
+		engineer_bay, //16 done: the only room where you can convert basic technology into advanced technology. Requires passing a skill test and/or M.P. and/or A.P. Can only fabricate some weapons, items, armor here at the cost of ap/mp/skill check. 
+		crew_quarters, //17 done: can spend 2 movement points here to restore sanity. Essentially an infinite sanity restoration well, but forces the player to spend at least 3 turns there: at least 1 turn to get there, 1 turn to sleep and restore some sanity (2-3 points), then another turn to leave; not mention the inconvenience of traveling there in the first place.
+		supply_closet, //18 done: simply contains useful resources, items and equipment.
+		hydroponics_lab, //19 done: Spend 1-2 movement point and/or AP and/or pass a science based skill test: receive 1-2 food. Must be powered. So this is a potentially limitless source of food, but best operated upon by science-based characters.
 		communication_station, //20 - not in use
 		arboretum_n_s_e_w, //21 done
-		storage_room, //22 done
-		research_lab, //23 done
+		storage_room, //22 done: contains useful resources, items and equipment, some of which may be necessary to complete the game. 
+		research_lab, //23 done: upon successfully science skill test and/or MP and/or AP: convert a certain amount of bio-matter resource into 
 		rec_room, //24 - not in use
-		robotics_bay, //25 done
-		recycler, //26 done
+		robotics_bay, //25 done: spend scrap here to create neutral droids.
+		recycler, //26 done: possibly the most important room in the game: Spend 1 MP to convert an inputted amount of scrap and/or bio-matter into engine fuel. 
 		astrometrics, //27 - not in use
-		animal_lab, //28 done
-		officers_quarters, //29 done
+		animal_lab, //28 done: perhaps this room just periodically spawns some particularly nasty enemy mobs. There's some dark shit going on in here.
+		officers_quarters, //29 done: basic lore provided here, journals as to what actually transpired on the such; otherwise functions just like 
 		computer_core, //30 - not in use
 		
 		intersection_e_w_n, //31 done
@@ -110,7 +111,7 @@ function scr_define_macros_and_enums(){
 		
 		vacuum, //35 done done
 		
-		airlock_e_w_n_s, //36 done
+		airlock_e_w_n_s, //36 done: this is where pirates land, where the pcs can (eventually) escape to finish the game or travel to another grid world; its also where players in a vacuum suit can exit the ship and travel around the outside of the ship (although they have limited oxygen in this state and so need to move quickly and can't just hang out here); the 'suit oxygen' can be an item_struct variable that decreases with each movement space traveled and, once depleted, is simply deleted from memory, as it is now useless and will expose the player to vacuum.
 		airlock_n_s, //37 done
 		airlock_e_w, //38 done
 		
@@ -162,10 +163,10 @@ function scr_define_macros_and_enums(){
 		lead_pipe,
 		assault_rifle,
 		emp_grenade,
-		motion_detector,
+		motion_detector, //Reveals if there's enemies in the next room; could also be a torvald ability.
 		medkit,
-		regen_nanites,
-		taser,
+		regen_nanites, 
+		taser, //cooper ability: Range 1, 0-1 damage
 		dna_tester,
 		fire_extinguisher,
 		shield_belt,
@@ -192,10 +193,10 @@ function scr_define_macros_and_enums(){
 		spine_projectile,
 		infection_needle,
 		writhing_tendril,
-		field_medicine,
-		energizing_stim_prick,
+		field_medicine, //Heals 5 HP plus removes burning, poisoned, and bleeding status effects. Costs 3 AP.
+		energizing_stim_prick, //Costs the doctor's 3 AP, but provides 2 AP to other characters; so a net loss if using on herself.
 		monstrous_claw,
-		kiras_noisy_game,
+		kiras_noisy_game, //Acts as a player in the sense that nearby enemies are lured to it.
 		machine_pistol,
 		acid_spit,
 		acid_cloud,
@@ -403,8 +404,11 @@ function scr_define_macros_and_enums(){
 	#macro MAX_COMBAT_RAN_NUM 10
 	#macro RAN_INITIATIVE_VAL 5
 	#macro ENERGENIZING_AP_BOOST 2
-	#macro SMOKE_GRENADE_EVADE_BUFF 1
-	#macro PERSONAL_SHIELD_BUFF 1
+	#macro SMOKE_GRENADE_EVADE_BUFF 2
+	#macro SMOKE_GRENADE_DURATION 3
+	#macro PERSONAL_SHIELD_ARMOR_BUFF 1
+	#macro PERSONAL_SHIELD_EVASION_BUFF 1
+	#macro PERSONAL_SHIELD_DURATION 3
 	#macro ADRENAL_PEN_SPD_BUFF 2
 	#macro ADRENAL_PEN_ACC_BUFF 1
 	#macro OGRE_MELEE_ACC_BUFF 1
@@ -420,14 +424,14 @@ function scr_define_macros_and_enums(){
 	#macro AVERAGE_EVASION_SCORE 0
 	#macro AVERAGE_ACCURACY_SCORE 7
 	#macro BASE_MAX_INFECTION 8
-	#macro PERSONAL_SHIELD_BONUS 1
-	#macro SMOKE_GRENADE_EVASION_BONUS 1
 	#macro MAX_RAN_SPD_VAL 6
 	#macro POISON_PERCENT_VAL .2
 	#macro BLEED_PERCENT_VAL .25
 	#macro HEALING_FACTOR_HEAL_VAL 1
 	#macro HEALING_FACTOR_CD_VAL 1
 	#macro REGEN_NANITES_HEAL_VAL 3
+	#macro REGEN_NANITES_DURATION 4
+	#macro FIELD_MEDICINE_HP_BOOST 4
 	#macro EVADE_BONUS 1
 	#macro FIRE_DURATION 3
 	#macro BLEED_DURATION 2
@@ -436,6 +440,7 @@ function scr_define_macros_and_enums(){
 	#macro CRAGOS_EVASION_DEBUFF 1
 	#macro GIANT_MELEE_DMG_BUFF 3
 	#macro AVERAGE_CHAR_SPEED 3
+	#macro MEDKIT_HP_BOOST 5
 	
 	#macro UNVISITED_CELL 0
 	#macro VISITED_CELL 1

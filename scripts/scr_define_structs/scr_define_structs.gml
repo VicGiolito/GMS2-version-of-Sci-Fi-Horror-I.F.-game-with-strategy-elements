@@ -7,6 +7,8 @@ function scr_define_structs(){
 		
 		struct_type_enum = struct_type.Character;
 		
+		neutrals_following_this_char_ar = -1;
+		
 		unique_id = global.unique_struct_id_num;
 		
 		global.unique_struct_id_num++;
@@ -85,8 +87,6 @@ function scr_define_structs(){
         combat_ai_preference = enemy_combat_ai.ranged_coward;
         chosen_weapon = -1;
         targeted_rank = -1;
-        ai_inferior_alternate_wep = -1;
-        hold_the_line_count = 0;
 		passing_item_struct_id = -1;
 		passing_item_index = -1;
 		using_item_struct_id = -1;
@@ -101,12 +101,9 @@ function scr_define_structs(){
 		
         enemy_ai_move_boolean = false;
         enemy_ai_fight_boolean = false;
-        is_opportunity_attacker_boolean = false;
 		combat_move_dir = 0; //1=south; -1 = north.
 
         ai_is_suppressor_boolean = false; //Just a sub-set of the ENUM_AI_COMBAT_RANGED_COWARD, this enemy chooses an item with suppression instead, and resorts to a weaker melee weapon when pcs finally close with it in melee; otherwise it behaves exactly the same as Spined Spitters.
-
-        dist_to_enemy = 0; //Used for enemy ai
 
         // Initialize inv_ar and nested total_slots:
 		inv_ar = [];
@@ -133,8 +130,6 @@ function scr_define_structs(){
 			cur_grid_y = -1
 		}
 
-        dodge_bonus_boolean = false;
-
         overwatch_rank = -1;
         will_overwatch_boolean = false
 	
@@ -151,6 +146,9 @@ function scr_define_structs(){
         suppressed_count = 0;
         stun_count = 0;
         spawn_minion_count = 0;
+		
+		smoke_grenade_count = 0;
+		hold_the_line_count = 0;
 
         resolve_dot_effects_boolean = true;
         healing_passive_boolean = false;
@@ -162,7 +160,7 @@ function scr_define_structs(){
         healing_factor_cd = 0;
 
         revived_dialogue_str_list = -1;
-        shield_bonus_count = 0; //For things like torvald's personal shield
+        shield_bubble_count = 0; //For things like torvald's personal shield
 
         already_fled_this_turn_boolean = false;
         fleeing_dir_x = -1;
@@ -848,7 +846,7 @@ function scr_define_structs(){
 			
 			scr_add_passive_ability(self,passive_abil_type.giant,"constructor event for transmogrified soldier char");
 			
-			scr_add_ability(self,item_type.sniper_rifle);
+			scr_add_ability(self,item_type.pulse_rifle);
 			
 			/* //Exclude for now while testing overwatch:
 			
@@ -980,20 +978,22 @@ function scr_define_structs(){
         requires_ammo_boolean = true;
         accuracy_bonus = 0;
         max_range = 0; //If 0=melee only
+		
+		char_spawn_enum = -1; //Used with ability-type items that spawn other characters.
 
         single_use_boolean = false;
-        melee_debuff_boolean = false;
+        melee_debuff_boolean = false; //May not implement this at all
         equippable_boolean = true;
         usable_boolean = false;
-        
-        use_script  = -1; //For items or abilities that are 'used'
-        use_requires_target_boolean = false; //For items or abilities that are 'used', usually destroyed after, and require a target- such as the medkit, adrenal pen, healing nanites, etc.
-        abil_passes_turn_boolean = false; //And when I say 'passes turn', I mean the advance_cur_combat_char is immediately called after using it.
-
+       
+        use_requires_target = false; //For items or abilities that are 'used', usually destroyed after, and require a target- such as the medkit, adrenal pen, healing nanites, etc.
+        abil_passes_turn_boolean = false; //And when I say 'passes turn', I mean using it triggers advance_cur_combat_char being called after using it, such as cooper's smoke grenade.
+		use_script  = -1; //For items or abilities that are 'used'; not implemented.
+		
         is_shield_boolean = false; //Currently only used in scr_check_valid_item_equip()
-        can_suppress_boolean = false;
         can_overwatch_boolean = false;
-
+		
+		sanity_cost = 0;
         ability_point_cost = 0;
         ability_cost_str = "";
         non_attack_ability_boolean = false; //Torvald's shield, cooper's buffs, Avia's summons, etc., all == true
@@ -1184,13 +1184,13 @@ function scr_define_structs(){
             item_name = "PERSONAL SHIELD GENERATOR";
             max_range = 0;
             ability_point_cost = 3;
-            stat_boost_list[stat_boost.armor] = PERSONAL_SHIELD_BONUS;
-            stat_boost_list[stat_boost.evasion] = PERSONAL_SHIELD_BONUS;
+            stat_boost_list[stat_boost.armor] = PERSONAL_SHIELD_ARMOR_BUFF; //Not implemented in this way
+            stat_boost_list[stat_boost.evasion] = PERSONAL_SHIELD_EVASION_BUFF; //Not implemented in this way
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = false;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.combat_only;
-			ability_cost_str = $"Spend {ability_point_cost} A.P.: clear the suppression status effect, and gain +{stat_boost_list[stat_boost.armor]} armor and +{stat_boost_list[stat_boost.evasion]} for 3 turns. This ability does not stack.";
+			ability_cost_str = $"Spend {ability_point_cost} A.P.: clear the suppression status effect, and gain +{stat_boost_list[stat_boost.armor]} armor and +{stat_boost_list[stat_boost.evasion]} evasion for 3 turns. This ability does not stack.";
 		}
 
         // 
@@ -1200,8 +1200,8 @@ function scr_define_structs(){
             item_name = "SMOKE GRENADE" ;
             max_range = 0;
             ability_point_cost = 3;
-            ability_cost_str = $"This ability does not stack. Spend {ability_point_cost} AP and pass your turn: every friendly unit in your party gains the following for next 3 turns:";
-            stat_boost_list[stat_boost.evasion] = SMOKE_GRENADE_EVASION_BONUS;
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: every friendly unit in your party gains +{SMOKE_GRENADE_EVADE_BUFF} evasion for {SMOKE_GRENADE_DURATION} turns. This ability does not stack.";
+            stat_boost_list[stat_boost.evasion] = SMOKE_GRENADE_EVADE_BUFF; //Not implemented in this way.
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
@@ -1215,12 +1215,12 @@ function scr_define_structs(){
             item_name = "FIELD MEDICINE";
             max_range = 0;
             ability_point_cost = 3;
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals 5 hit points and is cleared of the following status effects: burning, bleeding, poisoned.";
-            non_attack_ability_boolean = false; //This abil requires a target
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {FIELD_MEDICINE_HP_BOOST} hit points and is cleared of the following status effects: burning, bleeding, poisoned.";
+            non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
-            use_requires_target_boolean = true;  // Brings us to the USE_ITEM game state if this ability is used from the combat game state CHOOSE_ATTACK
 			use_context = abil_use_context.both;
+			use_requires_target = true;
 		}
 		
         // This skill uses utils execute_non_attack_ability()
@@ -1236,90 +1236,99 @@ function scr_define_structs(){
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
+			char_spawn_enum = character.neutral_light_sentry_gun;
 		}
 
         // This skill uses utils execute_non_attack_ability()
-        else if item_enum == item_type.spawn_light_sentry_gun {  // Engineer ability
+        else if item_enum == item_type.spawn_light_sentinel_droid {  
             dmg_min = 0;
             dmg_max = 0;
             item_name = "WHIPSTITCH SENTINEL DROID";
             max_range = 0;
             ability_point_cost = 6;
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy.";
+			sanity_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
+			char_spawn_enum = character.neutral_whipstitch_sentinel;
 		}
 
         // This skill uses utils execute_non_attack_ability()
-        else if item_enum == item_type.spawn_light_shotgun_droid {  // Engineer ability
+        else if item_enum == item_type.spawn_light_shotgun_droid {  
             dmg_min = 0;
             dmg_max = 0;
             item_name = "SPINNING SCATTERSHOT DROID";
             max_range = 0;
             ability_point_cost = 4;
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN."
+			sanity_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN."
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
+			char_spawn_enum = character.neutral_spinning_scattershot;
 		}
 
         // This skill uses utils execute_non_attack_ability()
-        else if item_enum == item_type.spawn_light_flamer_droid {  // Engineer ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "FUMIGATING FLAMER DROID"
-            max_range = 0
-            ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a FUMIGATING FLAMER DROID at your position. This fearless little droid would wheel itself through the gates of hell to protect you. It has been affixed with a FLAMETHROWER and is belching a disconcerting amount of smoke.";
-            non_attack_ability_boolean = true
-            abil_passes_turn_boolean = true
-            requires_ammo_boolean = false
+        else if item_enum == item_type.spawn_light_flamer_droid {  
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "FUMIGATING FLAMER DROID";
+            max_range = 0;
+            ability_point_cost = 3;
+			sanity_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a FUMIGATING FLAMER DROID at your position. This fearless little droid would wheel itself through the gates of hell to protect you. It has been affixed with a FLAMETHROWER and is belching a disconcerting amount of smoke.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
+			char_spawn_enum = character.neutral_fumigating_flamer;
 		}
 
         // This skill uses utils execute_non_attack_ability()
-        else if item_enum == item_type.spawn_light_buzzsaw_droid {  // Engineer ability
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "JITTERING BUZZSAW DROID"
-            max_range = 0
-            ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction..."
-            non_attack_ability_boolean = true
-            abil_passes_turn_boolean = true
-            requires_ammo_boolean = false
+        else if item_enum == item_type.spawn_light_buzzsaw_droid { 
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "JITTERING BUZZSAW DROID";
+            max_range = 0;
+            ability_point_cost = 3;
+			sanity_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction..."
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
+			char_spawn_enum = character.neutral_jittering_buzzsaw;
 		}
         // This skill uses utils execute_non_attack_ability()
-        else if item_enum == item_type.energizing_stim_prick {  
-            dmg_min = 0
-            dmg_max = 0
-            item_name = "ENERGIZING STIMULANT"
-            max_range = 0
-            ability_point_cost = 3
-            ability_cost_str = $"Spend {ability_point_cost} AP: target player character gains 2 ability points."
-            non_attack_ability_boolean = false 
-            abil_passes_turn_boolean = false
-            requires_ammo_boolean = false
-            use_requires_target_boolean = true  // Brings us to the USE_ITEM game state if this ability is used from the combat game state CHOOSE_ATTACK
+        else if item_enum == item_type.energizing_stim_prick {  //doctor ability
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "ENERGIZING STIMULANT";
+            max_range = 0;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP: target player character gains {ENERGENIZING_AP_BOOST} ability points.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = false;
+            requires_ammo_boolean = false;
+            use_requires_target = true;
 			use_context = abil_use_context.both;
 		}
 		
         else if item_enum == item_type.rocket_launcher {
-            dmg_min = 10
-            dmg_max = 15
-            single_use_boolean = true
-            item_name = "ROCKET LAUNCHER"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 4
-            item_verb = "fires the"
-            item_dmg_str = "exploded"
-            aoe_count = 8
-            bleed_chance = 75
-            burn_chance = 75 //DEBUG
+            dmg_min = 10;
+            dmg_max = 15;
+            single_use_boolean = true;
+            item_name = "ROCKET LAUNCHER";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 4;
+            item_verb = "fires the";
+            item_dmg_str = "exploded";
+            aoe_count = 8;
+            bleed_chance = 75;
+            burn_chance = 75; //DEBUG
 		}
         else if item_enum == item_type.lead_pipe {
             dmg_min = 1;
@@ -1638,7 +1647,6 @@ function scr_define_structs(){
             usable_boolean = true;
             item_name = "MEDICAL KIT";
             equippable_boolean = false;
-            combat_usable_boolean = true;
 			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.regen_nanites {
@@ -1646,7 +1654,6 @@ function scr_define_structs(){
             usable_boolean = true;
             item_name = "PEN OF REGENERATION NANITES";
             equippable_boolean = false;
-            combat_usable_boolean = true;
 			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.kiras_noisy_game {
@@ -1720,11 +1727,10 @@ function scr_define_structs(){
 			stat_boost_list[stat_boost.spd] = -6;
 		}
         else if item_enum == item_type.adrenal_pen {
-            single_use_boolean = true
-            usable_boolean = true
-            item_name = "ADRENAL PEN"
-            equippable_boolean = false
-            combat_usable_boolean = true
+            single_use_boolean = true;
+            usable_boolean = true;
+            item_name = "ADRENAL PEN";
+            equippable_boolean = false;
 			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.dna_tester {
@@ -2099,7 +2105,7 @@ function scr_define_structs(){
 				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
 				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
 				
-				pre_event_unpowered_room_desc = "You breath a sigh of relief upon realizing that you have at last discovered the central processing unit of this ship: the bridge. The cushioned chairs, the banks of computer monitors, and the raised, rotating gyroscope supporting the pilot's seat all leave little doubt in your mind that you have finally found the command station of this vessel.\n\nThe room is still without power, however. Stumbling through the bloodied gloom, you collapse within the cushioned embrace of an officer's chair. Find your own wearied expression staring back at you from one of the dead facades of a computer monitor. Until the power is restored, you won't be able to accomplish anything here.";
+				pre_event_unpowered_room_desc = "You breath a sigh of relief upon realizing that you have at last discovered the central processing unit of this ship: the bridge. The cushioned chairs, the banks of computer monitors, and the raised, rotating gyroscope supporting the pilot's seat all leave little doubt in your mind that you have finally found the command station of this vessel.\n\nThe room is still without power, however. Stumbling through the bloodied gloom, you collapse within the cushioned embrace of an officer's chair, to find your own wearied expression staring back at you from one of the dead facades of a computer monitor. Until the power is restored, you won't be able to accomplish anything here.";
 				pre_event_powered_room_desc = "You breath a sigh of relief upon realizing that you have at last discovered the central processing unit of this ship: the bridge. The cushioned chairs, the banks of computer monitors, and the raised, rotating gyroscope supporting the pilot's seat all leave little doubt in your mind that you have finally found the command station of this vessel.\n\nThere are more than a dozen blinking interfaces that whir to life as you pass by, and it looks like their security systems have already been disabled. You sit surrounded by blinking screens that display propulsion, nagivation, communications, sub-systems and more. You could OPERATE any one of them with little trouble.";
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;

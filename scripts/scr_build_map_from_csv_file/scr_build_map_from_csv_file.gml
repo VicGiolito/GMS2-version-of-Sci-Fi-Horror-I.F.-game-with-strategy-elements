@@ -73,9 +73,10 @@ function scr_build_map_from_csv_file(location_enum){
 						//Debug pcs:
 					//new global.Character(character.engineer,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					new global.Character(character.ogre,xx,yy,global.research_vessel_grid,team_type.pc,true);
-					//new global.Character(character.mechanician,xx,yy,global.research_vessel_grid,team_type.pc,true);
-					//new global.Character(character.security_guard,xx,yy,global.research_vessel_grid,team_type.pc,true);
-					//new global.Character(character.veteran,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.mechanician,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.security_guard,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.doctor,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.engineer,xx,yy,global.research_vessel_grid,team_type.pc,true);
 				}
 				
 				//East of stasis room:

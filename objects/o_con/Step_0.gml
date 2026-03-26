@@ -1126,6 +1126,11 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 										global.cur_combat_char.cur_grid_x += move_dir_x;
 										global.cur_combat_char.cur_grid_y += move_dir_y;
 										
+										//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
+										if is_array(global.cur_combat_char.neutrals_following_this_char_ar) && array_length(global.cur_combat_char.neutrals_following_this_char_ar) > 0 {
+											scr_update_neutrals_movement_vars(global.cur_combat_char.neutrals_following_this_char_ar,global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y);	
+										}
+										
 										//Remove from cur room ar:
 										scr_add_remove_char_room_ar(global.cur_combat_char.cur_room_id,global.cur_combat_char,false);
 				
@@ -1692,17 +1697,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars:
 						attacker_id.targeted_rank = maximum_targeted_rank;
 					
-						//Add to corresponding nested struct array:
-						var ar_to_use;
-						if attacker_id.char_team_enum == team_type.enemy {
-							ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].enemy_overwatch_ar;	
-						}
-						else { ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].player_overwatch_ar; }
-						
-						array_push(ar_to_use, attacker_id);
-					
-						//Display result message:
-						scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) aims the {attacker_id.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn.");
+						//Add to corresponding nested struct array in overwatch array:
+						scr_apply_overwatch(attacker_id);
 					
 						//No other actionable vars have been set for this char, the should just skip the rest of this game state's code.
 					}
@@ -1776,18 +1772,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						//(which itself calls scr_remove_char_from_overwatch_arrays):
 						attacker_id.targeted_rank = maximum_targeted_rank;
 					
-						//Add to corresponding nested struct array:
-						var ar_to_use;
-						if attacker_id.char_team_enum == team_type.enemy {
-							ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].enemy_overwatch_ar;	
-						}
-						else { ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].player_overwatch_ar; }
+						//Add to corresponding nested struct array in overwatch array:
+						scr_apply_overwatch(attacker_id);
 						
-						array_push(ar_to_use, attacker_id);
-					
-						//Display result message:
-						scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) aims the {attacker_id.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn.");
-					
 						//No other actionable vars have been set for this char, the should just skip the rest of this game state's code.
 					}
 					
@@ -1815,18 +1802,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 							//(which itself calls scr_remove_char_from_overwatch_arrays):
 							attacker_id.targeted_rank = maximum_targeted_rank;
 					
-							//Add to corresponding nested struct array:
-							var ar_to_use;
-							if attacker_id.char_team_enum == team_type.enemy {
-								ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].enemy_overwatch_ar;	
-							}
-							else { ar_to_use = global.overwatch_rank_ar[maximum_targeted_rank].player_overwatch_ar; }
-						
-							array_push(ar_to_use, attacker_id);
-					
-							//Display result message:
-							scr_add_str_to_dialogue_ar($"\n{attacker_id.name}({attacker_id.unique_id}) aims the {attacker_id.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn.");
-					
+							//Add to corresponding nested struct array in overwatch array:
+							scr_apply_overwatch(attacker_id);
+							
 							//No other actionable vars have been set for this char, the should just skip the rest of this game state's code.
 						}
 						
@@ -2016,7 +1994,14 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				d("\n o_con step event: game_state == combat_execute_action: There was either sufficient ammo (> 0) or the attacker did not a pc, calculating attack now...");
 					
 				//Define defender_id:
-				var defender_id = filtered_ar[attack_index];
+					//This is an aoe attack - we'll iterate through defenders sequentially (always starting at 0)
+				if num_attacks == -1 || num_attacks > 1 {
+					var defender_id = filtered_ar[attack_index];
+				}
+					//This is a single target attack - choose target randomly:
+				else if num_attacks == 1 {
+					var defender_id = filtered_ar[irandom_range(0,array_length(filtered_ar)-1)]; 
+				}
 				
 				//Increment attack index:
 				attack_index++;
@@ -2166,6 +2151,11 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		//Update char x and y vars:
 		fled_char_id.cur_grid_x += fled_char_id.fleeing_dir_x;
 		fled_char_id.cur_grid_y += fled_char_id.fleeing_dir_y;
+		
+		//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
+		if is_array(fled_char_id.neutrals_following_this_char_ar) && array_length(fled_char_id.neutrals_following_this_char_ar) > 0 {
+			scr_update_neutrals_movement_vars(fled_char_id.neutrals_following_this_char_ar,fled_char_id.cur_grid_x,fled_char_id.cur_grid_y);	
+		}
 				
 		//Update cur_room_id:
 		fled_char_id.cur_room_id = global.cur_grid[# fled_char_id.cur_grid_x,fled_char_id.cur_grid_y];
@@ -2329,64 +2319,106 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 					
 					//Check to make sure we have sufficient AP:
 					if global.cur_combat_char.ability_points_cur >= abil_item_struct_id.ability_point_cost {
-					
-						//This is an ability that functions just like a weapon: hand flamer, wrist rockets, etc.:
-						if abil_item_struct_id.non_attack_ability_boolean == false {
+						
+						if global.cur_combat_char.sanity_cur >= abil_item_struct_id.sanity_cost {
+						
+							//filtered_abil_ar created by scr_return_filtered_abil_ar() is only filled with actual item_struct_ids that are applicable for the 
+							//corresponding game state (either main, combat, or both), so we know that what is here is a valid option.
+						
+							//This is an ability that functions just like a weapon: hand flamer, wrist rockets, etc.;
+							//we don't reduce AP here because it's reduced (if applicable) in combat_execute_action, which is where this char is going if
+							//they're using an ability like this:
+							if abil_item_struct_id.non_attack_ability_boolean == false {
 							
-							if global.combat_prep_phase == false {
+								if global.combat_prep_phase == false {
 							
-								//These all have range requirements:
+									//These all have range requirements:
 							
-								//Check to see if there's an enemy in range:
-								var closest_enemy_rank = scr_return_nearest_target_rank_pos(global.cur_combat_char.cur_combat_rank,false);
+									//Check to see if there's an enemy in range:
+									var closest_enemy_rank = scr_return_nearest_target_rank_pos(global.cur_combat_char.cur_combat_rank,false);
 			
-								var dist_to_target = abs(global.cur_combat_char.cur_combat_rank - closest_enemy_rank);
+									var dist_to_target = abs(global.cur_combat_char.cur_combat_rank - closest_enemy_rank);
 			
-								var wep_range = abil_item_struct_id.max_range;
+									var wep_range = abil_item_struct_id.max_range;
 			
-								//If there's an enemy in range and our max_range is greater than 0, then move to choose_pc_rank_target:
-								if dist_to_target <= wep_range {
+									//If there's an enemy in range and our max_range is greater than 0, then move to choose_pc_rank_target:
+									if dist_to_target <= wep_range {
 								
-									//Assign chosen weapon:
-									global.cur_combat_char.chosen_weapon = abil_item_struct_id;
+										//Assign chosen weapon:
+										global.cur_combat_char.chosen_weapon = abil_item_struct_id;
 								
-									prev_game_state = global.cur_game_state;
+										prev_game_state = global.cur_game_state;
 				
-									/*To streamline the process even further, check to see if the enemy only occupies one rank in the entire combat_rank_ar;
-									if they do (we already know the enemy is within range), just automatically define our range 
-									based upon what rank it is in, then automatically move to execute action:
-									*/
-									if scr_return_opposite_team_occupied_ranks(global.cur_combat_char.char_team_enum) <= 1 {
-										global.cur_combat_char.targeted_rank = closest_enemy_rank;
-										global.cur_game_state = game_state.combat_execute_action;	
-									}
-				
-									else {
-										if wep_range > 0 {
-											global.cur_game_state = game_state.combat_pc_target_rank;
-											scr_print_ranks_to_target(global.cur_combat_char);
-										}
-										//otherwise, define our chosen rank and move straight to execute_action:
-										else if wep_range <= 0 {
+										/*To streamline the process even further, check to see if the enemy only occupies one rank in the entire combat_rank_ar;
+										if they do (we already know the enemy is within range), just automatically define our range 
+										based upon what rank it is in, then automatically move to execute action:
+										*/
+										if scr_return_opposite_team_occupied_ranks(global.cur_combat_char.char_team_enum) <= 1 {
 											global.cur_combat_char.targeted_rank = closest_enemy_rank;
-											global.cur_game_state = game_state.combat_execute_action;
+											global.cur_game_state = game_state.combat_execute_action;	
 										}
+				
+										else {
+											if wep_range > 0 {
+												global.cur_game_state = game_state.combat_pc_target_rank;
+												scr_print_ranks_to_target(global.cur_combat_char);
+											}
+											//otherwise, define our chosen rank and move straight to execute_action:
+											else if wep_range <= 0 {
+												global.cur_combat_char.targeted_rank = closest_enemy_rank;
+												global.cur_game_state = game_state.combat_execute_action;
+											}
+										}
+									}
+									else {
+										scr_add_str_to_dialogue_ar("\n");
+										scr_add_str_to_dialogue_ar($"There are no targets within your ability's range. Your {abil_item_struct_id.item_name} has a maximum range of {wep_range}. Either use a different ability, or move closer to the enemy.", true);
 									}
 								}
 								else {
-									scr_add_str_to_dialogue_ar("\n");
-									scr_add_str_to_dialogue_ar($"There are no targets within your ability's range. Your {abil_item_struct_id.item_name} has a maximum range of {wep_range}. Either use a different ability, or move closer to the enemy.", true);
+									scr_add_str_to_dialogue_ar("You can't use this ability during the combat preparation phase, try again.\n",true);	
 								}
 							}
-							else {
-								scr_add_str_to_dialogue_ar("You can't use this ability during the combat preparation phase, try again.\n",true);	
+							//This is an ability that does something else: spawns a unit, buffs a stat, applies a debuff, etc.
+							//some of these may require a target and will therefore send us to game_state.use_target_item
+							//some examples include: torvalds shield generator, energizing stim prick, cooper's smoke grenade, field_medicine, avia's spawn droid, etc.
+							else if abil_item_struct_id.non_attack_ability_boolean == true {
+							
+								//We can execute the abil right away - it will be something like shield generator, smoke grenade, spawn droid, etc.:
+								//We only target ourself in such a case.
+								if abil_item_struct_id.use_requires_target == false {
+								
+									//Reduce AP:
+									if abil_item_struct_id.ability_point_cost > 0 {
+										global.cur_combat_char.ability_points_cur -= abil_item_struct_id.ability_point_cost;
+									}
+								
+									scr_use_item_or_ability(abil_item_struct_id,global.cur_combat_char,global.cur_combat_char);
+								
+									//if this ability instantly finishes this char's turn (like smoke grenade), we need to advance the cur char now:
+									if abil_item_struct_id.abil_passes_turn_boolean == true {
+										scr_evaluate_combat_conclusion("o_con step event: game_state == combat_assign_pc_combat: player just used an ability that does NOT require a target but DOES immediately end the cur char's turn.")	
+									}
+									else {
+										//Important: we need to actually return to combat_assign_pc_command game state, since only pcs can access this game state:
+										global.cur_game_state = game_state.combat_assign_pc_command;
+										scr_print_combat_ranks(global.cur_combat_char);
+									}
+								}
+								//Using this abil requires that we move to game_state.use_target_item
+								else if abil_item_struct_id.use_requires_target == true {
+									prev_game_state = global.cur_game_state;
+									global.cur_combat_char.using_item_struct_id = abil_item_struct_id;
+									global.cur_combat_char.using_item_index = index_int;
+							
+									global.cur_game_state = game_state.use_target_item;
+							
+									scr_print_pc_party(false, true);	
+								}
 							}
 						}
-						//This is an ability that does something else: spawns a unit, buffs a stat, applies a debuff, etc.
-						//examples include: torvalds shield generator, cooper's smoke grenade, avia's spawn droid, etc.
-						else if abil_item_struct_id.non_attack_ability_boolean == true {
-							//None of these have a range requirement:
-							scr_add_str_to_dialogue_ar("These type of abilities haven't been implemented yet.");
+						else {
+							scr_add_str_to_dialogue_ar("\nYou don't have enough sanity points to use that ability, try again.",true);	
 						}
 					}
 					else {
@@ -2524,15 +2556,8 @@ else if global.cur_game_state == game_state.combat_pc_target_rank && global.wait
 					//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars:
 					global.cur_combat_char.targeted_rank = index_int;
 					
-					//Add to corresponding nested struct array:
-					array_push(global.overwatch_rank_ar[index_int].player_overwatch_ar,global.cur_combat_char);
-					
-					//Reset - technically very extraneous here - we would never be in this game if we were currently in overwatch mode:
-					global.overwatch_mode_enabled = false;
-					
-					//Display result message:
-					scr_add_str_to_dialogue_ar("\n");
-					scr_add_str_to_dialogue_ar($"{global.cur_combat_char.name}({global.cur_combat_char.unique_id}) aims the {global.cur_combat_char.chosen_weapon.item_name} at the {scr_return_rank_str(attacker_id.targeted_rank)}. They will automatically fire upon any enemy moving into that position until the start of their next turn."); 
+					//Add to corresponding nested struct array in overwatch array:
+					scr_apply_overwatch(attacker_id);
 					
 					//Advances cur_char, game state, checks combat end conditions:
 					scr_evaluate_combat_conclusion($"\no_con step event: game_state == pc_targets_rank: successfully overwatched target rank: {index_int} and added to corresponding nested struct array in g.overwatch_rank_ar. global.overwatch_mode_enabled == true\n");
@@ -2682,22 +2707,48 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 						}
 					}
 				}
-					
+				
+				//We only end up in this game state if using the item or ability requires a target.
 				else if global.cur_game_state == game_state.use_target_item {
-						
-					scr_use_item(cur_char.using_item_struct_id,cur_char.using_item_index,item_target_char_struct_id, cur_char);
 					
-					//Return to main; or go to combat_paused, then return to combat_assign_pc_command
-					if prev_game_state == game_state.main_game {
+					//We've successfully used the item, we can reduce our AP now, if applicable:
+					if cur_char.using_item_struct_id.ability_point_cost > 0 {
+						cur_char.ability_points_cur -= cur_char.using_item_struct_id.ability_point_cost;
+					}
+					
+					scr_use_item_or_ability(cur_char.using_item_struct_id, item_target_char_struct_id, cur_char);
+					
+					//Only actual items will ever have the single_use_boolean == true, so we know that this is an actual item_id in the cur_char's inventory:
+					if cur_char.using_item_struct_id.single_use_boolean == true {
+						var item_index = array_get_index(cur_char.inv_ar, cur_char.using_item_struct_id);
+						if item_index != -1 {
+							array_delete(cur_char.inv_ar,item_index,1);
+						}
+					}
+					
+					//Return to main:
+					if prev_game_state == game_state.main_game || global.combat_begun == false {
 						//"You are {}. What will you do?"
 						scr_add_str_to_dialogue_ar(scr_return_cur_char_str(cur_char),true);
 						
-						global.cur_game_state = prev_game_state;
+						//Explicitly reset both and send us back to main:
+						global.cur_game_state = game_state.main_game;
+						prev_game_state = game_state.main_game;
 					}
-					else if prev_game_state == game_state.combat_assign_pc_command {
-						global.cur_game_state = game_state.combat_paused;
+					//Return to combat_assign_pc_command OR advance the cur_combat_char within the combat system, 
+					//if this ability causes you to finish your turn:
+					else if prev_game_state == game_state.choose_pc_abil && global.combat_begun {
 						
-						next_combat_game_state = game_state.combat_assign_pc_command;
+						//if the use of the ability causes the g.cur_Combat_char to end their turn, then end it now;
+						//otherwise simply return to combat_assign_pc_command:
+						if cur_char.using_item_struct_id.abil_passes_turn_boolean == true {
+							global.cur_game_state = game_state.combat_assign_pc_command; //Might as well reset this, although we may or may not be going back there after scr_evaluate_combat_conclusion() finishes
+							scr_evaluate_combat_conclusion("\no_con step event: global.cur_game_state == game_state.use_target_item, just finished using an item or ability that required a target.");
+						}
+						else {
+							global.cur_game_state = game_state.combat_assign_pc_command;
+							scr_print_combat_ranks(global.cur_combat_char);
+						}
 					}
 				}	
 			}
@@ -2911,6 +2962,33 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		
 		#endregion
 		
+		#region Use 'ABIL'ITY - Move to choose ability game state:
+		
+		else if (player_input_str == "ABIL" || player_input_str == "ABILITY") {
+			
+			if is_array(global.acting_char_struct_id.ability_ar) && array_length(global.acting_char_struct_id.ability_ar) > 0 {
+				
+				global.acting_char_struct_id.filtered_abil_ar = scr_return_filtered_abil_ar(global.acting_char_struct_id);
+				
+				if array_length(global.acting_char_struct_id.filtered_abil_ar) > 0 {
+					
+					prev_game_state = global.cur_game_state;
+					
+					global.cur_game_state = game_state.choose_pc_abil;
+					
+					scr_print_weapon_or_abil_list(false, global.acting_char_struct_id);
+				}
+				else {
+					scr_add_str_to_dialogue_ar("\nThis character has no abilities that they can use outside of combat.\n",true);	
+				}
+			}
+			else {
+				scr_add_str_to_dialogue_ar("\nThis character has no abilities that they can use outside of combat.\n",true);	
+			}
+		}
+		
+		#endregion
+		
 		#region Logic for movement commands:
 		
 		//Movement commands:
@@ -2947,6 +3025,11 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				
 					//Add to next room array:
 					scr_add_remove_char_room_ar(global.acting_char_struct_id.cur_room_id,global.acting_char_struct_id,true);
+					
+					//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
+					if is_array(global.acting_char_struct_id.neutrals_following_this_char_ar) && array_length(global.acting_char_struct_id.neutrals_following_this_char_ar) > 0 {
+						scr_update_neutrals_movement_vars(global.acting_char_struct_id.neutrals_following_this_char_ar,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);	
+					}
 					
 					//Re-position it's sprite vars:
 					scr_update_char_sprite_position_vars(global.acting_char_struct_id);
@@ -3042,14 +3125,21 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					prev_game_state = global.cur_game_state;
 					global.acting_char_struct_id.using_item_struct_id = item_struct_id;
 					global.acting_char_struct_id.using_item_index = index_int;
-					global.cur_game_state = game_state.use_target_item;
-					scr_reset_wait();
-					scr_print_pc_party(false, true);
+					
+					if item_struct_id.use_requires_target == true {
+						global.cur_game_state = game_state.use_target_item;
+						scr_reset_wait();
+						scr_print_pc_party(false, true);
+					}
+					//Just use the item right away (it will be used on self):
+					else {
+						scr_use_item_or_ability(item_struct_id,global.acting_char_struct_id,global.acting_char_struct_id);
+						scr_print_char_reminder(global.acting_char_struct_id);
+					}
 				}
 				else if item_struct_id.usable_boolean == false {
 					multi_word_str_failed = true;
-					scr_add_str_to_dialogue_ar("\n");
-					scr_add_str_to_dialogue_ar("This item cannot be 'use'd in this way.", true);	
+					scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd in this way.", true);	
 				}
 			}
 			

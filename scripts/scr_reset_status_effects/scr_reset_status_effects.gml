@@ -31,5 +31,17 @@ function scr_reset_status_effects(char_struct_id){
 		char_struct_id.accuracy -= ADRENAL_PEN_ACC_BUFF;
 	}
 	
+	//Regen nanites:
 	char_struct_id.healing_nanites_count = 0;
+	
+	if char_struct_id.smoke_grenade_count > 0 {
+		char_struct_id.smoke_grenade_count = 0;
+		char_struct_id.evasion -= SMOKE_GRENADE_EVADE_BUFF;
+	}
+	
+	if char_struct_id.shield_bubble_count > 0 {
+		char_struct_id.shield_bubble_count = 0;
+		char_struct_id.armor -= PERSONAL_SHIELD_ARMOR_BUFF;
+		char_struct_id.evasion -= PERSONAL_SHIELD_EVASION_BUFF;
+	}
 }

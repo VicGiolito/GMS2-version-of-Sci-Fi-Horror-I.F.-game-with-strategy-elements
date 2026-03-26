@@ -93,6 +93,31 @@ function scr_trigger_dot_effects(char_struct_id){
 		}
 	}
 	
+	//Smoke grenade:
+	if char_struct_id.smoke_grenade_count > 0 {
+		
+		char_struct_id.smoke_grenade_count--;
+		
+		if char_struct_id.smoke_grenade_count <= 0 {
+			dot_result_str += $"{char_name_str}({char_struct_id.unique_id}) is no longer affected by the smoke grenade. (-{SMOKE_GRENADE_EVADE_BUFF} evasion.)\n";
+			char_struct_id.evasion -= SMOKE_GRENADE_EVADE_BUFF;
+		}
+	}
+	
+	//Personal shield:
+	if char_struct_id.shield_bubble_count > 0 {
+		
+		char_struct_id.shield_bubble_count--;
+		
+		if char_struct_id.shield_bubble_count <= 0 {
+	
+			char_struct_id.armor -= PERSONAL_SHIELD_ARMOR_BUFF;
+			char_struct_id.evasion -= PERSONAL_SHIELD_EVASION_BUFF;
+			
+			dot_result_str += $"{char_name_str}({char_struct_id.unique_id})'s PERSONAL SHIELD GENERATOR flickers off. (-{PERSONAL_SHIELD_ARMOR_BUFF} armor, -{PERSONAL_SHIELD_EVASION_BUFF} evasion.)\n";
+		}
+	}
+	
 	//Healing factor:
 	if char_struct_id.healing_factor_boolean == true {
 		

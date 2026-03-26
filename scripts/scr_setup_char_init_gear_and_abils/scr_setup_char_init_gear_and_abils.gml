@@ -11,7 +11,7 @@ function scr_setup_char_init_gear_and_abils(){
 		pc_char_enum = pc_char_struct.char_type_enum;
 		
 		//Debug: everyone gets a sniper rifle and a concussion grenade launcher:
-		var item_id = new global.Item(item_type.pulse_rifle);
+		var item_id = new global.Item(item_type.assault_rifle);
 		scr_add_item_to_inv(pc_char_struct,item_id,true);
 		
 		//var item_id = new global.Item(item_type.concussion_grenade_launcher);
@@ -51,8 +51,36 @@ function scr_setup_char_init_gear_and_abils(){
 				
 		}
 		
+		else if pc_char_enum == character.security_guard {
+			
+			scr_add_ability(pc_char_struct,item_type.taser);
+			scr_add_ability(pc_char_struct,item_type.smoke_grenade);
+		}
+		
 		else if pc_char_enum == character.mechanician {
-				
+			
+			scr_add_ability(pc_char_struct,item_type.spawn_light_buzzsaw_droid);
+			scr_add_ability(pc_char_struct,item_type.spawn_light_flamer_droid);
+			scr_add_ability(pc_char_struct,item_type.spawn_light_shotgun_droid);
+			scr_add_ability(pc_char_struct,item_type.spawn_light_sentinel_droid);
+		}
+		
+		else if pc_char_enum == character.engineer {
+			
+			scr_add_ability(pc_char_struct,item_type.spawn_light_sentry_gun);
+		}
+		
+		else if pc_char_enum == character.doctor {
+			
+			scr_add_ability(pc_char_struct,item_type.field_medicine);
+			scr_add_ability(pc_char_struct,item_type.energizing_stim_prick);
+			
+			var item_id = new global.Item(item_type.medkit);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
+			var item_id = new global.Item(item_type.adrenal_pen);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
+			var item_id = new global.Item(item_type.regen_nanites);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
 		}
 		
 		else if pc_char_enum == character.ogre {

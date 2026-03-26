@@ -50,19 +50,39 @@ function scr_check_combat_start(){
 				
 				//Add pcs in this room to the last combat rank, switch their participated_in_new_turn_battle var:
 				var pc_struct_id;
-				for(var pc_i = 0; pc_i < array_length(cur_room_struct_id.pcs_in_room_ar); pc_i++) {
+				if is_array(cur_room_struct_id.pcs_in_room_ar) {
+					for(var pc_i = 0; pc_i < array_length(cur_room_struct_id.pcs_in_room_ar); pc_i++) {
 					
-					pc_struct_id = cur_room_struct_id.pcs_in_room_ar[pc_i];
+						pc_struct_id = cur_room_struct_id.pcs_in_room_ar[pc_i];
 					
-					var starting_combat_rank = rank_pos.pc_far;
-					array_push(global.combat_rank_ar[starting_combat_rank],pc_struct_id);
-					//d($"scr_check_combat_start: At nested array at index 5, pc_struct_id.name == {pc_struct_id.name}");
+						var starting_combat_rank = rank_pos.pc_far;
+						array_push(global.combat_rank_ar[starting_combat_rank],pc_struct_id);
+						//d($"scr_check_combat_start: At nested array at index 5, pc_struct_id.name == {pc_struct_id.name}");
 					
-					array_push(global.combat_initiative_ar,pc_struct_id);
-					pc_struct_id.participated_in_new_turn_battle = true; //reset
-					pc_struct_id.has_fled_combat_bool = false; //reset
-					pc_struct_id.cur_combat_rank = starting_combat_rank;
-					d($"scr_check_combat_start: {pc_struct_id.name} cur_combat_rank == {pc_struct_id.cur_combat_rank}");
+						array_push(global.combat_initiative_ar,pc_struct_id);
+						pc_struct_id.participated_in_new_turn_battle = true; //reset
+						pc_struct_id.has_fled_combat_bool = false; //reset
+						pc_struct_id.cur_combat_rank = starting_combat_rank;
+						d($"scr_check_combat_start: {pc_struct_id.name} cur_combat_rank == {pc_struct_id.cur_combat_rank}");
+					}
+				}
+				
+				//Add neutrals in this room to the last combat rank:
+				var neutral_struct_id;
+				if is_array(cur_room_struct_id.neutrals_in_room_ar) {
+					for(var pc_i = 0; pc_i < array_length(cur_room_struct_id.neutrals_in_room_ar); pc_i++) {
+					
+						neutral_struct_id = cur_room_struct_id.neutrals_in_room_ar[pc_i];
+					
+						var starting_combat_rank = rank_pos.pc_far;
+						array_push(global.combat_rank_ar[starting_combat_rank],neutral_struct_id);
+						//d($"scr_check_combat_start: At nested array at index 5, neutral_struct_id.name == {neutral_struct_id.name}");
+					
+						array_push(global.combat_initiative_ar,pc_struct_id);
+						neutral_struct_id.has_fled_combat_bool = false; //reset
+						neutral_struct_id.cur_combat_rank = starting_combat_rank;
+						d($"scr_check_combat_start: {neutral_struct_id.name} cur_combat_rank == {neutral_struct_id.cur_combat_rank}");
+					}
 				}
 				
 				//Add all enemies in this room to the first combat rank:
@@ -80,6 +100,7 @@ function scr_check_combat_start(){
 					enemy_struct_id.cur_combat_rank = starting_combat_rank;
 					enemy_struct_id.has_fled_combat_bool = false; //reset
 				}
+				
 				
 				//Randomize, then sort global.combat_initiative_ar based upon speed, and a random value.
 				scr_shuffle_ar(global.combat_initiative_ar);
