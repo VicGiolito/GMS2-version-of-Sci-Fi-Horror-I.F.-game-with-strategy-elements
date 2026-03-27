@@ -16,7 +16,9 @@ function scr_return_filtered_abil_ar(cur_char_id){
 			
 			if is_struct(item_struct_id) && item_struct_id.struct_type_enum == struct_type.Item {
 				
-				if global.combat_begun == true {
+				if global.cur_game_state == game_state.choose_chars { array_push(filtered_abil_list,item_struct_id); }
+				
+				else if global.combat_begun == true {
 				
 					if item_struct_id.use_context == abil_use_context.combat_only || item_struct_id.use_context == abil_use_context.both {
 						array_push(filtered_abil_list,item_struct_id);

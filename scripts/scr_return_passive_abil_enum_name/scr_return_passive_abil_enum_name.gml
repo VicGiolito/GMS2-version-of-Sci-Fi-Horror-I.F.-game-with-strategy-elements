@@ -23,7 +23,7 @@ function scr_return_passive_abil_enum_name(passive_abil_enum){
 		break;
 		
 		case passive_abil_type.giant:
-			abil_str = "Giant";
+			abil_str = "Giant Mutant";
 		break;
 		
 		case passive_abil_type.thick_hide:

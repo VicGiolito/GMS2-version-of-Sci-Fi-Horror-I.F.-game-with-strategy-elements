@@ -19,4 +19,29 @@ function scr_add_passive_ability(char_struct_id, passive_abil_enum, called_from_
 	else if passive_abil_enum == passive_abil_type.thick_hide {
 		char_struct_id.armor += 1;	
 	}
+	else if passive_abil_enum == passive_abil_type.cybernetic {	
+		char_struct_id.res_fire += 50;
+        char_struct_id.res_vacuum += 50;
+        char_struct_id.res_gas += 50;
+        char_struct_id.res_electric += -50;
+        char_struct_id.char_max_infection = BASE_MAX_INFECTION + 4;
+        char_struct_id.res_infect += 50;
+        char_struct_id.res_poison += 50;
+	}
+	else if passive_abil_enum == passive_abil_type.synthetic {
+		char_struct_id.armor += 1;	
+		
+		//Base 'mechanical' resistences
+        char_struct_id.res_fire += 100;
+        char_struct_id.res_vacuum += 100;
+        char_struct_id.res_gas += 100;
+        char_struct_id.res_electric += -100;
+        char_struct_id.char_max_infection = BASE_MAX_INFECTION + 4;
+        char_struct_id.res_infect += 500;
+        char_struct_id.res_poison += 500;
+        char_struct_id.res_stun += 50;
+			
+		char_struct_id.morale_immune = true;
+		char_struct_id.infection_immune = true;
+	}
 }

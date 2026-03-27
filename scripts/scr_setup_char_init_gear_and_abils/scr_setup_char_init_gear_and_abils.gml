@@ -38,43 +38,29 @@ function scr_setup_char_init_gear_and_abils(){
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.suit_flak_armor);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
-			
-			//Abilities:
-			scr_add_passive_ability(pc_char_struct,passive_abil_type.hardened_skin,"scr_setup_char_init_gear_and_abils *");
-			scr_add_ability(pc_char_struct,item_type.wrist_rockets);
-			scr_add_ability(pc_char_struct,item_type.hand_flamer);
-			scr_add_ability(pc_char_struct,item_type.shocking_grasp);
-			scr_add_ability(pc_char_struct,item_type.personal_shield_generator);
 		}
 		
 		else if pc_char_enum == character.child {
-				
+			
+		}
+		
+		else if pc_char_enum == character.service_droid {
+			
 		}
 		
 		else if pc_char_enum == character.security_guard {
-			
-			scr_add_ability(pc_char_struct,item_type.taser);
-			scr_add_ability(pc_char_struct,item_type.smoke_grenade);
+
 		}
 		
 		else if pc_char_enum == character.mechanician {
 			
-			scr_add_ability(pc_char_struct,item_type.spawn_light_buzzsaw_droid);
-			scr_add_ability(pc_char_struct,item_type.spawn_light_flamer_droid);
-			scr_add_ability(pc_char_struct,item_type.spawn_light_shotgun_droid);
-			scr_add_ability(pc_char_struct,item_type.spawn_light_sentinel_droid);
 		}
 		
 		else if pc_char_enum == character.engineer {
 			
-			scr_add_ability(pc_char_struct,item_type.spawn_light_sentry_gun);
 		}
 		
 		else if pc_char_enum == character.doctor {
-			
-			scr_add_ability(pc_char_struct,item_type.field_medicine);
-			scr_add_ability(pc_char_struct,item_type.energizing_stim_prick);
-			
 			var item_id = new global.Item(item_type.medkit);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.adrenal_pen);
@@ -84,12 +70,6 @@ function scr_setup_char_init_gear_and_abils(){
 		}
 		
 		else if pc_char_enum == character.ogre {
-			scr_add_ability(pc_char_struct,item_type.headbutt);
-			scr_add_ability(pc_char_struct,item_type.feral_bite);
-			
-			scr_add_passive_ability(pc_char_struct,passive_abil_type.giant,"scr_setup_char_init_gear_and_abils");
-			scr_add_passive_ability(pc_char_struct,passive_abil_type.healing_factor,"scr_setup_char_init_gear_and_abils");
-			scr_add_passive_ability(pc_char_struct,passive_abil_type.thick_hide,"scr_setup_char_init_gear_and_abils");
 			
 			var item_id = new global.Item(item_type.suit_prisoner_jumpsuit);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
@@ -111,7 +91,6 @@ function scr_setup_char_init_gear_and_abils(){
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.suit_security_vest);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
-			
 		}
 	}
 	

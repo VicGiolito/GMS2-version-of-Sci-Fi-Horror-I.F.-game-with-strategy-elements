@@ -19,6 +19,18 @@ function scr_reset_status_effects(char_struct_id){
 	
 	char_struct_id.bleeding_count = 0;
 	
+	if char_struct_id.treacherous_count > 0 {
+		char_struct_id.treacherous_count = 0;
+		char_struct_id.char_team_enum = team_type.pc;	
+	}
+	
+	char_struct_id.cowering_bool = false;
+	
+	if char_struct_id.berserk_count > 0 {
+		char_struct_id.berserk_count = 0;
+		char_struct_id.char_team_enum = team_type.pc;	
+	}
+	
 	if char_struct_id.suppressed_count > 0 {
 		char_struct_id.suppressed_count = 0;
 		char_struct_id.spd += SUPPRESSED_SPEED_DEBUFF;

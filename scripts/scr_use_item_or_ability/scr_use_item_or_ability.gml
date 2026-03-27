@@ -10,6 +10,14 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 	
 	var item_type_enum = item_struct_id.item_enum;
 	
+	//We've successfully used the item, we can reduce our AP and/or sanity now, if applicable:
+	if item_struct_id.ability_point_cost > 0 {
+		char_struct_using_item.ability_points_cur -= item_struct_id.ability_point_cost;
+	}
+	if item_struct_id.sanity_cost > 0 {
+		char_struct_using_item.sanity_cur -= item_struct_id.sanity_cost;
+	}
+	
 	if item_type_enum == item_type.medkit {
 		
 		target_char_struct_of_item.hp_cur += MEDKIT_HP_BOOST;
@@ -20,6 +28,14 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		scr_reset_status_effects(target_char_struct_of_item);
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} uses the {item_struct_id.item_name} on {target_char_struct_of_item.name}. (Their hit points have increased by {MEDKIT_HP_BOOST}; they now have {target_char_struct_of_item.hp_cur} hit points. They have also been cleared of any bleeding, poisoned, or burning status effects.)**");
+		
+		//Check to see if this char has revived:
+		if target_char_struct_of_item.unconscious_bool == true && target_char_struct_of_item.hp_cur > 0 {
+			target_char_struct_of_item.unconscious_bool = false;
+			target_char_struct_of_item.unconscious_count = 0;
+			scr_add_str_to_dialogue_ar($"**\n{target_char_struct_of_item.name} has woken up!**");
+			if target_char_struct_of_item.sanity_cur <= 0 target_char_struct_of_item.sanity_cur = floor(target_char_struct_of_item.sanity_max / 2); //Reset sanity to half max, if applicable:
+		}
 	}
 	
 	else if item_type_enum == item_type.field_medicine {
@@ -32,6 +48,14 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		scr_reset_status_effects(target_char_struct_of_item);
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} dresses the wounds of {target_char_struct_of_item.name} with their {item_struct_id.item_name}. ({scr_string_capitalize(target_char_struct_of_item.name)}'s hit points have been increased by {FIELD_MEDICINE_HP_BOOST}; they now have {target_char_struct_of_item.hp_cur} hit points.)**");
+	
+		//Check to see if this char has revived:
+		if target_char_struct_of_item.unconscious_bool == true && target_char_struct_of_item.hp_cur > 0 {
+			target_char_struct_of_item.unconscious_bool = false;
+			target_char_struct_of_item.unconscious_count = 0;
+			scr_add_str_to_dialogue_ar($"\n**{target_char_struct_of_item.name} has woken up!**");
+			if target_char_struct_of_item.sanity_cur <= 0 target_char_struct_of_item.sanity_cur = floor(target_char_struct_of_item.sanity_max / 2); //Reset sanity to half max, if applicable:
+		}
 	}
 	
 	else if item_type_enum == item_type.regen_nanites {
@@ -43,10 +67,10 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 	
 	else if item_type_enum == item_type.energizing_stim_prick {
 		
-		target_char_struct_of_item.cur_action_points += ENERGENIZING_AP_BOOST;
+		target_char_struct_of_item.ability_points_cur += ENERGENIZING_AP_BOOST;
 		
 		//Cap:
-		if target_char_struct_of_item.cur_action_points > target_char_struct_of_item.max_action_points { target_char_struct_of_item.cur_action_points = target_char_struct_of_item.max_action_points; } 
+		if target_char_struct_of_item.ability_points_cur > target_char_struct_of_item.ability_points_max { target_char_struct_of_item.ability_points_cur = target_char_struct_of_item.ability_points_max; } 
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} injects {target_char_struct_of_item.name} with the {item_struct_id.item_name}. (Their ability points have increased by {ENERGENIZING_AP_BOOST}.)**"); 
 	}
@@ -126,7 +150,7 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 			}
 			else {
 				//We need to create a new mob struct, and add this to it.
-				array_push(global.enemy_mob_ar, { mob_cur_grid: spawn_grid, enemies_in_mob_ar : [], mob_grid_x : char_struct_using_item.cur_grid_x, mob_grid_y : char_struct_using_item.cur_grid_y, chosen_path_grid: -1, mob_dest_grid_x: -1, mob_dest_grid_y: -1 } );
+				array_push(global.enemy_mob_ar, new enemy_mob_struct(spawn_grid, char_struct_using_item.cur_grid_x, char_struct_using_item.cur_grid_y ) );
 				//Add to enemies_in_mob_ar in the new mob_struct_id:
 				array_push(global.enemy_mob_ar[array_length(global.enemy_mob_ar) - 1].enemies_in_mob_ar, newly_spawned_char_id);
 			}

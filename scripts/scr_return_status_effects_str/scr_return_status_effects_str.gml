@@ -9,24 +9,40 @@ function scr_return_status_effects_str(char_struct_id){
 	
 	var status_effect_found = false;
 	
-	with(char_struct_id) {	
+	with(char_struct_id) {
+		
+		if treacherous_count > 0 {
+			status_effect_found = true;	
+			status_effects_str += $" TREACHEROUS ({treacherous_count})";
+		}
+		
+		if berserk_count > 0 {
+			status_effect_found = true;	
+			status_effects_str += $" BERSERK ({berserk_count})";
+		}
+		
+		if cowering_bool == true {
+			status_effect_found = true;	
+			status_effects_str += $" COWERING ({stun_count})";
+		}
+		
 		if infection_count > 0 {
 			status_effect_found = true;	
-			status_effects_str += $"Infected({infection_count}/{char_max_infection})";
+			status_effects_str += $" Infected ({infection_count}/{char_max_infection})";
 		}
 		if burning_count > 0 {
 			status_effect_found = true;	
-			status_effects_str += $" Burning({burning_count})";
+			status_effects_str += $" Burning ({burning_count})";
 		}
 		if poisoned_count > 0 {
 			status_effect_found = true;	
-			status_effects_str += $" Poisoned({poisoned_count})";
+			status_effects_str += $" Poisoned ({poisoned_count})";
 		}
 		if bleeding_count > 0 {
 			status_effect_found = true;	
-			status_effects_str += $" Bleeding({bleeding_count})";
+			status_effects_str += $" Bleeding ({bleeding_count})";
 		}
-		if unconscious_bool  {
+		if unconscious_bool {
 			status_effect_found = true;
 			var remaining_unconscious_duration = UNCONSCIOUS_DURATION - char_struct_id.unconscious_count;
 			var plural_str = "";

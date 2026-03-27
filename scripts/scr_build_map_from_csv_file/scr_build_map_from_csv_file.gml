@@ -59,16 +59,17 @@ function scr_build_map_from_csv_file(location_enum){
 					
 						//Debug enemies
 					//Skittering larva:
-					repeat(3) {
+					repeat(1) {
 						//new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true);
 					}
 					//Lumbering carrier:
 					repeat(3) {
 						//new global.Character(character.enemy_lumbering_carrier,xx,yy,global.research_vessel_grid,team_type.enemy,true);
 						//new global.Character(character.enemy_spined_spitter,xx,yy,global.research_vessel_grid,team_type.enemy,true);
-						//new global.Character(character.enemy_sodden_shambler,xx,yy,global.research_vessel_grid,team_type.enemy,true);
+						new global.Character(character.enemy_sodden_shambler,xx,yy,global.research_vessel_grid,team_type.enemy,true);
 						//new global.Character(character.neutral_light_sentry_gun,xx,yy,global.research_vessel_grid,team_type.enemy,true);
-						global.Character(character.enemy_transmogrified_soldier,xx,yy,global.research_vessel_grid,team_type.enemy,true);
+						//global.Character(character.enemy_transmogrified_soldier,xx,yy,global.research_vessel_grid,team_type.enemy,true);
+						new global.Character(character.enemy_chittering_lurker,xx,yy,global.research_vessel_grid,team_type.enemy,true);
 					}
 						//Debug pcs:
 					//new global.Character(character.engineer,xx,yy,global.research_vessel_grid,team_type.pc,true);
@@ -77,6 +78,7 @@ function scr_build_map_from_csv_file(location_enum){
 					new global.Character(character.security_guard,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					new global.Character(character.doctor,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					new global.Character(character.engineer,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.service_droid,xx,yy,global.research_vessel_grid,team_type.pc,true);
 				}
 				
 				//East of stasis room:

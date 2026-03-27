@@ -25,7 +25,7 @@ function scr_define_macros_and_enums(){
 		child, //Increased stealth, low hp, can't use weapons or armor.
 		giant, //Can't hide, increased melee dmg and melee accuracy
 		cybernetic, //50% res to most hazard and damage types, 50% weakness to electric
-		synthetic, //100% res to most hazard and damage types, 100% weakness to electric
+		synthetic, //100% res to most hazard and damage types, 100% weakness to electric, morale immune
 		
 		total_ability_types
 	}
@@ -51,6 +51,13 @@ function scr_define_macros_and_enums(){
 		combat_execute_action,
 		combat_choose_pc_wep,
 		combat_pc_target_rank
+	}
+	
+	enum broken_morale_status_effects {
+		cowering,
+		berserk,
+		treacherous,
+		fleeing
 	}
 	
 	enum combat_concluded_result {
@@ -222,6 +229,8 @@ function scr_define_macros_and_enums(){
 		feral_bite,
 		adrenal_pen,
 		plasma_torch,
+		terrifying_wail,
+		regurgitated_vomit,
 		total_items
 	}
 	
@@ -238,7 +247,7 @@ function scr_define_macros_and_enums(){
 		service_droid,
 		janitor,
 		playboy,
-		physicist,
+		biologist,
 		security_guard, //should be considered the last pc character for purposes of defining the char_bio_ar in scr_define_global_and_con_data()
 		
 		neutral_infected_scientist,
@@ -398,6 +407,13 @@ function scr_define_macros_and_enums(){
 		both
 	}
 	
+	//Indicates whether an item or ability does morale damage, regular damage, or both.
+	enum item_dmg_type {
+		damage_only,
+		morale_only,
+		both
+	}
+	
 	//Some stat type macros/misc. macros:
 	#macro AVG_ACC_VAL 7
 	#macro MIN_COMBAT_RAN_NUM 1
@@ -436,11 +452,22 @@ function scr_define_macros_and_enums(){
 	#macro FIRE_DURATION 3
 	#macro BLEED_DURATION 2
 	#macro POISON_DURATION 2
+	
+	#macro COWERING_STUNNED_DURATION 4
+	#macro TREACHEROUS_DURATION 4
+	#macro BERSERK_DURATION 4
+	
 	#macro CRAGOS_ACC_DEBUFF 2
 	#macro CRAGOS_EVASION_DEBUFF 1
+	
 	#macro GIANT_MELEE_DMG_BUFF 3
 	#macro AVERAGE_CHAR_SPEED 3
 	#macro MEDKIT_HP_BOOST 5
+	#macro AVG_COURAGE_VAL 1
+	
+	#macro PASSIVE_THICK_HIDE_ARMOR_BUFF 1
+	#macro PASSIVE_HARDENED_FRAME_ARMOR_BUFF 1
+	#macro PASSIVE_CHILD_STEALTH_BUFF 2
 	
 	#macro UNVISITED_CELL 0
 	#macro VISITED_CELL 1

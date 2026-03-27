@@ -16,22 +16,50 @@ function scr_trigger_dot_effects(char_struct_id){
 	var dot_result_str = "", collapsed_bool = false;
 	var char_name_str = char_struct_id.name;
 	
+	if char_struct_id.treacherous_count > 0 {
+		char_struct_id.treacherous_count--;
+		
+		if char_struct_id.treacherous_count == 0 {
+			char_struct_id.char_team_enum = team_type.pc;
+			dot_result_str += $"**{scr_string_capitalize(char_name_str)} has come to their senses and is no longer TREACHEROUS.**\n";
+		}
+	}
+	
+	if char_struct_id.berserk_count > 0 {
+		char_struct_id.berserk_count--;
+		
+		if char_struct_id.berserk_count == 0 {
+			char_struct_id.char_team_enum = team_type.pc;
+			dot_result_str += $"**{scr_string_capitalize(char_name_str)} has come to their senses and is no longer BERSERK.**\n";
+		}
+	}
+	
 	if char_struct_id.stun_count > 0 {
 		
 		var plural_str = "";
 		
 		if char_struct_id.stun_count > 1 plural_str = "s";
 		
-		dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) is stunned, reeling in pain...**\n";
+		//Show cowering string:
+		if char_struct_id.cowering_bool == true {
+			var broken_morale_status_effect_struct = scr_return_broken_status_effect_struct(char_struct_id, broken_morale_status_effects.cowering);
+			
+			dot_result_str +=$"**{broken_morale_status_effect_struct.broken_morale_str}**\n";
+		}
+		
+		else dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) is stunned, reeling in pain...**\n";
 		
 		char_struct_id.stun_count--;
 		
 		char_still_alive_bool = false; //While the char is still technically alive, we want this script to return false 
 		//so that the stunned char is 'skipped' and doesn't get to perform an action on their turn.
 		
-		if char_struct_id.stun_count <= 0 {
+		//Show 'revived' string:
+		if char_struct_id.cowering_bool == false && char_struct_id.stun_count <= 0 {
 			dot_result_str += $"**... But they soon recover.**\n";	
 		}
+		
+		if char_struct_id.stun_count <= 0 { char_struct_id.cowering_bool = false; } //Reset
 	}
 	
 	if char_struct_id.burning_count > 0 {
@@ -148,6 +176,7 @@ function scr_trigger_dot_effects(char_struct_id){
 						ogre_revived_str = char_struct_id.revived_dialogue_str_ar[irandom_range(0,array_length(char_struct_id.revived_dialogue_str_ar)-1)];
 					}
 					dot_result_str += $"**{char_name_str} has woken up!**\n**{ogre_revived_str}**\n";
+					if char_struct_id.sanity_cur <= 0 char_struct_id.sanity_cur = floor(char_struct_id.sanity_max / 2); //Reset sanity to half max, if applicable:
 					collapsed_bool = false;
 				}
 			}
@@ -180,6 +209,8 @@ function scr_trigger_dot_effects(char_struct_id){
 						ogre_revived_str = char_struct_id.revived_dialogue_str_ar[irandom_range(0,array_length(char_struct_id.revived_dialogue_str_ar)-1)];
 				}
 				dot_result_str += $"{char_name_str}({char_struct_id.unique_id}) has woken up!\n**{ogre_revived_str}**\n";
+				
+				if char_struct_id.sanity_cur == 0 char_struct_id.sanity_cur = floor(char_struct_id.sanity_max / 2); //Reset sanity to half max, if applicable:
 				collapsed_bool = false;
 			}
 		}	

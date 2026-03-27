@@ -113,7 +113,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 	if item_struct_id.infection_chance > 0 {
 		var total_status_chance = item_struct_id.infection_chance - target_char_id.res_infect;
 		d($"Infect chance == {item_struct_id.infection_chance}, target res == {target_char_id.res_infect}, total_status_chance == {total_status_chance} ");
-		if total_status_chance > 0 {
+		if total_status_chance > 0 && target_char_id.infection_immune == false {
 			var ran_val = irandom_range(1,100);
 			
 			//Apply status effect:

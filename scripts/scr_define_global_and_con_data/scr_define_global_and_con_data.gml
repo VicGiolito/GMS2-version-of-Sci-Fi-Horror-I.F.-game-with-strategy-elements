@@ -218,7 +218,7 @@ function scr_define_global_and_con_data(){
 			array_push(char_bio_ar,"This character's bio hasn't been written yet.");
 		}
 		
-		else if i == character.physicist {
+		else if i == character.biologist {
 			primary_role_str = "SCIENTIST";
             char_class_snippet = "Another bespeckled gray beard in a white lab coat, they seem to populate most star ships--especially those that operate well outside of the known regions of space. This one has an imperious look and a slight sneer, even in stasis."
 		
@@ -239,7 +239,7 @@ function scr_define_global_and_con_data(){
 			array_push(char_bio_ar,"This char's backstory has not been defined.");
 		}
 		
-		array_push(char_stats_ar, $"{temp_char_id.name}: Primary role: {primary_role_str}.\n\n{char_class_snippet}\n\nSecurity: {temp_char_id.security}; Engineering: {temp_char_id.engineering}; Science: {temp_char_id.science}; Stealth: {temp_char_id.stealth}\n\n");
+		array_push(char_stats_ar, $"{temp_char_id.name}: Primary role: {primary_role_str}.\n\n{char_class_snippet}\n\nSecurity: {temp_char_id.security}; Engineering: {temp_char_id.engineering}; Science: {temp_char_id.science}; Stealth: {temp_char_id.stealth}\n");
 	
 		delete temp_char_id;
 	}

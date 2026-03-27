@@ -168,7 +168,7 @@ global.resources_scrap = 0;
 global.resources_basic_tech = 0;
 global.resources_advanced_tech = 0;
 global.resources_engine_fuel = 0;
-global.resources_ammo = 25;
+global.resources_ammo = 15;
 
 global.wait = false;
 global.wait_time = 2;

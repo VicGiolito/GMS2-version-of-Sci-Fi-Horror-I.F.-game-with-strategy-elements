@@ -1,11 +1,35 @@
 
 function scr_define_structs(){
 	
+	#region Enemy mob struct:
+	
+	enemy_mob_struct = function (spawn_grid, mob_grid_x_, mob_grid_y_) constructor {
+		
+		mob_cur_grid = spawn_grid;
+		
+		enemies_in_mob_ar = [];
+		
+		mob_grid_x = mob_grid_x_;
+		mob_grid_y = mob_grid_y_;
+		
+		chosen_path_grid = -1;
+		
+		mob_dest_grid_x = -1;
+		mob_dest_grid_y = -1;
+	}
+	
+	#endregion
+	
 	#region Character struct
 	
 	global.Character = function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, wep_loadout_int = 0) constructor {
 		
 		struct_type_enum = struct_type.Character;
+		
+		broken_morale_ar = -1;
+		
+		morale_immune = false;
+		infection_immune = false;
 		
 		neutrals_following_this_char_ar = -1;
 		
@@ -47,6 +71,8 @@ function scr_define_structs(){
         sanity_max = 0;
 		move_points_max = 2;
 		move_points_cur = move_points_max;
+		
+		courage = AVG_COURAGE_VAL; //Acts just like evasion, but for morale attacks.
 
         armor = 0;
         evasion = AVERAGE_EVASION_SCORE;
@@ -62,9 +88,6 @@ function scr_define_structs(){
 
         suppress_immune_boolean = false;
         stun_immune_boolean = false;
-
-        cur_action_points = 2;
-        max_action_points = 2;
 
         ability_ar = -1; //ACTIVATEABLE abilities, like combat abilities; these also double as item structs.
 		passive_abil_ar = -1;
@@ -147,6 +170,10 @@ function scr_define_structs(){
         stun_count = 0;
         spawn_minion_count = 0;
 		
+		treacherous_count = 0;
+		cowering_bool = false;
+		berserk_count = 0;
+		
 		smoke_grenade_count = 0;
 		hold_the_line_count = 0;
 
@@ -184,8 +211,10 @@ function scr_define_structs(){
             hp_cur = 16;
             ability_points_cur = 8;
             ability_points_max = 8;
-            sanity_cur = 10;
-            sanity_max = 10;
+            sanity_cur = 12;
+            sanity_max = sanity_cur;
+			
+			courage = AVG_COURAGE_VAL+1;
 
             engineering = 1;
             security = 9;
@@ -218,18 +247,32 @@ function scr_define_structs(){
 
             accuracy = AVERAGE_ACCURACY_SCORE-CRAGOS_ACC_DEBUFF; //Worse than average accuracy, only hits about 50% of the time, on average
             evasion = AVERAGE_EVASION_SCORE-CRAGOS_EVASION_DEBUFF; //Worse than average evasion
+			
+			//Define broken_morale_ar:
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: "\"Spit on me? Sneer at me? Lay hands on me? If you truly think me a monster--THEN LET ME SHOW YOU WHAT I CAN DO!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: "\"Ceaseless toil and torment! Will the pain never end?! RAGE my constant companion! RAGE my only friend!\"" });
+		
+			scr_add_passive_ability(self,passive_abil_type.giant,"constructor event");
+			scr_add_passive_ability(self,passive_abil_type.healing_factor,"constructor event");
+			scr_add_passive_ability(self,passive_abil_type.thick_hide,"constructor event");
+			
+			scr_add_ability(self,item_type.headbutt);
+			scr_add_ability(self,item_type.feral_bite);
 		}
 
         else if char_type_enum == character.doctor {
             name = "Revita, 'The Doctor'";
             hp_max = 6;
             hp_cur = 6;
-            ability_points_cur = 10;
-            ability_points_max = 10;
+            ability_points_cur = 6;
+            ability_points_max = ability_points_cur;
             sanity_cur = 8;
             sanity_max = 8;
 			
 			nick_name = "Doc";
+			
+			courage = AVG_COURAGE_VAL;
 
             engineering = 2;
             security = 0;
@@ -245,14 +288,22 @@ function scr_define_structs(){
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
+			
+			//Define broken_morale_ar:
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"... I'm sorry!... I can't... I can't!...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... Their hands, outstretched... Their eyes: pleading... I couldn't save them!... Couldn't save them...\"" });
+		
+			scr_add_ability(self,item_type.field_medicine);
+			scr_add_ability(self,item_type.energizing_stim_prick);
 		}
 		
 		else if char_type_enum == character.veteran {
             name = "Nikano, 'The Veteran'";
             hp_max = 10;
-            hp_cur = 10;
-            ability_points_cur = 10;
-            ability_points_max = 10;
+            hp_cur = hp_max;
+            ability_points_cur = 9;
+            ability_points_max = ability_points_cur;
             sanity_cur = 8;
             sanity_max = 8;
 			
@@ -263,6 +314,8 @@ function scr_define_structs(){
             science = 1;
             scavenging = 4;
             stealth = 7;
+			
+			courage = AVG_COURAGE_VAL+1;
 
             strength = 2;
             intelligence = 6;
@@ -272,6 +325,11 @@ function scr_define_structs(){
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
+			
+			//Define broken_morale_ar:
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: "\"... The voices of my kin are calling to me... I am sorry about this... I must answer their call...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: "\"Stay away from me!... The transformation, it's unstable... I can't control it!\"" });
 		}
 
         else if char_type_enum == character.engineer {
@@ -281,9 +339,11 @@ function scr_define_structs(){
             ability_points_cur = 10;
             ability_points_max = 10;
             sanity_cur = 6;
-            sanity_max = 6;
+            sanity_max = sanity_cur;
 			
 			nick_name = "Engie";
+			
+			courage = AVG_COURAGE_VAL;
 			
             engineering = 8;
             security = 0;
@@ -296,11 +356,15 @@ function scr_define_structs(){
             wisdom = 6;
             dexterity = 1;
             spd = AVERAGE_CHAR_SPEED;
-
-
+		
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"... They just keep coming! Why won't they stop? How do you stop them?! You can't... No one can!...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... Nothing comes together as easily as it falls apart...\"" });
+		
+			scr_add_ability(self,item_type.spawn_light_sentry_gun);
 		}
 
-        else if char_type_enum == character.janitor {
+        else if char_type_enum == character.janitor { //I'll prob just get rid of this character - quite extraneous.
             name = "Johns, 'The Janitor'";
             hp_max = 7;
             hp_cur = 7;
@@ -322,7 +386,8 @@ function scr_define_structs(){
             wisdom = 4;
             dexterity = 2;
             spd = AVERAGE_CHAR_SPEED+1;
-
+			
+			
 		}
 
         else if char_type_enum == character.mechanician {
@@ -331,8 +396,8 @@ function scr_define_structs(){
             hp_cur = 6;
             ability_points_cur = 10;
             ability_points_max = 10;
-            sanity_cur = 10;
-            sanity_max = 10;
+            sanity_cur = 12;
+            sanity_max = sanity_cur;
 			
 			nick_name = "Avia";
 
@@ -341,6 +406,8 @@ function scr_define_structs(){
             science = 2;
             scavenging = 1;
             stealth = 5;
+			
+			courage = AVG_COURAGE_VAL;
 
             strength = 1;
             intelligence = 7;
@@ -358,7 +425,17 @@ function scr_define_structs(){
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
-
+			
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"... Wait! I can still see the code of their consciousness, drifting away!... This way!... The currents flow this way, follow me!...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... Their voices, echoing inside my mind, like the whispers of so many dead children... They had only wished to be free... Now they're condemned to the purgatory of the void forever...\"" });
+		
+			scr_add_ability(self,item_type.spawn_light_buzzsaw_droid);
+			scr_add_ability(self,item_type.spawn_light_flamer_droid);
+			scr_add_ability(self,item_type.spawn_light_shotgun_droid);
+			scr_add_ability(self,item_type.spawn_light_sentinel_droid);
+			
+			scr_add_passive_ability(self,passive_abil_type.cybernetic,"constructor event");
 		}
 
         else if char_type_enum == character.mercenary_cyborg {
@@ -372,7 +449,9 @@ function scr_define_structs(){
             sanity_max = 10;
 			
 			nick_name = "Cyborg";
-
+			
+			courage = AVG_COURAGE_VAL+1;
+			
             engineering = 3;
             security = 8;
             science = 1;
@@ -385,15 +464,21 @@ function scr_define_structs(){
             dexterity = 3;
             spd = AVERAGE_CHAR_SPEED+1;
 
-            armor = 0; //Is set from passive
+            armor = 0; //Is increaed from from passive, as are his resistences.
             //Base 'half-mechanical' resistences:
-            res_fire = 50;
-            res_vacuum = 50;
-            res_gas = 50;
-            res_electric = -50;
-            char_max_infection = BASE_MAX_INFECTION + 4;
-            res_infect = 50;
-            res_poison = 25;
+            
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: "\"You're infected--all of you! Skin, hair, sweat--it's all unclean! You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "Torvald scratches at his face, pulls at his hair, claws at his eyes. \"This flesh--it burns! Let me be rid of it, once and for all!\"" });
+		
+			//Abilities:
+			scr_add_passive_ability(self,passive_abil_type.hardened_skin," constructor event ");
+			scr_add_passive_ability(self,passive_abil_type.cybernetic,"constructor event");
+			
+			scr_add_ability(self,item_type.wrist_rockets);
+			scr_add_ability(self,item_type.hand_flamer);
+			scr_add_ability(self,item_type.shocking_grasp);
+			scr_add_ability(self,item_type.personal_shield_generator);
 		}
 
         else if char_type_enum == character.security_guard {
@@ -403,9 +488,11 @@ function scr_define_structs(){
             ability_points_cur = 14;
             ability_points_max = 14;
             sanity_cur = 8;
-            sanity_max = 8;
+            sanity_max = sanity_cur;
 			
 			nick_name = "Guard";
+			
+			courage = AVG_COURAGE_VAL+1; 
 
             engineering = 1;
             security = 7;
@@ -418,19 +505,28 @@ function scr_define_structs(){
             wisdom = 2;
             dexterity = 2;
             spd = AVERAGE_CHAR_SPEED-1;
+			
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"Oh HELL no! I didn't sign up for this shit!"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"Just two more weeks, they said... Just two more weeks... Now I'll never see my little girl again...\"" });
+			
+			scr_add_ability(self,item_type.taser);
+			scr_add_ability(self,item_type.smoke_grenade);
 		}
 
-        else if char_type_enum == character.physicist {
-            name = "Darius, 'The Physicist'";
+        else if char_type_enum == character.biologist {
+            name = "Darius, 'The Biologist'";
             hp_max = 6;
             hp_cur = 6;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 6;
-            sanity_max = 6;
+            sanity_cur = 5;
+            sanity_max = sanity_cur;
 			
-			nick_name = "Scien";
-
+			nick_name = "Bio";
+			
+			courage = AVG_COURAGE_VAL-1; 
+			
             engineering = 2;
             security = 0;
             science = 9;
@@ -442,10 +538,13 @@ function scr_define_structs(){
             wisdom = 9;
             dexterity = 2;
             spd = AVERAGE_CHAR_SPEED-1;
-
+			
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"The human fight or flight instinct is very strong, you see, and, well--it seems my feet have decided for me! Goodbye!"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "Darius has a thousand yard stare. \"Millions of years of evolution... And it's all lead to this. How could we have been so blind?\"" });
 		};
 
-        else if char_type_enum == character.criminal {
+        else if char_type_enum == character.criminal { //Probably get rid of this character too
             name = "Emeran, 'The Criminal'";
             hp_max = 9;
             hp_cur = 9;
@@ -479,10 +578,12 @@ function scr_define_structs(){
             hp_cur = 14;
             ability_points_cur = 15;
             ability_points_max = 15;
-            sanity_cur = 10;
-            sanity_max = 10;
+            sanity_cur = 20;
+            sanity_max = 20;
 			
 			nick_name = "RG-88";
+			
+			courage = AVG_COURAGE_VAL+20; 
 
             engineering = 6;
             security = 6;
@@ -495,15 +596,10 @@ function scr_define_structs(){
             wisdom = 8;
             dexterity = 2;
             spd = AVERAGE_CHAR_SPEED+1;
-            //Base 'mechanical' resistences
-            res_fire = 100;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = -100;
-            char_max_infection = BASE_MAX_INFECTION + 4;
-            res_infect = 500;
-            res_poison = 500;
-            res_stun = 50;
+			
+			scr_add_passive_ability(self,passive_abil_type.synthetic,"constructor event");
+			
+			//'Synthetic' resistences and morale_immunity granted from passive in scr_add_passive
 		}
 
         else if char_type_enum == character.ceo {
@@ -516,6 +612,8 @@ function scr_define_structs(){
             sanity_max = 4;
 			
 			nick_name = "CEO";
+			
+			courage = AVG_COURAGE_VAL-2; 
 
             engineering = 3;
             security = 0;
@@ -531,7 +629,10 @@ function scr_define_structs(){
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
-
+			
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"The board members, they're counting on me, you see. I'm sure the rest of you can handle this just fine without me! Just keep working hard, okay? You'll get there, someday!"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "Celeste stares off into space. \"Are they the monsters, or are we?\"" });
 		}
 
         else if char_type_enum == character.child {
@@ -540,10 +641,12 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 6;
             ability_points_max = 6;
-            sanity_cur = 5;
-            sanity_max = 5;
+            sanity_cur = 4;
+            sanity_max = 4;
 			
 			nick_name = "Kira";
+			
+			courage = AVG_COURAGE_VAL+1;
 
             engineering = 1;
             security = 0;
@@ -561,6 +664,12 @@ function scr_define_structs(){
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
+			
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"Pappa, where are you?\""});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"MOMMA!\"" });
+		
+			scr_add_passive_ability(self,passive_abil_type.child,"constructor event");
 		}
 
         else if char_type_enum == character.playboy {
@@ -569,10 +678,12 @@ function scr_define_structs(){
             hp_cur = 8;
             ability_points_cur = 6;
             ability_points_max = 6;
-            sanity_cur = 3;
-            sanity_max = 3;
+            sanity_cur = 4;
+            sanity_max = 4;
 			
 			nick_name = "Play";
+			
+			courage = AVG_COURAGE_VAL-2; 
 
             engineering = 1;
             security = 1;
@@ -585,6 +696,10 @@ function scr_define_structs(){
             wisdom = 1;
             dexterity = 5;
             spd = AVERAGE_CHAR_SPEED+1;
+			
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"I'm really more of a general than a soldier--I work best from the back line... I'll--I'll send help, okay?\""});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"Be a man, he said... Just act like a man, for once in your goddamned life!... Then why can't I move my fucking FEET?!\"" });
 		}
 
         else if char_type_enum == character.neutral_infected_scientist {
@@ -911,8 +1026,9 @@ function scr_define_structs(){
 
             spd = 0;
 			
-			scr_add_ability(self,item_type.acid_cloud);
-			scr_add_ability(self,item_type.acid_spit);
+			//scr_add_ability(self,item_type.acid_cloud);
+			//scr_add_ability(self,item_type.acid_spit);
+			scr_add_ability(self,item_type.regurgitated_vomit);
 		}
 
         else if char_type_enum == character.enemy_chittering_lurker {
@@ -938,8 +1054,9 @@ function scr_define_structs(){
 
             spd = 7;
 			
-			scr_add_ability(self,item_type.filament_spray);
-			scr_add_ability(self,item_type.sticky_slime);
+			//scr_add_ability(self,item_type.filament_spray);
+			//scr_add_ability(self,item_type.sticky_slime);
+			scr_add_ability(self,item_type.terrifying_wail);
 		}
 		
 		#endregion End region for defining char stats
@@ -971,7 +1088,9 @@ function scr_define_structs(){
         for(var i = 0; i < stat_boost.total_stats; i++) {
             array_push(stat_boost_list,0);
 		}
-
+		
+		dmg_type_enum = item_dmg_type.damage_only;
+		
         // Default values for instance vars for each item:
         dmg_min = 0;
         dmg_max = 0;
@@ -1263,7 +1382,7 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 4;
 			sanity_cost = 2;
-            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN."
+            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
@@ -1295,7 +1414,7 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 3;
 			sanity_cost = 2;
-            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction..."
+            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction...";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
@@ -1512,6 +1631,19 @@ function scr_define_structs(){
             infection_chance = 10;
             always_checks_status_effect_boolean = false;
 		}
+		else if item_enum == item_type.regurgitated_vomit {
+            dmg_min = 1;
+            dmg_max = 3;
+            item_name = "UNDIGESTED VOMIT";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 2;
+            item_verb = "sprays";
+            item_dmg_str = "disgusted";
+            aoe_count = 2;
+            can_overwatch_boolean = true;
+            always_checks_status_effect_boolean = false;
+			dmg_type_enum = item_dmg_type.morale_only;
+		}
         else if item_enum == item_type.acid_cloud {
             dmg_min = 1;
             dmg_max = 3;
@@ -1552,6 +1684,18 @@ function scr_define_structs(){
             poison_chance = 10;
             stun_chance = 20;
             always_checks_status_effect_boolean = true;
+			dmg_type_enum = item_dmg_type.both;
+		}
+		else if item_enum == item_type.terrifying_wail {
+			dmg_type_enum = item_dmg_type.morale_only;
+            dmg_min = 1;
+            dmg_max = 1;
+            item_name = "TERRIFYING WAIL";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 5;
+            item_verb = "screams with a";
+            item_dmg_str = "stressed";
+            aoe_count = -1;
 		}
         else if item_enum == item_type.toxic_grenade_launcher {
             dmg_min = 1;

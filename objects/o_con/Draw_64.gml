@@ -139,7 +139,11 @@ else if global.cur_game_state >= game_state.main_game {
 		//PC Stats - AP, MP, Sanity, and skills:
 		if is_pc_char {
 			//AP, Sanity, MP:
-			draw_text(origin_x,origin_y,$"A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max} Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max} M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}");
+			var sanity_str = "";
+			if cur_char.char_type_enum != character.service_droid {
+				sanity_str = $"Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max}	";
+			}
+			draw_text(origin_x,origin_y,$"A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max} {sanity_str}M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}");
 			
 			origin_y += global.default_line_h*2;
 
@@ -151,10 +155,14 @@ else if global.cur_game_state >= game_state.main_game {
 			origin_y += global.default_line_h*2;
 		}
 		
-		//Universal stats - HP, Armor, Evasion, Accuracy, Speed:
+		//Universal stats - HP, Armor, Evasion, Accuracy, Speed, Courage:
 		draw_text(origin_x,origin_y,$"HP: {cur_char.hp_cur}/{cur_char.hp_max} Armor: {cur_char.armor} Evasion: {cur_char.evasion}");
 		origin_y += global.default_line_h;
-		draw_text(origin_x,origin_y,$"Accuracy: {cur_char.accuracy} Speed: {cur_char.spd}");
+		var courage_str = "";
+		if cur_char.char_type_enum != character.service_droid {
+			courage_str = $"Courage: {cur_char.courage}	";
+		}
+		draw_text(origin_x,origin_y,$"Accuracy: {cur_char.accuracy} {courage_str}Speed: {cur_char.spd}");
 		
 		origin_y += global.default_line_h*2;
 		
@@ -210,6 +218,10 @@ else if global.cur_game_state >= game_state.main_game {
 					var abil_name = "undefined";
 					
 					abil_name = global.item_reference_table[abil_enum].item_name;
+					
+					if global.item_reference_table[abil_enum].use_context == abil_use_context.combat_only {
+						abil_name += " (combat only)";
+					}
 					
 					draw_text(origin_x,origin_y,$"{abil_name}");
 					origin_y += global.default_line_h;

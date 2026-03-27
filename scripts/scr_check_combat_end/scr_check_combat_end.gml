@@ -17,7 +17,7 @@ function scr_check_combat_end(){
 				if char_struct_id.char_team_enum == team_type.pc {
 					pc_char_found = true;	
 				}
-				else if char_struct_id.char_team_enum == team_type.enemy {
+				else if char_struct_id.char_team_enum == team_type.enemy && char_struct_id.treacherous_count <= 0 {
 					enemy_char_found = true;	
 				}
 			}
@@ -40,3 +40,5 @@ function scr_check_combat_end(){
 	global.combat_begun = false; //reset
 	return combat_concluded_result.enemies_won;
 }
+
+/* I need to adapt this script so that 
