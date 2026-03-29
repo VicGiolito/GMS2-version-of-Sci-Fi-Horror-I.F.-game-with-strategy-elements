@@ -220,17 +220,19 @@ function scr_define_macros_and_enums(){
 		shocking_grasp,
 		personal_shield_generator,
 		smoke_grenade,
-		spawn_light_sentry_gun,
+		spawn_light_sentry_gun, //first spawn type abil, keep them together so I can add the 'spawn' word in front of them in the draw gui event
 		spawn_light_sentinel_droid,
 		spawn_light_flamer_droid,
 		spawn_light_shotgun_droid,
-		spawn_light_buzzsaw_droid,
+		spawn_light_buzzsaw_droid, //last spawn type abil, keep them together so I can add the 'spawn' word in front of them in the draw gui event
 		headbutt,
 		feral_bite,
 		adrenal_pen,
 		plasma_torch,
 		terrifying_wail,
 		regurgitated_vomit,
+		improvised_medicine,
+		anti_anxiety_meds,
 		total_items
 	}
 	
@@ -452,13 +454,15 @@ function scr_define_macros_and_enums(){
 	#macro FIRE_DURATION 3
 	#macro BLEED_DURATION 2
 	#macro POISON_DURATION 2
+	#macro IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF 1 //Does cure infectino - merely prolongs it
+	#macro ANTI_ANXIETY_SANITY_BUFF 1
 	
 	#macro COWERING_STUNNED_DURATION 4
 	#macro TREACHEROUS_DURATION 4
 	#macro BERSERK_DURATION 4
 	
 	#macro CRAGOS_ACC_DEBUFF 2
-	#macro CRAGOS_EVASION_DEBUFF 1
+	#macro CRAGOS_EVASION_DEBUFF 2
 	
 	#macro GIANT_MELEE_DMG_BUFF 3
 	#macro AVERAGE_CHAR_SPEED 3

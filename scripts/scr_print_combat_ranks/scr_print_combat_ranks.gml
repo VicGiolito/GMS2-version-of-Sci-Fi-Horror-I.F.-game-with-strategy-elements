@@ -60,7 +60,11 @@ function scr_print_combat_ranks(pc_char_struct_id){
 	}
 	
 	//Print the cur char's relevant stats:
-	var cur_char_str = $"You are {pc_char_struct_id.name}. You have the following stats: HP: {pc_char_struct_id.hp_cur}/{pc_char_struct_id.hp_max} AP: {pc_char_struct_id.ability_points_cur}/{pc_char_struct_id.ability_points_max} Accuracy: {pc_char_struct_id.accuracy} Evasion: {pc_char_struct_id.evasion} Armor: {pc_char_struct_id.armor} Speed: {pc_char_struct_id.spd}\nYou have the following active status effects: {scr_return_status_effects_str(pc_char_struct_id)}.\n";
+	var sanity_str = "";
+	if pc_char_struct_id.morale_immune == false {
+		sanity_str = $" Sanity: {pc_char_struct_id.sanity_cur}/{pc_char_struct_id.sanity_max}";	
+	}
+	var cur_char_str = $"You are {pc_char_struct_id.name}. You have the following stats: HP: {pc_char_struct_id.hp_cur}/{pc_char_struct_id.hp_max}{sanity_str} AP: {pc_char_struct_id.ability_points_cur}/{pc_char_struct_id.ability_points_max} Accuracy: {pc_char_struct_id.accuracy} Evasion: {pc_char_struct_id.evasion} Armor: {pc_char_struct_id.armor} Speed: {pc_char_struct_id.spd}\nYou have the following active status effects: {scr_return_status_effects_str(pc_char_struct_id)}.\n";
 	
 	if global.combat_prep_phase {
 		cur_char_str += "You can change the active character at any time by using the '<' or '>' keys.\nYou can access all of the standard inventory commands from this screen.\nThe following options are also available to you:\n'Abil'ity, 'V'iew Combat Order, 'S'tart combat.";

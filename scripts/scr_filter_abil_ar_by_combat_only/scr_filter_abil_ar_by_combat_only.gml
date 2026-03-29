@@ -11,7 +11,7 @@ function scr_filter_abil_ar_by_combat_only(arr){
 		
 			abil_enum = arr[i];
 		
-			if is_struct(abil_enum) == false && abil_enum.struct_type_enum != struct_type.Item {
+			if is_struct(abil_enum) == false {
 				item_struct_id = global.item_reference_table[abil_enum];
 				if item_struct_id.use_context == abil_use_context.combat_only {
 					array_push(ar_to_return, item_struct_id);

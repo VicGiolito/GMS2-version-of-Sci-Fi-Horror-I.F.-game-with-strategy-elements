@@ -8,6 +8,8 @@ When removing a val from array, if no matching value can be found to remove, the
 
 //IMPORTANT: This script RETURNS the modified array, so you need capture it when you call it.
 
+Edit: defunct, I wouldn't ever really bother with this.
+
 */
 
 function scr_add_remove_val_from_ar(ar_to_pass, val_to_remove_or_add, remove_only_one_boolean, add_or_remove_boolean){

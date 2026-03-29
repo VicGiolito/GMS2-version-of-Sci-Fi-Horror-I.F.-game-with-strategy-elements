@@ -9,7 +9,10 @@ Important: if the associated status effect also applied some sort of stat debuff
 
 */
 
-function scr_reset_status_effects(char_struct_id){
+function scr_reset_status_effects(char_struct_id, called_from_str){
+	
+	if is_undefined(called_from_str) throw("scr_reset_status_effects: called_from_str undefined, we need to know where this script is being called.");
+	else d($"Entering scr_reset_status_effects, it was called from: {called_from_str}");
 	
 	char_struct_id.stun_count = 0;
 	

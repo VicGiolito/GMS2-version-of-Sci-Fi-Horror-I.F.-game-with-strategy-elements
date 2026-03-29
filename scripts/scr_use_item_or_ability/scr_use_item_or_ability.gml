@@ -10,12 +10,12 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 	
 	var item_type_enum = item_struct_id.item_enum;
 	
-	//We've successfully used the item, we can reduce our AP and/or sanity now, if applicable:
+	//We've successfully used the item, we can modify our AP and/or sanity now, if applicable:
 	if item_struct_id.ability_point_cost > 0 {
 		char_struct_using_item.ability_points_cur -= item_struct_id.ability_point_cost;
 	}
 	if item_struct_id.sanity_cost > 0 {
-		char_struct_using_item.sanity_cur -= item_struct_id.sanity_cost;
+		char_struct_using_item.sanity_cur += item_struct_id.sanity_cost;
 	}
 	
 	if item_type_enum == item_type.medkit {
@@ -25,7 +25,7 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		//Cap:
 		if target_char_struct_of_item.hp_cur > target_char_struct_of_item.hp_max { target_char_struct_of_item.hp_cur = target_char_struct_of_item.hp_max; }
 		
-		scr_reset_status_effects(target_char_struct_of_item);
+		scr_reset_status_effects(target_char_struct_of_item, "scr_use_item_or_ability: medkit used");
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} uses the {item_struct_id.item_name} on {target_char_struct_of_item.name}. (Their hit points have increased by {MEDKIT_HP_BOOST}; they now have {target_char_struct_of_item.hp_cur} hit points. They have also been cleared of any bleeding, poisoned, or burning status effects.)**");
 		
@@ -45,7 +45,7 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		//Cap:
 		if target_char_struct_of_item.hp_cur > target_char_struct_of_item.hp_max { target_char_struct_of_item.hp_cur = target_char_struct_of_item.hp_max; }
 		
-		scr_reset_status_effects(target_char_struct_of_item);
+		scr_reset_status_effects(target_char_struct_of_item, "scr_use_item_or_ability: field_medicine used");
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} dresses the wounds of {target_char_struct_of_item.name} with their {item_struct_id.item_name}. ({scr_string_capitalize(target_char_struct_of_item.name)}'s hit points have been increased by {FIELD_MEDICINE_HP_BOOST}; they now have {target_char_struct_of_item.hp_cur} hit points.)**");
 	
@@ -56,6 +56,26 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 			scr_add_str_to_dialogue_ar($"\n**{target_char_struct_of_item.name} has woken up!**");
 			if target_char_struct_of_item.sanity_cur <= 0 target_char_struct_of_item.sanity_cur = floor(target_char_struct_of_item.sanity_max / 2); //Reset sanity to half max, if applicable:
 		}
+	}
+	
+	else if item_type_enum == item_type.improvised_medicine {
+		
+		target_char_struct_of_item.infection_count -= IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF;
+		
+		//Cap:
+		if target_char_struct_of_item.infection_count < 0  { target_char_struct_of_item.infection_count = 0; }
+		
+		scr_add_str_to_dialogue_ar($"\n**\"I have no idea what this is, so I really don't know how to treat it...\" With limited knowledge or supplies, {char_struct_using_item.name} does their best to treat the infection within {target_char_struct_of_item.name}. (-{IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF} infection points.)**");
+	}
+	
+	else if item_type_enum == item_type.anti_anxiety_meds {
+		
+		target_char_struct_of_item.sanity_cur -= ANTI_ANXIETY_SANITY_BUFF;
+		
+		//Cap:
+		if target_char_struct_of_item.sanity_cur < 0  { target_char_struct_of_item.sanity_cur = 0; }
+		
+		scr_add_str_to_dialogue_ar($"\n**\"Here, these should take the edge off...\" {char_struct_using_item.name} passes {target_char_struct_of_item.name} a blister pack full of mysterious tablets. (-{ANTI_ANXIETY_SANITY_BUFF} sanity points.)**");
 	}
 	
 	else if item_type_enum == item_type.regen_nanites {
@@ -78,19 +98,17 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 	else if item_type_enum == item_type.smoke_grenade {
 		
 		//Boost the evasion of every ally in the combat_init_ar:
-		var enemy_using_abil = false;
-		
-		if char_struct_using_item.char_team_enum == team_type.enemy enemy_using_abil = true;
 		
 		var ar_len = array_length(global.combat_initiative_ar), char_id;
 		for(var i = 0; i < ar_len; i++) {
 			char_id = global.combat_initiative_ar[i];
 			
-			if !enemy_using_abil && char_id.char_team_enum == team_type.enemy {
+			if (char_struct_using_item.char_team_enum == team_type.pc || char_struct_using_item.char_team_enum == team_type.neutral) 
+			&& char_id.char_team_enum == team_type.enemy {
 				char_id.smoke_grenade_count = SMOKE_GRENADE_DURATION;
 				char_id.evasion += SMOKE_GRENADE_EVADE_BUFF;
 			}
-			else if enemy_using_abil && char_id.char_team_enum != team_type.enemy {
+			else if char_struct_using_item.char_team_enum == team_type.enemy && (char_id.char_team_enum == team_type.pc || char_id.char_team_enum == team_type.neutral) {
 				char_id.smoke_grenade_count = SMOKE_GRENADE_DURATION;
 				char_id.evasion += SMOKE_GRENADE_EVADE_BUFF;	
 			}

@@ -164,7 +164,7 @@ alarm[2] = 1; //Setup all of our 'initialization' data: grids, world maps, cur_g
 
 //Define a lot of 'content' type data like string arrays, etc.
 global.resources_food = 0;
-global.resources_scrap = 0;
+global.resources_scrap = 8; // 0;
 global.resources_basic_tech = 0;
 global.resources_advanced_tech = 0;
 global.resources_engine_fuel = 0;

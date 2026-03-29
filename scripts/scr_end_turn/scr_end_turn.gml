@@ -20,7 +20,12 @@ function scr_end_turn(){
 	//Reset AP:
 	var ar_len = array_length(global.pc_char_ar);
 	for(var i = 0; i < ar_len; i++) {
-		global.pc_char_ar[i].cur_action_points = global.pc_char_ar[i].max_action_points;
+		//Increase, cap:
+		global.pc_char_ar[i].ability_points_cur += 2;
+		if global.pc_char_ar[i].ability_points_cur > global.pc_char_ar[i].ability_points_max {
+			global.pc_char_ar[i].ability_points_cur = global.pc_char_ar[i].ability_points_max;	
+		}
+		//Reset:
 		global.pc_char_ar[i].move_points_cur = global.pc_char_ar[i].move_points_max;
 		global.pc_char_ar[i].already_fled_this_turn_boolean = false;
 		global.pc_char_ar[i].participated_in_new_turn_battle = false;

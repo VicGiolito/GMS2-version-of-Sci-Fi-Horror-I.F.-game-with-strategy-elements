@@ -74,6 +74,10 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 						target_char_id.evading_boolean = false;
 						target_char_id.evasion -= EVADE_BONUS;
 					}
+					if target_char_id.smoke_grenade_count > 0 {
+						target_char_id.smoke_grenade_count = 0;
+						target_char_id.evasion -= SMOKE_GRENADE_EVADE_BUFF;
+					}
 					scr_remove_char_from_overwatch_arrays(target_char_id);
 				}
 			}

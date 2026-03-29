@@ -48,7 +48,7 @@ function scr_print_pc_party(show_give_command_boolean, show_use_item_command_boo
 		
 			char_struct_id = ar_to_use[i];
 		
-			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}\n");
+			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name} {scr_return_status_effects_str(char_struct_id,false)}\n");
 		}
 		
 		scr_add_str_to_dialogue_ar("\n");

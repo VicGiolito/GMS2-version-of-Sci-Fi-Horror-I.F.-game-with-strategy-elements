@@ -141,9 +141,9 @@ else if global.cur_game_state >= game_state.main_game {
 			//AP, Sanity, MP:
 			var sanity_str = "";
 			if cur_char.char_type_enum != character.service_droid {
-				sanity_str = $"Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max}	";
+				sanity_str = $" Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max}";
 			}
-			draw_text(origin_x,origin_y,$"A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max} {sanity_str}M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}");
+			draw_text(origin_x,origin_y,$"A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max}{sanity_str} M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}");
 			
 			origin_y += global.default_line_h*2;
 
@@ -155,16 +155,14 @@ else if global.cur_game_state >= game_state.main_game {
 			origin_y += global.default_line_h*2;
 		}
 		
-		//Universal stats - HP, Armor, Evasion, Accuracy, Speed, Courage:
+		//Universal stats - HP, Armor, Evasion, Accuracy, Speed:
 		draw_text(origin_x,origin_y,$"HP: {cur_char.hp_cur}/{cur_char.hp_max} Armor: {cur_char.armor} Evasion: {cur_char.evasion}");
 		origin_y += global.default_line_h;
-		var courage_str = "";
-		if cur_char.char_type_enum != character.service_droid {
-			courage_str = $"Courage: {cur_char.courage}	";
-		}
-		draw_text(origin_x,origin_y,$"Accuracy: {cur_char.accuracy} {courage_str}Speed: {cur_char.spd}");
+		
+		draw_text(origin_x,origin_y,$"Accuracy: {cur_char.accuracy} Speed: {cur_char.spd}");
 		
 		origin_y += global.default_line_h*2;
+		
 		
 		//Universal - Resistences:
 		draw_text(origin_x,origin_y,$"Resistances: Fire: {cur_char.res_fire} Vacuum: {cur_char.res_vacuum}");
@@ -199,12 +197,15 @@ else if global.cur_game_state >= game_state.main_game {
 			origin_y += global.default_line_h*2;
 		}
 		
+		//Draw header if this char has active or passive abilities:
+		if (is_array(cur_char.ability_ar) && array_length(cur_char.ability_ar) > 0) || 
+		(is_array(cur_char.passive_abil_ar) && array_length(cur_char.passive_abil_ar) > 0) {
+			draw_text(origin_x,origin_y,$"Abilities:"); 
+			origin_y += global.default_line_h;
+		}
 		
 		//Active Abilities:
 		if is_array(cur_char.ability_ar) && array_length(cur_char.ability_ar) > 0 {
-			
-			draw_text(origin_x,origin_y,$"Abilities:"); 
-			origin_y += global.default_line_h;
 			
 			var ar_len = array_length(cur_char.ability_ar)
 		
@@ -219,8 +220,13 @@ else if global.cur_game_state >= game_state.main_game {
 					
 					abil_name = global.item_reference_table[abil_enum].item_name;
 					
+					//Insert 'SPAWN' in front of the string:
+					if abil_enum >= item_type.spawn_light_sentry_gun && abil_enum <= item_type.spawn_light_buzzsaw_droid {
+						abil_name = string_insert("SPAWN ", abil_name, 1);
+					}
+					
 					if global.item_reference_table[abil_enum].use_context == abil_use_context.combat_only {
-						abil_name += " (combat only)";
+						abil_name += " (combat)";
 					}
 					
 					draw_text(origin_x,origin_y,$"{abil_name}");
@@ -368,66 +374,6 @@ if (global.max_scroll > 0) {
 	draw_set_color(global.default_fnt_color);
 	draw_set_alpha(1);
 }
-
-#endregion
-
-#region DEFUNCT - Draw our left side window text - currently visible in any game state:
-
-/*
-
-// Calculate visible line range
-var start_line = floor(global.left_win_scroll_position);
-var visible_lines = ceil((detailed_view_win_h - global.left_window_text_offset_x * 2) / global.dialogue_line_h) + 1;
-
-// Draw text lines
-var text_x = detailed_view_win_x + global.left_window_text_offset_x;
-var text_y = detailed_view_win_y + global.left_window_text_offset_y - ((global.left_win_scroll_position - start_line) * global.dialogue_line_h);
-
-for (var i = start_line; i < min(start_line + visible_lines, array_length(global.detailed_view_ar)); i++) {
-    if (i >= 0 && i < array_length(global.detailed_view_ar)) {
-        var current_y = text_y + ((i - start_line) * global.dialogue_line_h);
-        
-        // Only draw if within window bounds
-        if (current_y >= detailed_view_win_y && current_y < detailed_view_win_y + detailed_view_win_h) {
-            draw_text(text_x, current_y, global.detailed_view_ar[i]);
-        }
-    }
-}
-
-// Draw scrollbar only if there's content to scroll
-if (global.left_win_max_scroll > 0) {
-    // Recalculate scrollbar positions for drawing
-    var scrollbar_x = detailed_view_win_x + detailed_view_win_w - global.scrollbar_width - scrollbar_right_edge_offset_x;
-    var scrollbar_y = detailed_view_win_y + scrollbar_right_edge_offset_y;
-    var scrollbar_track_height = detailed_view_win_h - scrollbar_right_edge_offset_y;
-    
-    var scroll_ratio = global.left_win_scroll_position / global.left_win_max_scroll;
-    var visible_ratio = min(1, (detailed_view_win_h / global.dialogue_line_h) / array_length(global.detailed_view_ar));
-    var button_height = max(global.scrollbar_button_height, scrollbar_track_height * visible_ratio);
-    var button_y = scrollbar_y + (scrollbar_track_height - button_height) * scroll_ratio;
-    
-    // Draw scrollbar track
-    draw_rectangle_color(scrollbar_x, scrollbar_y, 
-                   scrollbar_x + global.scrollbar_width, 
-                   scrollbar_y + scrollbar_track_height, global.scrollbar_color,global.scrollbar_color,global.scrollbar_color,global.scrollbar_color,false);
-    
-    // Draw scrollbar button
-    draw_rectangle_color(scrollbar_x, button_y,
-                   scrollbar_x + global.scrollbar_width,
-                   button_y + button_height, global.scrollbar_button_color,global.scrollbar_button_color,global.scrollbar_button_color,global.scrollbar_button_color,false);
-    
-    // Draw button border
-    draw_set_color(c_white);
-    draw_rectangle(scrollbar_x, button_y,
-                   scrollbar_x + global.scrollbar_width,
-                   button_y + button_height, true);
-				   
-	// Reset drawing settings
-	draw_set_color(global.default_fnt_color);
-	draw_set_alpha(1);
-}
-
-*/
 
 #endregion
 

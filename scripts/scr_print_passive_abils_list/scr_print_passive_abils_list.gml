@@ -22,13 +22,13 @@ function scr_print_passive_abils_list(cur_char_id){
 				abil_str += $"Giant Mutant: -{CRAGOS_ACC_DEBUFF} accuracy with ranged weapons, -{CRAGOS_EVASION_DEBUFF} evasion, +{GIANT_MELEE_DMG_BUFF} damage in melee. Increased resistence to most status effects. Can't hide from enemies.";
 			}
 			else if abil_enum == passive_abil_type.healing_factor {
-				abil_str += $"Healing Factor: Automatically gains +{HEALING_FACTOR_HEAL_VAL} at the start of each turn, both in combat and outside of it.";
+				abil_str += $"Healing Factor: Automatically heals {HEALING_FACTOR_HEAL_VAL} hit points or {HEALING_FACTOR_HEAL_VAL} infection points at the start of each turn, both in combat and outside of it. Infection points are removed first. Also has a 20% chance of removing permanent injuries at the start of every turn.";
 			}
 			else if abil_enum == passive_abil_type.cybernetic {
 				abil_str += $"Cybernetic: Increased resistence to most status effects and hazards. Increased to electrical hazard damage by 50%.";
 			}
 			else if abil_enum == passive_abil_type.synthetic {
-				abil_str += $"Synthetic: Immune to most status effects and hazards. Immune to morale damage. Increased electrical hazard damage by 100%.";
+				abil_str += $"Synthetic: Immune to most status effects and hazards. Immune to morale damage. Increased electrical hazard damage by 100%. +1 armor.";
 			}
 			else if abil_enum == passive_abil_type.child {
 				abil_str += $"Child: Due to her small size, can't wield weapons and can't wear marine armor. +{PASSIVE_CHILD_STEALTH_BUFF} to stealth skill tests when hiding in rooms. Is the only character small enough to traverse through the ventillation shafts on the ship.";

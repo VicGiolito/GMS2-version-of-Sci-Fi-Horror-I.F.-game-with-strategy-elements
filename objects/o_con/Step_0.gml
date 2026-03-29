@@ -1,6 +1,6 @@
 /// @description o_con step event
 
-// Proposed solution to stop program from accepting input while the game is minimized or has lost focus (test this):
+// Proposed solution to stop program from accepting input while the game is minimized or has lost focus (does appear to work):
 if (!window_has_focus()) {
     keyboard_lastkey = 0;
     keyboard_lastchar = "";
@@ -570,6 +570,10 @@ else if global.cur_game_state == game_state.init_combat {
 
 #region game_state == combat_paused:
 
+//We should only come to this state if the global.combat_char_index was just incremented with scr_evaluate_combat_end(),
+//or if we're advancing because a char is fleeing and a opportunity attacker was present, or because we're advancing into the 
+//overwatch_enabled_mode
+
 else if global.cur_game_state == game_state.combat_paused && global.wait {
 	
 	if keyboard_check_released(vk_anykey) && global.wait {
@@ -591,12 +595,14 @@ else if global.cur_game_state == game_state.combat_paused && global.wait {
 		
 		//... We are NOT ending combat...
 		if next_combat_game_state != game_state.init_combat {
+			
 			//Assign the g.cur_combat_char:
 			global.cur_combat_char = next_combat_char;
 			
 			//Trigger DOT effects, if they are not performing an opportunity attack and we are not in overwatch mode;
 			//also reset some combat related vars:
 			var char_is_still_alive = true;
+			
 			if global.char_is_fleeing_bool == false && global.overwatch_mode_enabled == false {
 				
 				scr_reset_certain_char_combat_vars(global.cur_combat_char);
@@ -604,17 +610,23 @@ else if global.cur_game_state == game_state.combat_paused && global.wait {
 				char_is_still_alive = scr_trigger_dot_effects(global.cur_combat_char);
 			}
 			
-			//Only allow execute action or pc_command if they not unconscious and not stunned:
-			if char_is_still_alive && global.cur_combat_char.unconscious_bool == false && global.cur_combat_char.stun_count <= 0 {
-				global.cur_game_state = next_combat_game_state;
+			//Only allow execute action or pc_command if they not unconscious and not stunned;
+			//This will NOT trigger if the char is trying to flee because their morale was broken:
+			if char_is_still_alive && global.cur_combat_char.unconscious_bool == false && global.cur_combat_char.stun_count <= 0 && 
+			global.cur_combat_char.has_fled_combat_bool == false && global.char_is_fleeing_bool == false {
+				
+				//Assign cur_game_state as next_combat_game_state - next_combat_game_state was assigned in scr_evaluate_combat_conclusion:
+				global.cur_game_state = next_combat_game_state; 
 		
 				//Print combat ranks if we're moving to the assign pc command game state:
 				if global.cur_game_state == game_state.combat_assign_pc_command {
 					scr_print_combat_ranks(global.cur_combat_char);
 				}
 			}
-			//If they are otherwise impaired (dead, unconscious, or stunned), move to next char in queue:
-			else if char_is_still_alive == false || global.cur_combat_char.unconscious_bool == true || global.cur_combat_char.stun_count > 0 {
+			//If they are otherwise impaired (dead, unconscious, or stunned), move to next char in queue;
+			//This will also trigger if the char just fled unscathed from a broken morale effect: 
+			else if char_is_still_alive == false || global.cur_combat_char.unconscious_bool == true || global.cur_combat_char.stun_count > 0 ||
+			global.cur_combat_char.has_fled_combat_bool == true {
 				scr_evaluate_combat_conclusion($"o_con step event: game_state == combat_paused, the next_combat_char was just assigned as the g.cur_combat_char and it just died from dot effects. Its name was {global.cur_combat_char.name}.");	
 			}
 		}
@@ -816,7 +828,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			}
 			
 			//Check to see if there's an enemy in range:
-			var closest_enemy_rank = scr_return_nearest_target_rank_pos(global.cur_combat_char.cur_combat_rank,false);
+			var closest_enemy_rank = scr_return_nearest_target_rank_pos(global.cur_combat_char.cur_combat_rank, global.cur_combat_char);
 			
 			var dist_to_target = abs(global.cur_combat_char.cur_combat_rank - closest_enemy_rank);
 			
@@ -860,10 +872,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 		
 		else if (player_input_str == "V" || player_input_str == "VIEW") {
 			scr_print_combat_init_ar();
-			scr_add_str_to_dialogue_ar("\n");
-			scr_add_str_to_dialogue_ar("Press any key to view the battlefield and available commands again.");
-			next_combat_game_state = game_state.combat_assign_pc_command;
-			global.cur_game_state = game_state.combat_paused;
+			scr_print_combat_ranks(global.cur_combat_char);
 		}
 		
 		#endregion
@@ -1033,77 +1042,77 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 										pc, enemy, or neutral. It would be cool to have pcs and neutrals that can force enemies to run, and vice verssa.
 									*/
 				
-									var valid_attacker_found = false, char_id, enemy_fleeing = false, applicable_char_found = false;
+									var valid_attacker_found = false, char_id, applicable_char_found = false;
 									var cur_char_rank = global.cur_combat_char.cur_combat_rank, iterate_count = 0;
-									var diff = cur_char_rank, rank_i = cur_char_rank;
+									var rank_i = cur_char_rank, failsafe_val = 0, failsafe_max = array_length(global.combat_rank_ar);
 									//First repeat loop we iterate 'north' (up); second time, we iterate south (down):
 									repeat(2) {
+										
 										if valid_attacker_found break;
-										if iterate_count == 1 { 
-											diff = array_length(global.combat_rank_ar) - cur_char_rank;
-										}
-					
-										//Cap:
-										if diff == 0 diff = 1;
 					
 										//Reset:
 										rank_i = cur_char_rank;
+										failsafe_val = 0;
 					
 										//Iterate through up or down through g.combat_rank:
-										repeat(diff) {
+										do {
 											//Iterate through nested_array:
 											for(var i = 0; i < array_length(global.combat_rank_ar[rank_i]); i++) {
+												
 												applicable_char_found = false //reset
+												
 												//Assign char_id we are checking:
 												char_id = global.combat_rank_ar[rank_i][i]; 
-												//Unconscious, dead, fled, or stunned chars cannot perform opportunity attack:
-												if char_id.unconscious_bool == false && char_id.stun_count <= 0 && char_id.has_died_bool == false && char_id.has_fled_combat_bool == false {
+												
+												//Same character, unconscious, dead, fled, or stunned chars cannot perform opportunity attack:
+												if char_id != global.cur_combat_char && char_id.unconscious_bool == false && char_id.stun_count <= 0 && char_id.has_died_bool == false && char_id.has_fled_combat_bool == false {
+													
 													//If this is a pc or a neutral fleeing, check to see if this is a enemy:
-													if !enemy_fleeing && char_id.char_team_enum == team_type.enemy {
+													if (global.cur_combat_char.char_team_enum == team_type.pc || global.cur_combat_char.char_team_enum == team_type.neutral) && char_id.char_team_enum == team_type.enemy {
 														applicable_char_found = true;
 													}
+													
 													//If this is a enemy fleeing, check to see if this is a pc or a neutral:
-													else if enemy_fleeing && (char_id.char_team_enum == team_type.pc || char_id.char_team_enum == team_type.neutral) {
+													else if global.cur_combat_char.char_team_enum == team_type.enemy && (char_id.char_team_enum == team_type.pc || char_id.char_team_enum == team_type.neutral) {
 														applicable_char_found = true;	
 													}
 												}
 						
 												if applicable_char_found {
-													var temp_wep_ar = [];
-													temp_wep_ar = scr_shuffle_ar(char_id.ability_ar);
+													
+													if is_array(char_id.ability_ar) && array_length(char_id.ability_ar) > 0 {
+													
+														var temp_wep_ar = [];
+														temp_wep_ar = scr_shuffle_ar(char_id.ability_ar);
 							
-													for(var item_i = 0; item_i < array_length(temp_wep_ar); item_i++) {
+														for(var item_i = 0; item_i < array_length(temp_wep_ar); item_i++) {
 								
-														var item_enum = temp_wep_ar[item_i];
-														var item_struct_id = global.item_reference_table[item_enum];
-														var item_range = item_struct_id.max_range;
+															var item_enum = temp_wep_ar[item_i];
+															var item_struct_id = global.item_reference_table[item_enum];
+														
+															//Skip invalid abilities - this will only apply to pc or neutral characters that have a treacherous count > 0:
+															if item_struct_id.use_context != abil_use_context.combat_only continue;
+														
+															var item_range = item_struct_id.max_range;
 								
-														var dist = abs(cur_char_rank-rank_i);
-								
-														if dist <= item_range {
-															//Assign vars for the opportunity attacker:
-															next_combat_char = char_id;
-															next_combat_char.chosen_weapon = item_struct_id;
-															next_combat_char.targeted_rank = cur_char_rank;
-															//Assign vars for the fleeing char:
-															global.cur_combat_char.fleeing_dir_x = move_dir_x;
-															global.cur_combat_char.fleeing_dir_y = move_dir_y;
-															global.fleeing_combat_char_id = global.cur_combat_char;
+															var dist = abs(cur_char_rank-rank_i);
+															
+															d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: the rank we are checking (rank_i) == {rank_i}, our cur rank we are checking from (cur_char_rank) == {cur_char_rank}, the char we are checking == {char_id.name}, the item_name == {item_struct_id.item_name}, its range == {item_struct_id.max_range}, and dist between the target and our self == {dist}.\n");
+															
+															if dist <= item_range {
+																
+																d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: char_id.name= {char_id.name}, this WAS A VALID OPPORTUNITY ATTACKER.\n");
+																
+																
 														
-															valid_attacker_found = true;
+																valid_attacker_found = true;
 														
-															global.char_is_fleeing_bool = true;
-															//Assign char_id_after_char_flees or is killed:
-															var cur_char_index = array_get_index(global.combat_initiative_ar,global.cur_combat_char);
-														
-															if cur_char_index + 1 < array_length(global.combat_initiative_ar) {
-																char_id_after_char_flees = global.combat_initiative_ar[cur_char_index+1];
+		
+													
+																d($"\no_con step event: pc combat assign command: fleeing code: a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {char_id.chosen_weapon.item_name} with a range of: {char_id.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
+																
+																break;
 															}
-															else {
-																char_id_after_char_flees = -1;	
-															}
-															d($"\no_con step event: pc combat assign command: 'R'un command: a valid opportunity-of-attack char was found, it is: {next_combat_char.name}, using a weapon: {next_combat_char.chosen_weapon} with a range of: {next_combat_char.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
-															break;
 														}
 													}
 												}
@@ -1111,34 +1120,66 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 												if valid_attacker_found break;
 											} //End of iterating through the nested array.
 											if valid_attacker_found break;
-						
+											
+											//Iterating north
 											if iterate_count == 0 {
-												rank_i--;	
+												rank_i--;
+												if rank_i < 0 break;
 											}
+											//Iterating south
 											else {
-												rank_i++;	
+												rank_i++;
+												if rank_i >= array_length(global.combat_rank_ar) break;
 											}
+											
+											failsafe_val++;
 										} //End of repeat(diff), iterating one way or the other through g.combat_rank_ar.
+										until (failsafe_val > failsafe_max || valid_attacker_found == true);
+										
 										iterate_count++;
 									} //ENd of repeat(2), changing iteration direction each time.
-				
+									
+									//Immediately advance to execute action, which will pick up the next_combat_char as the attacker, and then when scr_evaluate_combat_end is called at the end of execute_action,
+									//it will pick up using the next g.cur_combat_char_index, which never changed; it will manually assign the defender_id = global.fleeing_combat_char_id, and will set num_attacks = 1.
 									if valid_attacker_found {
-										next_combat_game_state = game_state.combat_execute_action;
-										global.cur_game_state = game_state.combat_paused;
+										
+										//Assign vars for the opportunity attacker:
+											//next_combat_char = char_id;
+										//next_combat_char.chosen_weapon = item_struct_id;
+										//next_combat_char.targeted_rank = cur_char_rank; //Why is setting this necessary? Only to prevent scr_return_opposite_team_ar() from having an error.
+																
+										//Assign vars for the fleeing char:
+										global.cur_combat_char.fleeing_dir_x = move_dir_x;
+										global.cur_combat_char.fleeing_dir_y = move_dir_y;
+										global.fleeing_combat_char_id = global.cur_combat_char;
+																
+										global.char_is_fleeing_bool = true;
+										
+										//next_combat_game_state = game_state.combat_execute_action;
+										global.cur_game_state = game_state.combat_execute_action;
 					
 										scr_add_str_to_dialogue_ar("\n");
 										var capitalized_str = scr_string_capitalize(global.cur_combat_char.name);
-										scr_add_str_to_dialogue_ar($"{capitalized_str} is attempting to flee through enemies that are within range, press any key to continue...");
+										scr_add_str_to_dialogue_ar($"{scr_string_capitalize(global.cur_combat_char.name)} is attempting to flee through enemies that are within range, press any key to continue...");
 										multi_word_str_failed = true;
+										
+										//Change the g.cur_char to the opportunity attacker:
+										global.cur_combat_char = char_id;
+										global.cur_combat_char.chosen_weapon = item_struct_id;
+										global.cur_combat_char.targeted_rank = cur_char_rank; //Why is setting this necessary? Only to prevent scr_return_opposite_team_ar() from having an error.	
 									}
+									
 									//The pc gets to escape unmolested:
 									else if !valid_attacker_found {
 										valid_command = true;
 										immediately_move_to_next_char = true;
 										scr_add_str_to_dialogue_ar("\n");
-										scr_add_str_to_dialogue_ar($"{global.cur_combat_char.name} successfully escapes the room unscathed; there were no enemies in range to attack them.");
+										scr_add_str_to_dialogue_ar($"{global.cur_combat_char.name} successfully escapes the room unscathed; there were no enemies in range to attack them. They have taken with them any droids or clones that may have been following them.");
 										multi_word_str_failed = true;
-									
+										
+										//Reset certain status effects:
+										scr_reset_status_effects_from_fleeing(global.cur_combat_char);
+										
 										//Update bool var:
 										global.cur_combat_char.has_fled_combat_bool = true;
 									
@@ -1147,10 +1188,9 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 										global.cur_combat_char.cur_grid_x += move_dir_x;
 										global.cur_combat_char.cur_grid_y += move_dir_y;
 										
-										//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
-										if is_array(global.cur_combat_char.neutrals_following_this_char_ar) && array_length(global.cur_combat_char.neutrals_following_this_char_ar) > 0 {
-											scr_update_neutrals_movement_vars(global.cur_combat_char.neutrals_following_this_char_ar,global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y);	
-										}
+										//Update vars for any neutrals in this char's neutrals_following_this_char_ar;
+										//If applicable, this update their room arrays, cur_room, grid coordinates, and combat arrays:
+										scr_update_neutrals_movement_vars(global.cur_combat_char.neutrals_following_this_char_ar, global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y);
 										
 										//Remove from cur room ar:
 										scr_add_remove_char_room_ar(global.cur_combat_char.cur_room_id,global.cur_combat_char,false);
@@ -1391,7 +1431,10 @@ else if global.cur_game_state == game_state.combat_execute_action {
 	
 	d($"\n...o_con step event: game_state == combat_execute_action: {attacker_id.name} is entering game_state execute action now, and G.CUR_COMBAT_CHAR_INDEX == {global.cur_combat_char_index}...");
 	
-	if global.char_is_fleeing_bool d($"\n o_con step event: game_state == combat_execute_action: g.char_is_fleeing_bool == true: {attacker_id.name} is an opportunity attacker, responding to the character: {global.fleeing_combat_char_id.name}, who is fleeing. Their chosen wep is: {attacker_id.chosen_weapon.item_name}");
+	if global.char_is_fleeing_bool {
+		d($"\n o_con step event: game_state == combat_execute_action: g.char_is_fleeing_bool == true: {attacker_id.name} is an opportunity attacker, responding to the character: {global.fleeing_combat_char_id.name}, who is fleeing.");
+		d($"The chosen weapon of the opportunity attacker == {attacker_id.chosen_weapon.item_name}");
+	}
 	
 	#region Evaluate enemy ai:
 	
@@ -1441,9 +1484,16 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						//Identify longest range abil as arr[0]:
 						sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar, true, "max_range");
 						
+						d($"\no_con step event: evaluating ranged_coward ai: a temp copy of ability_ar has just been randomized and sorted with max_range being at index 0, iterating through it now for debug purposes...\n");
+						
+						//debug only:
+						for(var kk = 0; kk < array_length(sorted_by_range_abil_ar); kk++) {
+							d($"\no_con step event: evaluating ranged_coward ai: at index: {kk}, ability_ar == {sorted_by_range_abil_ar[kk].item_name}\n");	
+						}
+						
 						if sorted_by_range_abil_ar == -1 { throw("o_con step event: game_state == combat_execute_action: evaluating ranged_coward ai: sorted_by_range_abil_ar == -1, the array we passed in did not contain item structs or the structs did not contain the 'max_range' var we were looking for.") }
 						
-						var longest_range_abil_id = sorted_by_range_abil_ar[0].max_range;
+						var longest_range_abil_id = sorted_by_range_abil_ar[0];
 						
 						if longest_range_abil_id.max_range > 0 {
 						
@@ -1459,12 +1509,19 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					var randomized_inv_ar = []; 
 					randomized_inv_ar = scr_filter_abil_ar_by_combat_only(attacker_id.inv_ar);
 					
-					randomized_inv_ar = scr_shuffle_ar(temp_abil_ar);
+					randomized_inv_ar = scr_shuffle_ar(randomized_inv_ar);
 					
 					//Identify longest range abil as arr[0]:
 					randomized_inv_ar = scr_reverse_sort_ar_by_struct_var(randomized_inv_ar, true, "max_range");
 					
 					if randomized_inv_ar == -1 { throw("o_con step event: game_state == combat_execute_action: evaluating ranged_coward ai: randomized_inv_ar == -1, the array we passed in did not contain item structs or the structs did not contain the 'max_range' var we were looking for.") }
+					
+					d($"\no_con step event: evaluating ranged_coward ai: a temp copy of the inv)_ar has just been randomized and sorted with max_range being at index 0, iterating through it now for debug purposes...\n");
+						
+					//debug only:
+					for(var kk = 0; kk < array_length(randomized_inv_ar); kk++) {
+						d($"\no_con step event: evaluating ranged_coward ai: at index: {kk}, ability_ar == {randomized_inv_ar[kk].item_name}\n");	
+					}
 					
 					var longest_range_abil_id = randomized_inv_ar[0].max_range;
 						
@@ -1482,7 +1539,6 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			
 			//This is truly an enemy - not just a pc or neutral posing as one:
 			else {			
-			
 				//Create a temporary array of all of this enemy's available weapons from its abil_ar:
 				var temp_abil_ar = [], item_enum;
 				for(var i = 0; i < array_length(attacker_id.ability_ar); i++) {
@@ -1509,7 +1565,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			var wep_range = attacker_id.chosen_weapon.max_range;
 			
 			//Assign the rank
-			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
 			
 			if nearest_valid_rank_int != -1 {
 			
@@ -1596,8 +1652,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		if ai_type_enum == enemy_combat_ai.melee {
 			
 			//Those that use this ai act like berserkers - they simply move toward the nearest valid targets and engage in melee.
-			
-			//d($"ENTERING ENEMY AI MELEE NOW!!");
+	
 			//All of this enemy's attacks are melee, choose one at random:
 			var chosen_wep_enum, chosen_wep_item_struct_id;
 			
@@ -1621,13 +1676,20 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						
 						if sorted_by_range_abil_ar == -1 { throw("o_con step event: game_state == combat_execute_action: evaluating melee ai: sorted_by_range_abil_ar == -1, the array we passed in did not contain item structs or the structs did not contain the 'max_range' var we were looking for.") }
 						
+						d($"\no_con step event: evaluating melee ai: a temp copy of the ability_ar has just been randomized and sorted with max_range being at index 0, iterating through it now for debug purposes...\n");
+						
+						//debug only:
+						for(var kk = 0; kk < array_length(sorted_by_range_abil_ar); kk++) {
+							d($"\no_con step event: evaluating melee ai: at index: {kk}, ability_ar == {sorted_by_range_abil_ar[kk].item_name}\n");	
+						}
+						
 						attacker_id.chosen_weapon = sorted_by_range_abil_ar[0];
 						valid_melee_abil_found = true;
 					}
 				}
 				
-				if !valid_melee_abil_found { //They're just going to attack with their fists:
-					//If applicable, have them choose an ability of theirs with a range of 0:
+				//They're just going to attack with their fists:
+				if !valid_melee_abil_found { 
 					attacker_id.chosen_weapon = scr_return_fists_item_struct_id(attacker_id);
 				}
 			}
@@ -1640,7 +1702,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			//d($"combat_execute_action: evaluating enemy ai: melee: attacker_id.chosen_weapon == {attacker_id.chosen_weapon.item_name}");
 			//d($"combat_execute_action: evaluating enemy ai: melee: attacker_id.chosen_weapon == {attacker_id.chosen_weapon.aoe_count}");
 			
-			attacker_id.targeted_rank = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			attacker_id.targeted_rank = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
 		
 			d($"\ncombat_execute_action: evaluating enemy ai: melee: Just finished calling scr_enemy_return_nearest_target_rank_pos: attacker_id.targeted_rank == {attacker_id.targeted_rank}, its chosen_weapon.name == {attacker_id.chosen_weapon.item_name}, and it's aoe_count == {attacker_id.chosen_weapon.aoe_count}")
 		
@@ -1668,10 +1730,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					}
 					//This melee character is suppressed - there's nothing else they can do.
 					else {
-						var capitalized = scr_string_capitalize(attacker_id.name);
 						var plural_str = "";
 						if attacker_id.suppressed_count > 1 plural_str = "s";
-						scr_add_str_to_dialogue_ar($"\n{capitalized} wants to move closer to their target but they can't - they're suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");
+						scr_add_str_to_dialogue_ar($"\n{scr_string_capitalize(attacker_id.name)} wants to move closer to their target but they can't - they're suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");
 					}
 				}
 			}
@@ -1710,7 +1771,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			var wep_range = highest_range_item_id.max_range;
 				
 			//Assign nearest valid rank int:
-			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
 			
 			if nearest_valid_rank_int != -1 {
 					
@@ -1800,7 +1861,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			var wep_range = highest_range_item_id.max_range;
 				
 			//Assign nearest valid rank int:
-			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
 			
 			if nearest_valid_rank_int != -1 {
 					
@@ -1871,7 +1932,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			var wep_range = highest_range_item_id.max_range;
 				
 			//Assign nearest valid rank int:
-			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank);
+			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
 			
 			if nearest_valid_rank_int != -1 {
 					
@@ -2082,8 +2143,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 	//If this is a pc or an enemy that has been designated to attack, move to attack calculations:
 	else if global.char_is_fleeing_bool == true || attacker_id.char_team_enum == team_type.pc || attacker_id.enemy_ai_fight_boolean == true || 
 	global.overwatch_mode_enabled == true {
-		d($"\n o_con step event: game_state == combat_execute_action: {attacker_id.name} has chosen to fight. Its chosen_weapon.name == {attacker_id.chosen_weapon.item_name}, and it's aoe_count == {attacker_id.chosen_weapon.aoe_count}");
+		d($"\n o_con step event: game_state == combat_execute_action: {attacker_id.name} has chosen to fight. Its chosen_weapon.name == {attacker_id.chosen_weapon.item_name}, its range == {attacker_id.chosen_weapon.max_range} and its aoe_count == {attacker_id.chosen_weapon.aoe_count}");
 		
+		//Set defaults:
 		var num_attacks = 1;
 		
 		//Create filtered list:
@@ -2092,7 +2154,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		
 		//If applicable, assign num_attacks:
 		if attacker_id.will_overwatch_boolean == false && global.char_is_fleeing_bool == false {
-			
+
 			//Hits entire rank:
 			if attacker_id.chosen_weapon.aoe_count == -1 { num_attacks = array_length(filtered_ar); }
 			
@@ -2111,15 +2173,15 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		if global.overwatch_mode_enabled global.overwatch_attacker_index++;
 		
 		//Reduce AP (if applicable) only once:
-		if attacker_id.chosen_weapon.ability_point_cost > 0 { attacker_id.ability_points_cur -= attacker_id.chosen_weapon.ability_point_cost; }
+		if attacker_id.chosen_weapon.ability_point_cost > 0 && attacker_id.char_team_enum == team_type.pc { attacker_id.ability_points_cur -= attacker_id.chosen_weapon.ability_point_cost; }
 		
-		//Choose the starting enemy we will target:
-		var attack_index = filtered_ar[irandom_range(0,array_length(filtered_ar)-1)];
+		//Randomize the starting enemy we will target:
+		var attack_index = irandom_range(0,array_length(filtered_ar)-1);
 		
 		repeat(num_attacks) {
 			d("\n o_con step event: game_state == combat_execute_action: Entering num_attacks repeat loop now...");
-			//Make sure we have ammunition:
-			if global.resources_ammo > 0 || attacker_id.char_team_enum != team_type.pc || 
+			//Make sure we have ammunition - cases: enemies never consume ammunition; we can always fire if we have more than 0 ammo; we can always fire if requires_ammo_boolean == false.
+			if global.resources_ammo > 0 || attacker_id.char_team_enum == team_type.enemy || 
 			attacker_id.chosen_weapon.requires_ammo_boolean == false {
 				d("\n o_con step event: game_state == combat_execute_action: There was either sufficient ammo (> 0) or the attacker did not a pc, calculating attack now...");
 					
@@ -2146,7 +2208,6 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				var attack_result_str = "";
 				
 				//Define stats, perform combat calculations:
-				
 				var attacker_acc = attacker_id.accuracy;
 				var defender_evasion = defender_id.evasion;
 				
@@ -2196,25 +2257,32 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					}
 					
 					//Calculate and apply morale damage:
-					if defender_id.morale_immune == false && (attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.morale_only || attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.both) {
+					if attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.morale_only || attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.both {
 						
-						//Only apply sanity damage if the char isn't already in the throes of a mental break:
-						if defender_id.berserk_count <= 0 && defender_id.cowering_bool == false && defender_id.treacherous_count <= 0 {
+						//Defender's can continue to take sanity damage even if they're in the throes of a mental break, b.c we want to show this dialogue
+						//string regardless; HOWEVER, their cur_sanity will be reduced to their max_santity - 1 when we check for mental break code below,
+						//and they will never trigger an additional mental break while already broken:
+						var dmg_roll = irandom_range(attacker_id.chosen_weapon.dmg_min,attacker_id.chosen_weapon.dmg_max);
 						
-							var dmg_roll = irandom_range(attacker_id.chosen_weapon.dmg_min,attacker_id.chosen_weapon.dmg_max);
-						
-							if dmg_roll > 0 {
-		
+						if dmg_roll > 0 {
+								
+							var immune_str = "";
+								
+							if defender_id.morale_immune == false {
 								//Reduce target sanity:
-								defender_id.sanity_cur += total_dmg;
+								defender_id.sanity_cur += dmg_roll;
 						
 								//Cap:
-								if defender_id.sanity_cur > defender_id.sanity_max defender_id.sanity_cur = defender_id.sanity_max;
-						
-								var capitalized_str = scr_string_capitalize(defender_id.name);
-								attack_result_str += $"\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} sanity damage!**";	
+								if defender_id.sanity_cur >= defender_id.sanity_max { defender_id.sanity_cur = defender_id.sanity_max; }
 							}
+							else {
+								immune_str = $"--But {defender_id.name} is impervious to this assault!--"	
+							}
+						
+							var capitalized_str = scr_string_capitalize(defender_id.name);
+							attack_result_str += $"\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} sanity damage!{immune_str}**";	
 						}
+						
 					}
 					
 					#region Set defender's died or unconscious bool var to true:
@@ -2233,7 +2301,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						else {
 							defender_id.unconscious_bool = true;
 							//Reset all of their DOTs - we don't want chars to continue taking DOT while unconscious:
-							scr_reset_status_effects(defender_id);
+							scr_reset_status_effects(defender_id,$"o_con step event: combat execute action game state: defender_id.name: {defender_id.name} was just rendered unconscious.");
 							attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has collapsed!**";
 						}
 					}
@@ -2243,10 +2311,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				}
 				//Miss
 				else {
-					var capitalized_atk_str = scr_string_capitalize(attacker_id.name);
 					var enemy_the_str = "";
 					if defender_id.char_team_enum != team_type.pc enemy_the_str = "the ";
-					attack_result_str += $"\n--//{capitalized_atk_str}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!//--";
+					attack_result_str += $"\n--{scr_string_capitalize(attacker_id.name)}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!--";
 				}
 				
 				//Whether it was a hit or miss, or whether damage was applied or not, we need to print our attack_result_str now:
@@ -2263,9 +2330,18 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						scr_apply_status_effects(attacker_id.chosen_weapon, defender_id);	
 					}
 					
-					//Check and apply broken morale:
-					if defender_id.morale_immune == false {
-						scr_check_and_apply_broken_morale(defender_id);	
+					//Apply broken morale:
+					if defender_id.morale_immune == false && defender_id.sanity_cur >= defender_id.sanity_max {
+						//Only apply again if they are not already in the throes of a mental break down:
+						if defender_id.berserk_count <= 0 && defender_id.treacherous_count <= 0 
+						&& defender_id.cowering_bool == false && defender_id.char_fleeing_from_broken_morale == false {
+							scr_apply_broken_morale(defender_id);	
+						}
+						//If any of those are true, our defender could end up with 0 sanity even while in the throes of a mental breakdown, so keep them just shy of max_sanity instead,
+						//so that when they come to, they are not still technically insane:
+						else {
+							defender_id.sanity_cur = defender_id.sanity_max-1;
+						}
 					}
 				}
 				
@@ -2283,7 +2359,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 	
 	#region Char successfully fled - If applicable, show 'successfully fled' message, and execute fled logic:
 	
-	if defender_killed == false && global.char_is_fleeing_bool && global.overwatch_mode_enabled == false {
+	if defender_killed == false && global.char_is_fleeing_bool && global.overwatch_mode_enabled == false && defender_id.stun_count <= 0 {
 		
 		d($"\no_con step event: cur_game_state == combat_execute_action: EXECUTING CODE FOR IF DEFENDER_KILLED == false AND CHAR_IS_FLEEING_BOOL == TRUE")
 		
@@ -2291,9 +2367,14 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		
 		fled_char_id.has_fled_combat_bool = true;
 		
-		var capital_str = scr_string_capitalize(fled_char_id.name);
-		scr_add_str_to_dialogue_ar($"\n**{capital_str} has successfully fled from combat!**");
+		//Reset, in any case, we don't want to be triggering this code again.
+		fled_char_id.char_fleeing_from_broken_morale = false; 
+		
+		scr_add_str_to_dialogue_ar($"\n**{scr_string_capitalize(fled_char_id.name)} has successfully fled from combat! They have taken with them any droids or clones that may have been following them.**");
 		defender_successfully_fled = true;
+		
+		//Reset any morale status effects they may have had:
+		scr_reset_status_effects_from_fleeing(fled_char_id);
 
 		//Remove from current room array:
 		scr_add_remove_char_room_ar(fled_char_id.cur_room_id,fled_char_id,false);
@@ -2305,15 +2386,13 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		fled_char_id.cur_grid_y += fled_char_id.fleeing_dir_y;
 		
 		//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
-		if is_array(fled_char_id.neutrals_following_this_char_ar) && array_length(fled_char_id.neutrals_following_this_char_ar) > 0 {
-			scr_update_neutrals_movement_vars(fled_char_id.neutrals_following_this_char_ar,fled_char_id.cur_grid_x,fled_char_id.cur_grid_y);	
-		}
+		scr_update_neutrals_movement_vars(fled_char_id.neutrals_following_this_char_ar,fled_char_id.cur_grid_x,fled_char_id.cur_grid_y);	
 				
 		//Update cur_room_id:
-		fled_char_id.cur_room_id = global.cur_grid[# fled_char_id.cur_grid_x,fled_char_id.cur_grid_y];
-				
+		fled_char_id.cur_room_id = global.cur_grid[# fled_char_id.cur_grid_x, fled_char_id.cur_grid_y];			
+		
 		//Add to next room array:
-		scr_add_remove_char_room_ar(fled_char_id.cur_room_id,fled_char_id,true);
+		scr_add_remove_char_room_ar(fled_char_id.cur_room_id, fled_char_id, true);
 		
 		//Re-position it's sprite vars:
 		scr_update_char_sprite_position_vars(fled_char_id);
@@ -2479,100 +2558,109 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 					//Check to make sure we have sufficient AP:
 					if cur_char.ability_points_cur >= abil_item_struct_id.ability_point_cost {
 						
-						if cur_char.sanity_cur >= abil_item_struct_id.sanity_cost {
+						if cur_char.sanity_cur + abil_item_struct_id.sanity_cost <= cur_char.sanity_max {
+							
+							if global.resources_scrap >= abil_item_struct_id.scrap_cost {
+							
+								//filtered_abil_ar created by scr_return_filtered_abil_ar() is only filled with actual item_struct_ids that are applicable for the 
+								//corresponding game state (either main, combat, or both), so we know that what is here is a valid option.
 						
-							//filtered_abil_ar created by scr_return_filtered_abil_ar() is only filled with actual item_struct_ids that are applicable for the 
-							//corresponding game state (either main, combat, or both), so we know that what is here is a valid option.
-						
-							//This is an ability that functions just like a weapon: hand flamer, wrist rockets, etc.;
-							//we don't reduce AP here because it's reduced (if applicable) in combat_execute_action, which is where this char is going if
-							//they're using an ability like this:
-							if abil_item_struct_id.non_attack_ability_boolean == false {
+								//This is an ability that functions just like a weapon: hand flamer, wrist rockets, etc.;
+								//we don't reduce AP here because it's reduced (if applicable) in combat_execute_action, which is where this char is going if
+								//they're using an ability like this:
+								if abil_item_struct_id.non_attack_ability_boolean == false {
 							
-								if global.combat_prep_phase == false {
+									if global.combat_prep_phase == false {
 							
-									//These all have range requirements:
+										//These all have range requirements:
 							
-									//Check to see if there's an enemy in range:
-									var closest_enemy_rank = scr_return_nearest_target_rank_pos(cur_char.cur_combat_rank,false);
+										//Check to see if there's an enemy in range:
+										var closest_enemy_rank = scr_return_nearest_target_rank_pos(cur_char.cur_combat_rank, cur_char);
 			
-									var dist_to_target = abs(cur_char.cur_combat_rank - closest_enemy_rank);
+										var dist_to_target = abs(cur_char.cur_combat_rank - closest_enemy_rank);
 			
-									var wep_range = abil_item_struct_id.max_range;
+										var wep_range = abil_item_struct_id.max_range;
 			
-									//If there's an enemy in range and our max_range is greater than 0, then move to choose_pc_rank_target:
-									if dist_to_target <= wep_range {
+										//If there's an enemy in range and our max_range is greater than 0, then move to choose_pc_rank_target:
+										if dist_to_target <= wep_range {
 								
-										//Assign chosen weapon:
-										cur_char.chosen_weapon = abil_item_struct_id;
+											//Assign chosen weapon:
+											cur_char.chosen_weapon = abil_item_struct_id;
 								
-										prev_game_state = global.cur_game_state;
+											prev_game_state = global.cur_game_state;
 				
-										/*To streamline the process even further, check to see if the enemy only occupies one rank in the entire combat_rank_ar;
-										if they do (we already know the enemy is within range), just automatically define our range 
-										based upon what rank it is in, then automatically move to execute action:
-										*/
-										if scr_return_opposite_team_occupied_ranks(cur_char.char_team_enum) <= 1 {
-											cur_char.targeted_rank = closest_enemy_rank;
-											global.cur_game_state = game_state.combat_execute_action;	
-										}
-				
-										else {
-											if wep_range > 0 {
-												global.cur_game_state = game_state.combat_pc_target_rank;
-												scr_print_ranks_to_target(cur_char);
-											}
-											//otherwise, define our chosen rank and move straight to execute_action:
-											else if wep_range <= 0 {
+											/*To streamline the process even further, check to see if the enemy only occupies one rank in the entire combat_rank_ar;
+											if they do (we already know the enemy is within range), just automatically define our range 
+											based upon what rank it is in, then automatically move to execute action:
+											*/
+											if scr_return_opposite_team_occupied_ranks(cur_char.char_team_enum) <= 1 {
 												cur_char.targeted_rank = closest_enemy_rank;
-												global.cur_game_state = game_state.combat_execute_action;
+												global.cur_game_state = game_state.combat_execute_action;	
 											}
+				
+											else {
+												if wep_range > 0 {
+													global.cur_game_state = game_state.combat_pc_target_rank;
+													scr_print_ranks_to_target(cur_char);
+												}
+												//otherwise, define our chosen rank and move straight to execute_action:
+												else if wep_range <= 0 {
+													cur_char.targeted_rank = closest_enemy_rank;
+													global.cur_game_state = game_state.combat_execute_action;
+												}
+											}
+										}
+										else {
+											scr_add_str_to_dialogue_ar($"\nThere are no targets within your ability's range. Your {abil_item_struct_id.item_name} has a maximum range of {wep_range}. Either use a different ability, or move closer to the enemy.", true);
 										}
 									}
 									else {
-										scr_add_str_to_dialogue_ar($"\nThere are no targets within your ability's range. Your {abil_item_struct_id.item_name} has a maximum range of {wep_range}. Either use a different ability, or move closer to the enemy.", true);
+										scr_add_str_to_dialogue_ar("You can't use this ability during the combat preparation phase, try again.\n",true);	
 									}
 								}
-								else {
-									scr_add_str_to_dialogue_ar("You can't use this ability during the combat preparation phase, try again.\n",true);	
+								//This is an ability that does something else: spawns a unit, buffs a stat, applies a debuff, etc.
+								//some of these may require a target and will therefore send us to game_state.use_target_item
+								//some examples include: torvalds shield generator, energizing stim prick, cooper's smoke grenade, field_medicine, avia's spawn droid, etc.
+								else if abil_item_struct_id.non_attack_ability_boolean == true {
+							
+									//We can execute the abil right away - it will be something like shield generator, smoke grenade, spawn droid, etc.:
+									//We only target ourself in such a case.
+									if abil_item_struct_id.use_requires_target == false {
+								
+										scr_use_item_or_ability(abil_item_struct_id,cur_char,cur_char);
+								
+										//if this ability instantly finishes this char's turn (like smoke grenade), we need to advance the cur char now;
+										//but ONLY if we're not in the combat preparation phase
+										if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == true 
+										&& global.combat_prep_phase == false {
+											scr_evaluate_combat_conclusion("o_con step event: game_state == combat_assign_pc_combat: player just used an ability that does NOT require a target but DOES immediately end the cur char's turn.")	
+										}
+										else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == false {
+											//Important: we need to actually return to combat_assign_pc_command game state:
+											global.cur_game_state = game_state.combat_assign_pc_command;
+											scr_print_combat_ranks(cur_char);
+										}
+										//This abil was accessed from main game state, so return us there.
+										else if global.combat_begun == false {
+											global.cur_game_state = game_state.main_game;
+											scr_print_char_reminder(cur_char);
+										}
+									}
+								
+									//Using this abil requires that we move to game_state.use_target_item
+									else if abil_item_struct_id.use_requires_target == true {
+										prev_game_state = global.cur_game_state;
+										cur_char.using_item_struct_id = abil_item_struct_id;
+										cur_char.using_item_index = index_int;
+							
+										global.cur_game_state = game_state.use_target_item;
+							
+										scr_print_pc_party(false, true);	
+									}
 								}
 							}
-							//This is an ability that does something else: spawns a unit, buffs a stat, applies a debuff, etc.
-							//some of these may require a target and will therefore send us to game_state.use_target_item
-							//some examples include: torvalds shield generator, energizing stim prick, cooper's smoke grenade, field_medicine, avia's spawn droid, etc.
-							else if abil_item_struct_id.non_attack_ability_boolean == true {
-							
-								//We can execute the abil right away - it will be something like shield generator, smoke grenade, spawn droid, etc.:
-								//We only target ourself in such a case.
-								if abil_item_struct_id.use_requires_target == false {
-								
-									scr_use_item_or_ability(abil_item_struct_id,cur_char,cur_char);
-								
-									//if this ability instantly finishes this char's turn (like smoke grenade), we need to advance the cur char now:
-									if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == true {
-										scr_evaluate_combat_conclusion("o_con step event: game_state == combat_assign_pc_combat: player just used an ability that does NOT require a target but DOES immediately end the cur char's turn.")	
-									}
-									else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == false {
-										//Important: we need to actually return to combat_assign_pc_command game state:
-										global.cur_game_state = game_state.combat_assign_pc_command;
-										scr_print_combat_ranks(cur_char);
-									}
-									//This abil was accessed from main game state, so return us there.
-									else {
-										global.cur_game_state = game_state.main_game;
-										scr_print_char_reminder(cur_char);
-									}
-								}
-								//Using this abil requires that we move to game_state.use_target_item
-								else if abil_item_struct_id.use_requires_target == true {
-									prev_game_state = global.cur_game_state;
-									cur_char.using_item_struct_id = abil_item_struct_id;
-									cur_char.using_item_index = index_int;
-							
-									global.cur_game_state = game_state.use_target_item;
-							
-									scr_print_pc_party(false, true);	
-								}
+							else {
+								scr_add_str_to_dialogue_ar("\nYou don't have enough of the scrap resource to use that ability, try again.",true);	
 							}
 						}
 						else {
@@ -2888,6 +2976,7 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 						global.cur_game_state = game_state.main_game;
 						prev_game_state = game_state.main_game;
 					}
+					
 					//Return to combat_assign_pc_command OR advance the cur_combat_char within the combat system, 
 					//if this ability causes you to finish your turn:
 					else if prev_game_state == game_state.choose_pc_abil && global.combat_begun {
@@ -3180,9 +3269,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					scr_add_remove_char_room_ar(global.acting_char_struct_id.cur_room_id,global.acting_char_struct_id,true);
 					
 					//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
-					if is_array(global.acting_char_struct_id.neutrals_following_this_char_ar) && array_length(global.acting_char_struct_id.neutrals_following_this_char_ar) > 0 {
-						scr_update_neutrals_movement_vars(global.acting_char_struct_id.neutrals_following_this_char_ar,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);	
-					}
+					scr_update_neutrals_movement_vars(global.acting_char_struct_id.neutrals_following_this_char_ar,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);	
 					
 					//Re-position it's sprite vars:
 					scr_update_char_sprite_position_vars(global.acting_char_struct_id);

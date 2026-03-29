@@ -20,8 +20,9 @@ function scr_post_combat_reset_vars(){
 				char_id = global_ar[i];
 				
 				if char_id.has_fled_combat_bool == true char_id.has_fled_combat_bool = false;
+				char_id.char_fleeing_from_broken_morale = false;
 				
-				scr_reset_status_effects(char_id);
+				scr_reset_status_effects(char_id,"scr_post_combat_reset_vars: which is itself called from o_con step event: init_combat game state: combat_begun == false.");
 			}
 		}
 		

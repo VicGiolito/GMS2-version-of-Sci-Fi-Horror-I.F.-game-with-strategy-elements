@@ -11,8 +11,10 @@ function scr_setup_char_init_gear_and_abils(){
 		pc_char_enum = pc_char_struct.char_type_enum;
 		
 		//Debug: everyone gets a sniper rifle and a concussion grenade launcher:
-		var item_id = new global.Item(item_type.assault_rifle);
-		scr_add_item_to_inv(pc_char_struct,item_id,true);
+		if pc_char_enum != character.mercenary_cyborg {
+			var item_id = new global.Item(item_type.assault_rifle);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
+		}
 		
 		//var item_id = new global.Item(item_type.concussion_grenade_launcher);
 		//scr_add_item_to_inv(pc_char_struct,item_id,true);
@@ -24,6 +26,7 @@ function scr_setup_char_init_gear_and_abils(){
 			var item_index = array_get_index(pc_char_struct.inv_ar,item_id);
 			if item_index != -1 scr_equip_or_unequip_item(pc_char_struct,item_id,item_index,true,true);
 			
+			/*
 			var item_id = new global.Item(item_type.flame_thrower);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.assault_rifle);
@@ -38,6 +41,7 @@ function scr_setup_char_init_gear_and_abils(){
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.suit_flak_armor);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
+			*/
 		}
 		
 		else if pc_char_enum == character.child {

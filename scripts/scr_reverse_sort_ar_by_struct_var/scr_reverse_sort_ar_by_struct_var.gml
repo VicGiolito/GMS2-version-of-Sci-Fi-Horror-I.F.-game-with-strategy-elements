@@ -11,7 +11,7 @@ if reverse_sort_bool == false, those with the lowest var_name_str value will end
 
 */
 
-function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str, convert_to_item_struct = false){
+function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str){
 	
 	var ar_len  = array_length(arr);
 	
@@ -29,9 +29,11 @@ function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str,
 				initial_struct_id = arr[j];
 				next_struct_id = arr[j + 1];
 				
-				//Convert to item struct, if applicable:
-				if convert_to_item_struct && (is_struct(initial_struct_id) == false || is_struct(next_struct_id) == false) {
+				//Convert to item structs, if applicable:
+				if is_struct(initial_struct_id) == false {
 					initial_struct_id = global.item_reference_table[initial_struct_id];
+				}
+				if is_struct(next_struct_id) == false{
 					next_struct_id = global.item_reference_table[next_struct_id];
 				}
 				
@@ -71,9 +73,11 @@ function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str,
 				initial_struct_id = arr[j];
 	            next_struct_id = arr[j + 1];
 				
-				//Convert to item struct, if applicable:
-				if convert_to_item_struct && (is_struct(initial_struct_id) == false || is_struct(next_struct_id) == false) {
+				//Convert to item structs, if applicable:
+				if is_struct(initial_struct_id) == false {
 					initial_struct_id = global.item_reference_table[initial_struct_id];
+				}
+				if is_struct(next_struct_id) == false{
 					next_struct_id = global.item_reference_table[next_struct_id];
 				}
 				

@@ -12,12 +12,13 @@ function scr_check_combat_end(){
 			
 			char_struct_id = global.combat_initiative_ar[i];
 			
-			if char_struct_id.has_fled_combat_bool == false && char_struct_id.has_died_bool == false {
+			if char_struct_id.has_fled_combat_bool == false && char_struct_id.has_died_bool == false 
+			&& char_struct_id.treacherous_count <= 0 && char_struct_id.berserk_count <= 0 {
 			
 				if char_struct_id.char_team_enum == team_type.pc {
 					pc_char_found = true;	
 				}
-				else if char_struct_id.char_team_enum == team_type.enemy && char_struct_id.treacherous_count <= 0 {
+				else if char_struct_id.char_team_enum == team_type.enemy {
 					enemy_char_found = true;	
 				}
 			}

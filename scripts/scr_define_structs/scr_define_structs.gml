@@ -26,7 +26,11 @@ function scr_define_structs(){
 		
 		struct_type_enum = struct_type.Character;
 		
+		stationary_neutral_bool = false; //These neutrals don't ever from a room once they are placed there: such as security_camera and light_sentry_drone.
+		
 		broken_morale_ar = -1;
+		
+		fleeing_str = "fleeing str not defined";
 		
 		morale_immune = false;
 		infection_immune = false;
@@ -154,7 +158,8 @@ function scr_define_structs(){
 		}
 
         overwatch_rank = -1;
-        will_overwatch_boolean = false
+        will_overwatch_boolean = false;
+		char_fleeing_from_broken_morale = false;
 	
 		//status effect type vars:
         infection_count = 0;
@@ -211,8 +216,7 @@ function scr_define_structs(){
             hp_cur = 16;
             ability_points_cur = 8;
             ability_points_max = 8;
-            sanity_cur = 12;
-            sanity_max = sanity_cur;
+            sanity_max = 12;
 			
 			courage = AVG_COURAGE_VAL+1;
 
@@ -250,8 +254,8 @@ function scr_define_structs(){
 			
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: "\"Spit on me? Sneer at me? Lay hands on me? If you truly think me a monster--THEN LET ME SHOW YOU WHAT I CAN DO!\"" });
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: "\"Ceaseless toil and torment! Will the pain never end?! RAGE my constant companion! RAGE my only friend!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"{name} roars: \"Spit on me? Sneer at me? Lay hands on me? If you truly think me a monster--THEN LET ME SHOW YOU WHAT I CAN DO!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"{name} rants and raves: \"Ceaseless toil and torment! Will the pain never end?! RAGE my constant companion! RAGE my only friend!\"" });
 		
 			scr_add_passive_ability(self,passive_abil_type.giant,"constructor event");
 			scr_add_passive_ability(self,passive_abil_type.healing_factor,"constructor event");
@@ -267,8 +271,7 @@ function scr_define_structs(){
             hp_cur = 6;
             ability_points_cur = 6;
             ability_points_max = ability_points_cur;
-            sanity_cur = 8;
-            sanity_max = 8;
+            sanity_max = 6;
 			
 			nick_name = "Doc";
 			
@@ -291,11 +294,13 @@ function scr_define_structs(){
 			
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"... I'm sorry!... I can't... I can't!...\"" });
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... Their hands, outstretched... Their eyes: pleading... I couldn't save them!... Couldn't save them...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... I'm sorry!...\" {name} mutters, before turning to flee. \"I can't... I can't!...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} clutches her knees to her chest, whispering: \"... Their hands, outstretched... Their eyes: pleading... I couldn't save them... Couldn't save them...\"" });
 		
 			scr_add_ability(self,item_type.field_medicine);
 			scr_add_ability(self,item_type.energizing_stim_prick);
+			scr_add_ability(self,item_type.improvised_medicine);
+			scr_add_ability(self,item_type.anti_anxiety_meds);
 		}
 		
 		else if char_type_enum == character.veteran {
@@ -304,7 +309,6 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 9;
             ability_points_max = ability_points_cur;
-            sanity_cur = 8;
             sanity_max = 8;
 			
 			nick_name = "Vet";
@@ -328,8 +332,8 @@ function scr_define_structs(){
 			
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: "\"... The voices of my kin are calling to me... I am sorry about this... I must answer their call...\"" });
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: "\"Stay away from me!... The transformation, it's unstable... I can't control it!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"... The voices of my kin are calling to me!...\" {name} tears at her own face and hands with fingers like claws. \"... I am sorry... I must answer their call!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"\"Stay away from me!...\" {name} screams. \"... The transformation, it's unstable... I can't control it!\"" });
 		}
 
         else if char_type_enum == character.engineer {
@@ -338,8 +342,7 @@ function scr_define_structs(){
             hp_cur = 8;
             ability_points_cur = 10;
             ability_points_max = 10;
-            sanity_cur = 6;
-            sanity_max = sanity_cur;
+            sanity_max = 6;
 			
 			nick_name = "Engie";
 			
@@ -358,8 +361,8 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED;
 		
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"... They just keep coming! Why won't they stop? How do you stop them?! You can't... No one can!...\"" });
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... Nothing comes together as easily as it falls apart...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... They just keep coming!\" {name} cries, before routing. \"How do you stop them?! You can't... No one can!...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} gazes off into space, remarking, to no one at all: \"... Nothing comes together as easily as it falls apart...\"" });
 		
 			scr_add_ability(self,item_type.spawn_light_sentry_gun);
 		}
@@ -370,7 +373,6 @@ function scr_define_structs(){
             hp_cur = 7;
             ability_points_cur = 5;
             ability_points_max = 5;
-            sanity_cur = 6;
             sanity_max = 6;
 			
 			nick_name = "Jan";
@@ -387,7 +389,6 @@ function scr_define_structs(){
             dexterity = 2;
             spd = AVERAGE_CHAR_SPEED+1;
 			
-			
 		}
 
         else if char_type_enum == character.mechanician {
@@ -396,8 +397,7 @@ function scr_define_structs(){
             hp_cur = 6;
             ability_points_cur = 10;
             ability_points_max = 10;
-            sanity_cur = 12;
-            sanity_max = sanity_cur;
+            sanity_max = 12;
 			
 			nick_name = "Avia";
 
@@ -427,8 +427,8 @@ function scr_define_structs(){
             possessive_pronoun = "her";
 			
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"... Wait! I can still see the code of their consciousness, drifting away!... This way!... The currents flow this way, follow me!...\"" });
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... Their voices, echoing inside my mind, like the whispers of so many dead children... They had only wished to be free... Now they're condemned to the purgatory of the void forever...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... Wait! I can still see the code of their consciousness, drifting away!...\" {name} has outstreched her slender hands, grasping for the ethereal form of some invisible phantasm. \"This way!... The currents flow this way, follow me!...\"" });
+			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"... Their voices, echoing inside my mind, like the whispers of so many dead children...\" {name} has slumped against the floor and refuses to move. \"... Now they're condemned to the purgatory of the void forever...\"" });
 		
 			scr_add_ability(self,item_type.spawn_light_buzzsaw_droid);
 			scr_add_ability(self,item_type.spawn_light_flamer_droid);
@@ -445,7 +445,6 @@ function scr_define_structs(){
             hp_cur = 12;
             ability_points_cur = 8;
             ability_points_max = 8;
-            sanity_cur = 10;
             sanity_max = 10;
 			
 			nick_name = "Cyborg";
@@ -468,8 +467,8 @@ function scr_define_structs(){
             //Base 'half-mechanical' resistences:
             
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: "\"You're infected--all of you! Skin, hair, sweat--it's all unclean! You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "Torvald scratches at his face, pulls at his hair, claws at his eyes. \"This flesh--it burns! Let me be rid of it, once and for all!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, brandishing his myriad of weapons. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} gouges his face, pulls locks from his hair. \"This flesh--it burns! Let me be rid of it, once and for all!\"" });
 		
 			//Abilities:
 			scr_add_passive_ability(self,passive_abil_type.hardened_skin," constructor event ");
@@ -487,8 +486,7 @@ function scr_define_structs(){
             hp_cur = 10;
             ability_points_cur = 14;
             ability_points_max = 14;
-            sanity_cur = 8;
-            sanity_max = sanity_cur;
+            sanity_max = 8;
 			
 			nick_name = "Guard";
 			
@@ -507,8 +505,8 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED-1;
 			
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"Oh HELL no! I didn't sign up for this shit!"});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"Just two more weeks, they said... Just two more weeks... Now I'll never see my little girl again...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"Oh HELL no!\" {name} cries, bolting from his position. \"I didn't sign up for this shit!\""});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Just two more weeks, they said... Just two more weeks...\" {name} stands dumbfounded, frozen with fear. \"... Now I'll never see my little girl again...\"" });
 			
 			scr_add_ability(self,item_type.taser);
 			scr_add_ability(self,item_type.smoke_grenade);
@@ -520,8 +518,7 @@ function scr_define_structs(){
             hp_cur = 6;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 5;
-            sanity_max = sanity_cur;
+            sanity_max = 4;
 			
 			nick_name = "Bio";
 			
@@ -540,8 +537,8 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED-1;
 			
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"The human fight or flight instinct is very strong, you see, and, well--it seems my feet have decided for me! Goodbye!"});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "Darius has a thousand yard stare. \"Millions of years of evolution... And it's all lead to this. How could we have been so blind?\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"The human fight or flight response is very strong, you see...\" {name} says, while fleeing in the opposite direction. \"... And, well--it seems my feet have decided for me! Goodbye!\""});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Millions of years of evolution... And it's all lead to this.\" {name} has assumed a thousand yard stare and refuses to move. \"How could we have been so blind?\""});
 		};
 
         else if char_type_enum == character.criminal { //Probably get rid of this character too
@@ -550,7 +547,6 @@ function scr_define_structs(){
             hp_cur = 9;
             ability_points_cur = 12;
             ability_points_max = 12;
-            sanity_cur = 9;
             sanity_max = 9;
 			
 			nick_name = "Crim";
@@ -578,7 +574,6 @@ function scr_define_structs(){
             hp_cur = 14;
             ability_points_cur = 15;
             ability_points_max = 15;
-            sanity_cur = 20;
             sanity_max = 20;
 			
 			nick_name = "RG-88";
@@ -608,7 +603,6 @@ function scr_define_structs(){
             hp_cur = 7;
             ability_points_cur = 8;
             ability_points_max = 8;
-            sanity_cur = 4;
             sanity_max = 4;
 			
 			nick_name = "CEO";
@@ -631,17 +625,16 @@ function scr_define_structs(){
             possessive_pronoun = "her";
 			
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"The board members, they're counting on me, you see. I'm sure the rest of you can handle this just fine without me! Just keep working hard, okay? You'll get there, someday!"});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "Celeste stares off into space. \"Are they the monsters, or are we?\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"The board members, they're counting on me!\" The words of {name} are already no more than a echo as she bolts from the battle field. \"I'm sure the rest of you can handle this just fine without me!"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"The eyes of {name} have glazed over. She mumbles: \"Are they the monsters, or are we?\"" });
 		}
 
         else if char_type_enum == character.child {
             name = "Kira, 'The Gamer'";
-            hp_max = 1; //5
+            hp_max = 5;
             hp_cur = hp_max;
             ability_points_cur = 6;
             ability_points_max = 6;
-            sanity_cur = 4;
             sanity_max = 4;
 			
 			nick_name = "Kira";
@@ -666,8 +659,8 @@ function scr_define_structs(){
             possessive_pronoun = "her";
 			
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"Pappa, where are you?\""});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"MOMMA!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"With a whimper and sob, {name} turns tail and flees."});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} has assumed a fetal position and is screaming. \"MOMMA!\"" });
 		
 			scr_add_passive_ability(self,passive_abil_type.child,"constructor event");
 		}
@@ -678,7 +671,6 @@ function scr_define_structs(){
             hp_cur = 8;
             ability_points_cur = 6;
             ability_points_max = 6;
-            sanity_cur = 4;
             sanity_max = 4;
 			
 			nick_name = "Play";
@@ -698,8 +690,8 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED+1;
 			
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"I'm really more of a general than a soldier--I work best from the back line... I'll--I'll send help, okay?\""});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"Be a man, he said... Just act like a man, for once in your goddamned life!... Then why can't I move my fucking FEET?!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"I'm really more of a general than a soldier--I work best from the back line...\" The feet of {name} are irresistibly guiding him from the battle field. \"I'll--I'll send help, okay?\""});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} has curled into a ball, sheletering his head with his hands, and muttering: \"Be a man, he said... Just act like a man, for once in your goddamned life!... Then why can't I move my fucking FEET?!\"" });
 		}
 
         else if char_type_enum == character.neutral_infected_scientist {
@@ -708,8 +700,7 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 2;
-            sanity_max = 2;
+            sanity_max = 3;
 			
 			nick_name = "Gregos";
 
@@ -726,7 +717,10 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED+2;
 
             combat_ai_preference = enemy_combat_ai.ranged_coward;
-
+			
+			broken_morale_ar = [];
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"I--I can't be here! I'm sorry!\""});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... What have I done?... Oh God, what have I done?...\"" });
 		}
 
         else if char_type_enum == character.enemy_skittering_larva {
@@ -735,8 +729,8 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 20;
             sanity_max = 20;
+			
             spd = 8;
 
             combat_ai_preference = enemy_combat_ai.melee;
@@ -753,6 +747,8 @@ function scr_define_structs(){
 			
 			scr_add_ability(self,item_type.infection_needle);
 			scr_add_ability(self,item_type.writhing_tendril);
+			
+			morale_immune = true;
 		}
 
         else if char_type_enum == character.neutral_jittering_buzzsaw {
@@ -761,23 +757,20 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 20;
             sanity_max = 20;
+			
             spd = AVERAGE_CHAR_SPEED+1;
 			
 			nick_name = "Buzzsaw";
 
             combat_ai_preference = enemy_combat_ai.melee;
-
-            armor = 1;
-            evasion = 0;
-            res_fire = 50;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = -100;
-            res_poison = 500;
-            res_infect = 500;
-            res_bleed = 500;
+			
+			morale_immune = true;
+			
+			//Resistences and armor are changed here:
+			scr_add_passive_ability(self,passive_abil_type.synthetic,"constructor event");
+			
+			scr_add_ability(self, item_type.crude_buzzsaw);
 		}
 
         else if char_type_enum == character.neutral_fumigating_flamer {
@@ -786,7 +779,6 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 20;
             sanity_max = 20;
             spd = 0;
 			
@@ -794,16 +786,12 @@ function scr_define_structs(){
 
             combat_ai_preference = enemy_combat_ai.melee;
 
-            armor = 1;
-            evasion = 0;
-            res_fire = 50;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = -100;
-            res_poison = 500;
-            res_infect = 500;
-            res_bleed = 500;
-
+			morale_immune = true;
+			
+			//Resistences and armor are changed here:
+			scr_add_passive_ability(self,passive_abil_type.synthetic,"constructor event");
+			
+			scr_add_ability(self, item_type.flame_thrower);
 		}
 
         else if char_type_enum == character.neutral_spinning_scattershot {
@@ -812,23 +800,20 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 20;
             sanity_max = 20;
+			
             spd = 7;
 			
 			nick_name = "Shotgun";
 
             combat_ai_preference = enemy_combat_ai.ranged_coward;
-
-            armor = 0;
-            evasion = 1;
-            res_fire = 50;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = -100;
-            res_poison = 500;
-            res_infect = 500;
-            res_bleed = 500;
+			
+			morale_immune = true;
+			
+			//Resistences and armor are changed here:
+			scr_add_passive_ability(self,passive_abil_type.synthetic,"constructor event");
+			
+			scr_add_ability(self, item_type.shotgun);
 		}
 
         else if char_type_enum == character.neutral_whipstitch_sentinel {
@@ -837,31 +822,25 @@ function scr_define_structs(){
             hp_cur = hp_max;
             ability_points_cur = 3;
             ability_points_max = 3;
-            sanity_cur = 20;
             sanity_max = 20;
             spd = AVERAGE_CHAR_SPEED;
 			
 			nick_name = "Sentinel";
+			
+			morale_immune = true;
 
             combat_ai_preference =  enemy_combat_ai.overwatch_coward;
 
-            armor = 0;
-            evasion = 0;
-            res_fire = 50;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = -100;
-            res_poison = 500;
-            res_infect = 500;
-            res_bleed = 500;
-
+            //Resistences and armor are changed here:
+			scr_add_passive_ability(self,passive_abil_type.synthetic,"constructor event");
+			
+			scr_add_ability(self, item_type.pulse_pistol);
 		}
 
         else if char_type_enum == character.neutral_light_sentry_gun {
             name = "Light Sentry Drone";
             hp_max = 4;
             hp_cur = hp_max;
-            sanity_cur = 20;
             sanity_max = 20;
             spd = 10;
 			
@@ -869,24 +848,18 @@ function scr_define_structs(){
 
             combat_ai_preference = enemy_combat_ai.stationary_overwatch;
 
-            armor = 0;
-            evasion = 0;
-            res_fire = 50;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = -100;
-            res_poison = 500;
-            res_infect = 500;
-            res_bleed = 500;
+            //Resistences and armor are changed here:
+			scr_add_passive_ability(self,passive_abil_type.synthetic,"constructor event");
 			
 			scr_add_ability(self,item_type.light_mg);
+			
+			stationary_neutral_bool = true; //Never moves from a room.
 		}
 
         else if char_type_enum == character.enemy_lumbering_carrier {
             name = "Lumbering Carrier";
             hp_max = irandom_range(16,20);
             hp_cur = hp_max;
-            sanity_cur = 20;
             sanity_max = 20;
 			
 			nick_name = "Carrier";
@@ -910,13 +883,14 @@ function scr_define_structs(){
             spd = -1
 
 			scr_add_ability(self, item_type.monstrous_claw);
+			
+			morale_immune = true;
 		}
 
         else if char_type_enum == character.enemy_spined_spitter {
             name = "Spined Spitter";
             hp_max = irandom_range(9,11);
             hp_cur = hp_max;
-            sanity_cur = 20;
             sanity_max = 20;
 			
 			nick_name = "Spitter";
@@ -935,13 +909,14 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED+1;
 
 			scr_add_ability(self, item_type.spine_projectile);	
+			
+			morale_immune = true;
 		}
 
         else if char_type_enum == character.enemy_transmogrified_soldier {
             name = "Transmogrified Soldier";
             hp_max = irandom_range(10,13);
             hp_cur = hp_max;
-            sanity_cur = 20;
             sanity_max = 20;
 			
 			nick_name = "TransformedSldr.";
@@ -954,6 +929,8 @@ function scr_define_structs(){
             res_vacuum = 100;
             res_gas = 100;
             res_electric = 0;
+			
+			morale_immune = true;
 
             combat_ai_preference = enemy_combat_ai.overwatch_coward;
 
@@ -1008,7 +985,6 @@ function scr_define_structs(){
             name = "Sodden Shambler";
             hp_max = irandom_range(8,10);
             hp_cur = hp_max;
-            sanity_cur = 20;
             sanity_max = 20;
 			
 			nick_name = "Shambler";
@@ -1021,38 +997,41 @@ function scr_define_structs(){
             res_vacuum = 100;
             res_gas = 100;
             res_electric = 0;
+			
+			morale_immune = true;
 
             combat_ai_preference = enemy_combat_ai.ranged_coward;
 
             spd = 0;
 			
 			//scr_add_ability(self,item_type.acid_cloud);
-			//scr_add_ability(self,item_type.acid_spit);
-			scr_add_ability(self,item_type.regurgitated_vomit);
+			scr_add_ability(self,item_type.acid_spit);
+			//scr_add_ability(self,item_type.regurgitated_vomit);
 		}
 
         else if char_type_enum == character.enemy_chittering_lurker {
-            name = "Chittering Lurker"
-            hp_max = irandom_range(7,9)
-            hp_cur = hp_max
-            sanity_cur = 20
-            sanity_max = 20
+            name = "Chittering Lurker";
+            hp_max = irandom_range(7,9);
+            hp_cur = hp_max;
+            sanity_max = 20;
 			
 			nick_name = "Lurker";
 			
 			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
-            armor = 0
-            evasion = 2
-            res_fire = 0
-            res_vacuum = 100
-            res_gas = 100
-            res_electric = 0
+            armor = 0;
+            evasion = 2;
+            res_fire = 0;
+            res_vacuum = 100;
+            res_gas = 100;
+            res_electric = 0;
 
             ai_is_suppressor_boolean = true
             combat_ai_preference = enemy_combat_ai.ranged_coward
 
             spd = 7;
+			
+			morale_immune = true;
 			
 			//scr_add_ability(self,item_type.filament_spray);
 			//scr_add_ability(self,item_type.sticky_slime);
@@ -1113,6 +1092,7 @@ function scr_define_structs(){
         can_overwatch_boolean = false;
 		
 		sanity_cost = 0;
+		scrap_cost = 0;
         ability_point_cost = 0;
         ability_cost_str = "";
         non_attack_ability_boolean = false; //Torvald's shield, cooper's buffs, Avia's summons, etc., all == true
@@ -1137,7 +1117,7 @@ function scr_define_structs(){
         item_verb = "fires";
         aoe_count = 1; //indicates max targets item will hit; -1 indicates it hits the entire mob, flamers only
 		
-		use_context = abil_use_context.both; //Used with abilities and 'useable' items when determining where they can be used: in combat, outside of it, or in both scenarios
+		use_context = abil_use_context.main_game_only; //Used with abilities and 'useable' items when determining where they can be used: in combat, outside of it, or in both scenarios
 		
 		melee_only = false; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		
@@ -1148,6 +1128,7 @@ function scr_define_structs(){
             dmg_max = 1;
             item_name = "FLASHLIGHT";
             equip_slot_list = [equip_slot.accessory];
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.shotgun {
             dmg_min = 3;
@@ -1161,6 +1142,7 @@ function scr_define_structs(){
             can_overwatch_boolean = true;
             bleed_chance = 25;
             item_desc = "Your standard issue military grade shotgun most commonly used by security personnel.";
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.semi_auto_pistol {
             dmg_min = 1;
@@ -1172,6 +1154,7 @@ function scr_define_structs(){
             item_dmg_str = "shot";
             can_overwatch_boolean = true;
             bleed_chance = 10;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.pulse_pistol {
             dmg_min = 2;
@@ -1184,6 +1167,7 @@ function scr_define_structs(){
             item_dmg_str = "burned";
             can_overwatch_boolean = true;
             burn_chance = 10;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.frag_grenade {
             dmg_min = 8;
@@ -1197,6 +1181,7 @@ function scr_define_structs(){
             aoe_count = 6;
             burn_chance = 25;
             bleed_chance = 25;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.flame_thrower {
             dmg_min = 3;
@@ -1208,6 +1193,7 @@ function scr_define_structs(){
             item_dmg_str = "burned";
             aoe_count = -1;
             burn_chance = 75;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.hand_flamer { //Torvald ability
             dmg_min = 2;
@@ -1327,7 +1313,6 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 		}
 
-        // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.field_medicine {  // Doctor ability
             dmg_min = 0;
             dmg_max = 0;
@@ -1335,6 +1320,34 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 3;
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {FIELD_MEDICINE_HP_BOOST} hit points and is cleared of the following status effects: burning, bleeding, poisoned.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+			use_context = abil_use_context.both;
+			use_requires_target = true;
+		}
+		
+		else if item_enum == item_type.improvised_medicine {  // Doctor ability
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "IMPROVISED TREATMENT";
+            max_range = 0;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF} infection points.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+			use_context = abil_use_context.both;
+			use_requires_target = true;
+		}
+		
+		else if item_enum == item_type.anti_anxiety_meds {  // Doctor ability
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "ANTI-ANXIETY TABLETS";
+            max_range = 0;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {ANTI_ANXIETY_SANITY_BUFF} sanity points.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
@@ -1350,12 +1363,13 @@ function scr_define_structs(){
             equip_slot_list = [equip_slot.body];  // Indicates either hand can equip
             max_range = 0;
             ability_point_cost = 4;
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: spawn a LIGHT SENTRY GUN at your position. Sentry guns do not move, fire at enemies within their range, and set overwatch when enemies are beyond their range.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
 			char_spawn_enum = character.neutral_light_sentry_gun;
+			scrap_cost = 2;
+			ability_cost_str = $"Spend {ability_point_cost} AP, {scrap_cost} scrap, and pass your turn if in combat: spawn a LIGHT SENTRY GUN at your position. Sentry guns do not move, fire at enemies within their range, and set overwatch when enemies are beyond their range.";
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1366,12 +1380,13 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 6;
 			sanity_cost = 2;
-            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
 			char_spawn_enum = character.neutral_whipstitch_sentinel;
+			scrap_cost = 2;
+			ability_cost_str = $"Spend {ability_point_cost} AP, {scrap_cost} scrap, {sanity_cost} sanity, and pass your turn if in combat: spawn a WHIPSTITCH SENTINEL DROID at your position. This hastily constructed bag of bolts uses a PULSE PISTOL and likes to set overwatch, but only if it has the ranged advantage over the enemy.";
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1382,12 +1397,13 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 4;
 			sanity_cost = 2;
-            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
 			char_spawn_enum = character.neutral_spinning_scattershot;
+			scrap_cost = 2;
+			 ability_cost_str = $"Spend {ability_point_cost} AP, {scrap_cost} scrap, {sanity_cost} sanity, and pass your turn if in combat: spawn a SPINNING SCATTERSHOT DROID at your position. This cowardly little droid likes to pepper enemies with its SHOTGUN.";
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1398,12 +1414,13 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 3;
 			sanity_cost = 2;
-            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a FUMIGATING FLAMER DROID at your position. This fearless little droid would wheel itself through the gates of hell to protect you. It has been affixed with a FLAMETHROWER and is belching a disconcerting amount of smoke.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
 			char_spawn_enum = character.neutral_fumigating_flamer;
+			scrap_cost = 2;
+			ability_cost_str = $"Spend {ability_point_cost} AP, {scrap_cost} scrap, {sanity_cost} sanity, and pass your turn if in combat: spawn a FUMIGATING FLAMER DROID at your position. This fearless little droid would wheel itself through the gates of hell to protect you. It has been affixed with a FLAMETHROWER and is belching a disconcerting amount of smoke.";
 		}
 
         // This skill uses utils execute_non_attack_ability()
@@ -1414,12 +1431,13 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 3;
 			sanity_cost = 2;
-            ability_cost_str = $"Spend {ability_point_cost} AP, {sanity_cost} sanity, and pass your turn: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction...";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
 			use_context = abil_use_context.both;
 			char_spawn_enum = character.neutral_jittering_buzzsaw;
+			scrap_cost = 2;
+			ability_cost_str = $"Spend {ability_point_cost} AP, {scrap_cost} scrap, {sanity_cost} sanity, and pass your turn if in combat: spawn a JITTERING BUZZSAW DROID at your position. Its spinning BUZZSAW looks as though its about to bounce out of its frame! Better point this droid in the right direction...";
 		}
         // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.energizing_stim_prick {  //doctor ability
@@ -1448,6 +1466,7 @@ function scr_define_structs(){
             aoe_count = 8;
             bleed_chance = 75;
             burn_chance = 75; //DEBUG
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.lead_pipe {
             dmg_min = 1;
@@ -1459,6 +1478,7 @@ function scr_define_structs(){
             item_dmg_str = "blundgeoned";
             max_range = 0;
             stun_chance = 50;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.monstrous_claw {
@@ -1472,6 +1492,7 @@ function scr_define_structs(){
             max_range = 0;
             bleed_chance = 50;
             infection_chance = 10;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.writhing_tendril {
@@ -1487,6 +1508,7 @@ function scr_define_structs(){
             bleed_chance = 0;
             always_checks_status_effect_boolean = false;
             infection_chance = 15;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.desperate_claw {
@@ -1500,6 +1522,7 @@ function scr_define_structs(){
             max_range = 0;
             bleed_chance = 25;
             infection_chance = 10;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.infection_needle {
@@ -1512,6 +1535,7 @@ function scr_define_structs(){
             item_dmg_str = "punctured";
             max_range = 0;
             infection_chance = 100;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.police_truncheon {
@@ -1524,6 +1548,7 @@ function scr_define_structs(){
             item_dmg_str = "blundgeoned";
             max_range = 0;
             stun_chance = 25;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.stun_baton { //Has a 100% chance of stunning enemies, minus their electric_res
@@ -1537,6 +1562,7 @@ function scr_define_structs(){
             max_range = 0;
             stun_chance = 100;
             always_checks_status_effect_boolean = false;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.fire_axe {
@@ -1549,6 +1575,7 @@ function scr_define_structs(){
             item_dmg_str = "mauled";
             max_range = 0;
             bleed_chance = 25;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.crude_buzzsaw {
@@ -1561,6 +1588,7 @@ function scr_define_structs(){
             item_dmg_str = "eviscerated";
             max_range = 0;
             bleed_chance = 75;
+			use_context = abil_use_context.combat_only;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
 		}
         else if item_enum == item_type.taser { //High stun chance, extra damage to characters with weak electric_res
@@ -1591,6 +1619,7 @@ function scr_define_structs(){
             bleed_chance = 25;
             can_overwatch_boolean = true;
 			aoe_count = 2;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.light_mg { //Light sentry gun weapon.
             dmg_min = 3;
@@ -1604,6 +1633,7 @@ function scr_define_structs(){
             bleed_chance = 25;
             suppress_chance = 33;
 			aoe_count = 2;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.spine_projectile {
             dmg_min = 3;
@@ -1616,6 +1646,7 @@ function scr_define_structs(){
             bleed_chance = 25;
             infection_chance = 10;
             poison_chance = 25;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.acid_spit {
             dmg_min = 4;
@@ -1630,10 +1661,12 @@ function scr_define_structs(){
             poison_chance = 75;
             infection_chance = 10;
             always_checks_status_effect_boolean = false;
+			dmg_type_enum = item_dmg_type.morale_only; //item_dmg_type.both;
+			use_context = abil_use_context.combat_only;
 		}
 		else if item_enum == item_type.regurgitated_vomit {
-            dmg_min = 1;
-            dmg_max = 3;
+            dmg_min = 2;
+            dmg_max = 4;
             item_name = "UNDIGESTED VOMIT";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 2;
@@ -1643,10 +1676,11 @@ function scr_define_structs(){
             can_overwatch_boolean = true;
             always_checks_status_effect_boolean = false;
 			dmg_type_enum = item_dmg_type.morale_only;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.acid_cloud {
-            dmg_min = 1;
-            dmg_max = 3;
+            dmg_min = 2;
+            dmg_max = 4;
             item_name = "ACID CLOUD";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 2;
@@ -1654,9 +1688,10 @@ function scr_define_structs(){
             item_dmg_str = "melted";
             aoe_count = -1;
             poison_chance = 75;
-            bleed_chance = 20;
+            bleed_chance = 25;
             infection_chance = 10;
             always_checks_status_effect_boolean = true;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.sticky_slime {
             dmg_min = 0;
@@ -1670,6 +1705,7 @@ function scr_define_structs(){
             suppress_chance = 75;
             always_checks_status_effect_boolean = true;
             infection_chance = 10;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.filament_spray {
             dmg_min = 0;
@@ -1685,6 +1721,7 @@ function scr_define_structs(){
             stun_chance = 20;
             always_checks_status_effect_boolean = true;
 			dmg_type_enum = item_dmg_type.both;
+			use_context = abil_use_context.combat_only;
 		}
 		else if item_enum == item_type.terrifying_wail {
 			dmg_type_enum = item_dmg_type.morale_only;
@@ -1696,6 +1733,7 @@ function scr_define_structs(){
             item_verb = "screams with a";
             item_dmg_str = "stressed";
             aoe_count = -1;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.toxic_grenade_launcher {
             dmg_min = 1;
@@ -1708,6 +1746,7 @@ function scr_define_structs(){
             aoe_count = -1;
             poison_chance = 75;
             always_checks_status_effect_boolean = true;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.frag_grenade_launcher {
             dmg_min = 5;
@@ -1720,6 +1759,7 @@ function scr_define_structs(){
             aoe_count = 4;
             burn_chance = 25;
             always_checks_status_effect_boolean = false;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.concussion_grenade_launcher {
             dmg_min = 0;
@@ -1733,33 +1773,36 @@ function scr_define_structs(){
             stun_chance = 100; //75;
             suppress_chance = 100; //75;
             always_checks_status_effect_boolean = true;
+			use_context = abil_use_context.combat_only;
 		}
         
         else if item_enum == item_type.sub_machine_gun {
-            dmg_min = 3
-            dmg_max = 5
-            item_name = "SUB MACHINE GUN"
-            equip_slot_list = [[equip_slot.rh,equip_slot.lh]] //Indicates two-handed weapon
-            max_range = 3
-            item_verb = "fires the"
-            item_dmg_str = "shot"
-            can_overwatch_boolean = true
-            aoe_count = 4
-            bleed_chance = 25
-            suppress_chance = 50
+            dmg_min = 3;
+            dmg_max = 5;
+            item_name = "SUB MACHINE GUN";
+            equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
+            max_range = 3;
+            item_verb = "fires the";
+            item_dmg_str = "shot";
+            can_overwatch_boolean = true;
+            aoe_count = 4;
+            bleed_chance = 25;
+            suppress_chance = 50;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.machine_pistol {
-            dmg_min = 2
-            dmg_max = 4
-            item_name = "MACHINE PISTOL"
-            equip_slot_list = [equip_slot.rh,equip_slot.lh] //Indicates either hand can equip
-            max_range = 2
-            item_verb = "fires the"
-            item_dmg_str = "shot"
-            can_overwatch_boolean = true
-            aoe_count = 3
-            bleed_chance = 25
-            suppress_chance = 25
+            dmg_min = 2;
+            dmg_max = 4;
+            item_name = "MACHINE PISTOL";
+            equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
+            max_range = 2;
+            item_verb = "fires the";
+            item_dmg_str = "shot";
+            can_overwatch_boolean = true;
+            aoe_count = 3;
+            bleed_chance = 25;
+            suppress_chance = 25;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.sniper_rifle {
             dmg_min = 8;
@@ -1772,6 +1815,7 @@ function scr_define_structs(){
             item_dmg_str = "shot";
             can_overwatch_boolean = true;
             bleed_chance = 50;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.pulse_rifle {
             dmg_min = 6;
@@ -1785,6 +1829,7 @@ function scr_define_structs(){
             item_dmg_str = "burned";
             can_overwatch_boolean = true;
             burn_chance = 25;
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.medkit {
             single_use_boolean = true;
@@ -1815,36 +1860,43 @@ function scr_define_structs(){
             stat_boost_list[stat_boost.fire_res] = 50;
             stat_boost_list[stat_boost.electric_res] = 50;
             stat_boost_list[stat_boost.gas_res] = 100;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_prisoner_jumpsuit {
-            item_name = "PRISONER JUMPSUIT"
-            stat_boost_list[stat_boost.evasion] = 1
-            equip_slot_list = [equip_slot.body]
+            item_name = "PRISONER JUMPSUIT";
+            stat_boost_list[stat_boost.evasion] = 1;
+            equip_slot_list = [equip_slot.body];
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_engineer_garb {
-            item_name = "ENGINEER GARB"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.evasion] = 1
+            item_name = "ENGINEER GARB";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.evasion] = 1;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_scientist_labcoat {
-            item_name = "SCIENTIST LABCOAT"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.evasion] = 1
+            item_name = "SCIENTIST LABCOAT";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.evasion] = 1;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_medical_scrubs {
-            item_name = "MEDICAL SCRUBS"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.evasion] = 1
+            item_name = "MEDICAL SCRUBS";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.evasion] = 1;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_officer_jumpsuit {
-            item_name = "OFFICER JUMPSUIT"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.evasion] = 1
+            item_name = "OFFICER JUMPSUIT";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.evasion] = 1;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_civilian_jumpsuit {
             item_name = "CIVILIAN JUMPSUIT";
             equip_slot_list = [equip_slot.body];
             stat_boost_list[stat_boost.evasion] = 1;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_flak_armor {
             item_name = "FLAK ARMOR";
@@ -1852,16 +1904,18 @@ function scr_define_structs(){
             stat_boost_list[stat_boost.armor] = 2;
             stat_boost_list[stat_boost.evasion] = 0;
 			stat_boost_list[stat_boost.spd] = -3;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_security_vest {
-            item_name = "SECURITY VEST"
-            equip_slot_list = [equip_slot.body]
-            stat_boost_list[stat_boost.armor] = 1
-            stat_boost_list[stat_boost.evasion] = 1
+            item_name = "SECURITY VEST";
+            equip_slot_list = [equip_slot.body];
+            stat_boost_list[stat_boost.armor] = 1;
+            stat_boost_list[stat_boost.evasion] = 1;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.suit_marine {
-            item_name = "MARINE ARMOR"
-            equip_slot_list = [equip_slot.body]
+            item_name = "MARINE ARMOR";
+            equip_slot_list = [equip_slot.body];
             stat_boost_list[stat_boost.armor] = 4;
             stat_boost_list[stat_boost.electric_res] = 100;
             stat_boost_list[stat_boost.evasion] = -2;
@@ -1869,6 +1923,7 @@ function scr_define_structs(){
             stat_boost_list[stat_boost.gas_res] = 100;
             stat_boost_list[stat_boost.fire_res] = 100;
 			stat_boost_list[stat_boost.spd] = -6;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.adrenal_pen {
             single_use_boolean = true;
@@ -1878,23 +1933,25 @@ function scr_define_structs(){
 			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.dna_tester {
-            single_use_boolean = false
-            usable_boolean = true
-            item_name = "DNA ANALYZER"
-            equippable_boolean = false
+            single_use_boolean = false;
+            usable_boolean = true;
+            item_name = "DNA ANALYZER";
+            equippable_boolean = false;
 			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.access_targeting_hud {
             item_name = "TACTICAL MONOCLE";
             equip_slot_list = [equip_slot.accessory];
             stat_boost_list[stat_boost.accuracy] = 1;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.shield_riot {
             item_name = "RIOT SHIELD";
             equip_slot_list = [equip_slot.rh,equip_slot.lh];  // Indicates either hand can equip
             stat_boost_list[stat_boost.armor] = 1;
             stat_boost_list[stat_boost.evasion] = 1;
-            is_shield_boolean = true
+            is_shield_boolean = true;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.shield_flak {
             item_name = "FLAK SHIELD";
@@ -1903,13 +1960,15 @@ function scr_define_structs(){
             stat_boost_list[stat_boost.evasion] = 2;
 			stat_boost_list[stat_boost.spd] = -1;
             is_shield_boolean = true;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.shield_phase {
-            item_name = "PHASE SHIELD"
-            equip_slot_list = [equip_slot.rh, equip_slot.lh]  // Indicates either hand can equip
-            stat_boost_list[stat_boost.armor] = 3
-            stat_boost_list[stat_boost.evasion] = 4
-            is_shield_boolean = true
+            item_name = "PHASE SHIELD";
+            equip_slot_list = [equip_slot.rh, equip_slot.lh];  // Indicates either hand can equip
+            stat_boost_list[stat_boost.armor] = 3;
+            stat_boost_list[stat_boost.evasion] = 4;
+            is_shield_boolean = true;
+			use_context = abil_use_context.main_game_only;
 		}
         else if item_enum == item_type.fists_adult {
             dmg_min = 1;
@@ -1921,6 +1980,7 @@ function scr_define_structs(){
             item_dmg_str = "battered";
             max_range = 0;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.fists_child {
             dmg_min = 0;
@@ -1932,6 +1992,7 @@ function scr_define_structs(){
             item_dmg_str = "battered";
             max_range = 0;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
+			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.fists_giant {
             dmg_min = 2;
@@ -1944,6 +2005,7 @@ function scr_define_structs(){
             max_range = 0;
             stun_chance = 25;
 			melee_only = true; //Used to distinguish melee weapons from weapons that have a range of 0, for providing specific buffs or debuffs for chars that are strong or weak with melee weapons.
+			use_context = abil_use_context.combat_only;
 		}
 
         else if item_enum == item_type.plasma_torch {

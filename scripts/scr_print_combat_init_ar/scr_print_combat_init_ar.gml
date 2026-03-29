@@ -13,15 +13,12 @@ function scr_print_combat_init_ar(){
 		
 		if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false {
 			
-			var collapsed_str = "";
-			var plural_str = "";
+			var status_effects_list = scr_return_status_effects_str(char_struct_id,false);
 			
-			if char_struct_id.unconscious_bool == true {
-				if UNCONSCIOUS_DURATION - char_struct_id.unconscious_count > 1 plural_str = "s";
-				collapsed_str = $" (unconscious for {UNCONSCIOUS_DURATION - char_struct_id.unconscious_count} more turn{plural_str})";
-			}
+			if status_effects_list != "" var status_effects_str = $" - {status_effects_list}";
+			else var status_effects_str = "";
 			
-			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}({char_struct_id.unique_id}){collapsed_str}.");
+			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}({char_struct_id.unique_id}){status_effects_str}");
 		}
 	}
 }

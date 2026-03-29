@@ -20,6 +20,7 @@ function scr_remove_char_from_overwatch_arrays(char_struct_id){
 			}
 	
 			if is_array(ar_to_use) && array_length(ar_to_use) > 0 {
+				
 				ar_index = array_get_index(ar_to_use,char_struct_id);
 	
 				if ar_index != -1 {
