@@ -136,14 +136,28 @@ else if global.cur_game_state >= game_state.main_game {
 	
 		origin_y += global.default_line_h*2;
 		
+		//Draw hp string - if this is a pc, it will be on the same line as AP, MP, Sanity, etc.:
+		var hp_str = $"HP: {cur_char.hp_cur}/{cur_char.hp_max}";
+		
+		//AP, Sanity, MP, on the same line as hp:
+		var hp_str_w = string_width(hp_str);
+		
+		draw_text(origin_x,origin_y, hp_str);
+		
 		//PC Stats - AP, MP, Sanity, and skills:
 		if is_pc_char {
-			//AP, Sanity, MP:
+			
 			var sanity_str = "";
+			
 			if cur_char.char_type_enum != character.service_droid {
 				sanity_str = $" Sanity: {cur_char.sanity_cur}/{cur_char.sanity_max}";
 			}
-			draw_text(origin_x,origin_y,$"A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max}{sanity_str} M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}");
+			
+			draw_text(origin_x+hp_str_w,origin_y,$" A.P.: {cur_char.ability_points_cur}/{cur_char.ability_points_max}{sanity_str}");
+			
+			origin_y += global.default_line_h;
+			
+			draw_text(origin_x,origin_y,$"M.P.: {cur_char.move_points_cur}/{cur_char.move_points_max}");
 			
 			origin_y += global.default_line_h*2;
 
@@ -151,12 +165,12 @@ else if global.cur_game_state >= game_state.main_game {
 			draw_text(origin_x,origin_y,$"Security: {cur_char.security} Engineering: {cur_char.engineering}");
 			origin_y += global.default_line_h;
 			draw_text(origin_x,origin_y,$"Science: {cur_char.science} Stealth: {cur_char.stealth}");
-		
-			origin_y += global.default_line_h*2;
 		}
 		
+		origin_y += global.default_line_h*2;
+		
 		//Universal stats - HP, Armor, Evasion, Accuracy, Speed:
-		draw_text(origin_x,origin_y,$"HP: {cur_char.hp_cur}/{cur_char.hp_max} Armor: {cur_char.armor} Evasion: {cur_char.evasion}");
+		draw_text(origin_x,origin_y,$"Armor: {cur_char.armor} Evasion: {cur_char.evasion}");
 		origin_y += global.default_line_h;
 		
 		draw_text(origin_x,origin_y,$"Accuracy: {cur_char.accuracy} Speed: {cur_char.spd}");

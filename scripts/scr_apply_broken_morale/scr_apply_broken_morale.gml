@@ -26,11 +26,9 @@ function scr_apply_broken_morale(char_struct_id){
 			
 			char_struct_id.char_team_enum = team_type.enemy;
 		
-			//Set ai to either melee or ranged coward:
-			if char_struct_id.char_type_enum == character.ogre char_struct_id.combat_ai_preference = enemy_combat_ai.melee;
-			else {
-				char_struct_id.combat_ai_preference = enemy_combat_ai.ranged_coward; //choose(enemy_combat_ai.melee, enemy_combat_ai.ranged_coward);	
-			}
+			//Set ai to ranged_stationary
+			char_struct_id.combat_ai_preference = enemy_combat_ai.ranged_stationary; //choose(enemy_combat_ai.melee, enemy_combat_ai.ranged_coward);	
+			
 		
 			immediate_dialogue_str = $"**{ran_broken_morale_struct.broken_morale_str}**\n";
 		}

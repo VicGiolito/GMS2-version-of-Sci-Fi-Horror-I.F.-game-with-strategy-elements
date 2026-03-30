@@ -36,6 +36,7 @@ function scr_check_combat_start(){
 				d($"scr_check_combat_start: For char_struct_id: {char_struct_id.name}, the enemies in room ar was an array and its length was > 0. Its length is: {array_length(cur_room_struct_id.enemies_in_room_ar)}. This script will return TRUE.");
 				
 				combat_initiated = true;
+				
 				//Build our global.combat_rank_ar and global.combat_initiative_ar
 				global.combat_rank_ar = -1;
 				global.combat_rank_ar = [];
@@ -50,7 +51,7 @@ function scr_check_combat_start(){
 				
 				//Add pcs in this room to the last combat rank, switch their participated_in_new_turn_battle var:
 				var pc_struct_id;
-				if is_array(cur_room_struct_id.pcs_in_room_ar) {
+				if is_array(cur_room_struct_id.pcs_in_room_ar) && array_length(cur_room_struct_id.pcs_in_room_ar) > 0 {
 					for(var pc_i = 0; pc_i < array_length(cur_room_struct_id.pcs_in_room_ar); pc_i++) {
 					
 						pc_struct_id = cur_room_struct_id.pcs_in_room_ar[pc_i];
@@ -69,7 +70,7 @@ function scr_check_combat_start(){
 				
 				//Add neutrals in this room to the last combat rank:
 				var neutral_struct_id;
-				if is_array(cur_room_struct_id.neutrals_in_room_ar) {
+				if is_array(cur_room_struct_id.neutrals_in_room_ar) && array_length(cur_room_struct_id.neutrals_in_room_ar) > 0 {
 					for(var pc_i = 0; pc_i < array_length(cur_room_struct_id.neutrals_in_room_ar); pc_i++) {
 					
 						neutral_struct_id = cur_room_struct_id.neutrals_in_room_ar[pc_i];
@@ -78,7 +79,7 @@ function scr_check_combat_start(){
 						array_push(global.combat_rank_ar[starting_combat_rank],neutral_struct_id);
 						//d($"scr_check_combat_start: At nested array at index 5, neutral_struct_id.name == {neutral_struct_id.name}");
 					
-						array_push(global.combat_initiative_ar,pc_struct_id);
+						array_push(global.combat_initiative_ar,neutral_struct_id);
 						neutral_struct_id.has_fled_combat_bool = false; //reset
 						neutral_struct_id.cur_combat_rank = starting_combat_rank;
 						d($"scr_check_combat_start: {neutral_struct_id.name} cur_combat_rank == {neutral_struct_id.cur_combat_rank}");

@@ -33,7 +33,7 @@ function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str)
 				if is_struct(initial_struct_id) == false {
 					initial_struct_id = global.item_reference_table[initial_struct_id];
 				}
-				if is_struct(next_struct_id) == false{
+				if is_struct(next_struct_id) == false {
 					next_struct_id = global.item_reference_table[next_struct_id];
 				}
 				
@@ -77,7 +77,7 @@ function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str)
 				if is_struct(initial_struct_id) == false {
 					initial_struct_id = global.item_reference_table[initial_struct_id];
 				}
-				if is_struct(next_struct_id) == false{
+				if is_struct(next_struct_id) == false {
 					next_struct_id = global.item_reference_table[next_struct_id];
 				}
 				

@@ -468,7 +468,7 @@ function scr_define_structs(){
             
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, brandishing his myriad of weapons. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} gouges his face, pulls locks from his hair. \"This flesh--it burns! Let me be rid of it, once and for all!\"" });
+			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"This flesh--it burns!\" {name} gouges his face, pulls locks from his hair. \"Let me be rid of it, once and for all!\"" });
 		
 			//Abilities:
 			scr_add_passive_ability(self,passive_abil_type.hardened_skin," constructor event ");
@@ -481,7 +481,7 @@ function scr_define_structs(){
 		}
 
         else if char_type_enum == character.security_guard {
-            name = "Cooper, 'The Security Guard'";
+            name = "Cooper, 'The Cop'";
             hp_max = 10;
             hp_cur = 10;
             ability_points_cur = 14;

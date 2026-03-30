@@ -17,6 +17,9 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 	if item_struct_id.sanity_cost > 0 {
 		char_struct_using_item.sanity_cur += item_struct_id.sanity_cost;
 	}
+	if item_struct_id.scrap_cost > 0 {
+		global.resources_scrap -= item_struct_id.scrap_cost;
+	}
 	
 	if item_type_enum == item_type.medkit {
 		
@@ -104,11 +107,11 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 			char_id = global.combat_initiative_ar[i];
 			
 			if (char_struct_using_item.char_team_enum == team_type.pc || char_struct_using_item.char_team_enum == team_type.neutral) 
-			&& char_id.char_team_enum == team_type.enemy {
+			&& (char_id.char_team_enum == team_type.pc || char_id.char_team_enum == team_type.neutral) {
 				char_id.smoke_grenade_count = SMOKE_GRENADE_DURATION;
 				char_id.evasion += SMOKE_GRENADE_EVADE_BUFF;
 			}
-			else if char_struct_using_item.char_team_enum == team_type.enemy && (char_id.char_team_enum == team_type.pc || char_id.char_team_enum == team_type.neutral) {
+			else if char_struct_using_item.char_team_enum == team_type.enemy && char_id.char_team_enum == team_type.enemy {
 				char_id.smoke_grenade_count = SMOKE_GRENADE_DURATION;
 				char_id.evasion += SMOKE_GRENADE_EVADE_BUFF;	
 			}

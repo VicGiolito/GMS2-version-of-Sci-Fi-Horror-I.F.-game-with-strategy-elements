@@ -439,7 +439,6 @@ else if global.cur_game_state == game_state.choose_chars {
 		
 		else if player_input_str == "B" || player_input_str == "BIO" {
 			scr_add_str_to_dialogue_ar(char_bio_ar[cursor_pos]);
-			scr_add_str_to_dialogue_ar("\n");
 			scr_print_char_select_instructions();
 		}
 		
@@ -1445,19 +1444,6 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		
 		var ai_type_enum = attacker_id.combat_ai_preference;
 		
-		//Manually assign ai_type_enum if this char is berserking or treacherous:
-		if attacker_id.berserk_count > 0 ai_type_enum = enemy_combat_ai.melee;
-		
-		else if attacker_id.treacherous_count > 0 {
-			
-			if attacker_id.char_type_enum == character.ogre {
-				ai_type_enum = enemy_combat_ai.melee;	
-			}
-			else {
-				ai_type_enum = enemy_combat_ai.ranged_coward;	
-			}
-		}
-		
 		#region AI type: ranged coward:
 		
 		if ai_type_enum == enemy_combat_ai.ranged_coward {
@@ -1750,25 +1736,72 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			
 			//This ai type never retreats; otherwise is identical to ranged_coward.
 			
-			//Create a temporary array of all of this enemy's available weapons from its abil_ar:
-			var temp_abil_ar = [], item_enum;
-			for(var i = 0; i < array_length(attacker_id.ability_ar); i++) {
-				item_enum = attacker_id.ability_ar[i];
-				array_push(temp_abil_ar, global.item_reference_table[item_enum]);
+			var valid_abil_found = false;
+			
+			//Create a temporary array of all of this enemy's available combat_only weapons from its abil_ar:
+			if is_array(attacker_id.ability_ar) && array_length(attacker_id.ability_ar) > 0 {
+				
+				var temp_abil_ar = [];
+				temp_abil_ar = scr_filter_abil_ar_by_combat_only(attacker_id.ability_ar);
+			
+				//Need to shuffle the array first so that those positions with == values will be randomized:
+				var sorted_by_range_abil_ar = [];
+				sorted_by_range_abil_ar = scr_shuffle_ar(temp_abil_ar);
+			
+				//Identify longest range abil as arr[0]:
+				sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar, true, "max_range");
+			
+				if sorted_by_range_abil_ar != -1 { 
+					
+					d($"\no_con step event: evaluating ranged_stationary ai: a temp copy of the sorted_by_range_abil_ar has just been randomized and sorted with max_range being at index 0, iterating through it now for debug purposes...\n");
+						
+					//debug only:
+					for(var kk = 0; kk < array_length(sorted_by_range_abil_ar); kk++) {
+						d($"\no_con step event: evaluating ranged_stationary ai: at index: {kk}, ability_ar == {sorted_by_range_abil_ar[kk].item_name}\n");	
+					}
+					
+					var highest_range_item_id = sorted_by_range_abil_ar[0];
+					attacker_id.chosen_weapon = highest_range_item_id;
+					valid_abil_found = true;
+				}
 			}
 			
-			//Need to shuffle the array first so that those positions with == values will be randomized:
-			var sorted_by_range_abil_ar = [];
-			sorted_by_range_abil_ar = scr_shuffle_ar(temp_abil_ar);
-			
-			//Identify longest range abil as arr[0]:
-			sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar, true, "max_range");
-			
-			if sorted_by_range_abil_ar == -1 { throw("o_con step event: game_state == combat_execute_action: evaluating ranged_stationary ai: sorted_by_range_abil_ar == -1, the array we passed in did not contain item structs or the structs did not contain the 'max_range' var we were looking for.") }
+			//Search inv array instead:
+			if !valid_abil_found {
 				
-			var highest_range_item_id = sorted_by_range_abil_ar[0];
-			attacker_id.chosen_weapon = highest_range_item_id;
-			var wep_range = highest_range_item_id.max_range;
+				if is_array(attacker_id.inv_ar) && array_length(attacker_id.inv_ar) > 0 {
+					var temp_abil_ar = [];
+					temp_abil_ar = scr_filter_abil_ar_by_combat_only(attacker_id.inv_ar);
+			
+					//Need to shuffle the array first so that those positions with == values will be randomized:
+					var sorted_by_range_abil_ar = [];
+					sorted_by_range_abil_ar = scr_shuffle_ar(temp_abil_ar);
+			
+					//Identify longest range abil as arr[0]:
+					sorted_by_range_abil_ar = scr_reverse_sort_ar_by_struct_var(sorted_by_range_abil_ar, true, "max_range");
+			
+					if sorted_by_range_abil_ar != -1 { 
+						
+						d($"\no_con step event: evaluating ranged_stationary ai: a temp copy of the inv_ar has just been randomized and sorted with max_range being at index 0, iterating through it now for debug purposes...\n");
+						
+						//debug only:
+						for(var kk = 0; kk < array_length(sorted_by_range_abil_ar); kk++) {
+							d($"\no_con step event: evaluating ranged_stationary ai: at index: {kk}, ability_ar == {sorted_by_range_abil_ar[kk].item_name}\n");	
+						}
+						
+						var highest_range_item_id = sorted_by_range_abil_ar[0];
+						attacker_id.chosen_weapon = highest_range_item_id;
+						valid_abil_found = true;
+					}
+				}
+			}
+			
+			//If they still have nothing, just let use their fists instead:
+			if valid_abil_found == false { 
+				attacker_id.chosen_weapon = scr_return_fists_item_struct_id(attacker_id);	
+			}
+			
+			var wep_range = attacker_id.chosen_weapon.max_range;
 				
 			//Assign nearest valid rank int:
 			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
@@ -1778,6 +1811,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				//Determine the dist to to the nearest_valid_target, store as dist_to_nearest_valid_target:
 				var dist_to_nearest_valid_target = abs(attacker_id.cur_combat_rank - nearest_valid_rank_int);
 				
+				d($"\no_con step event: evaluating ranged_stationary ai: attacker_id.name == {attacker_id.name}, their cur_combat_rank == {attacker_id.cur_combat_rank}, chosen_wep == {attacker_id.chosen_weapon.item_name}, its range == {attacker_id.chosen_weapon.max_range}, nearest_valid_rank_int = {nearest_valid_rank_int}, dist_to_nearest_valid_target = {dist_to_nearest_valid_target}.");
+				
 				if dist_to_nearest_valid_target <= wep_range {
 					
 					//Attack:
@@ -1785,7 +1820,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					attacker_id.enemy_ai_fight_boolean = true;
 					
 					//Switch to 'superior' melee wep if we're in melee range of our nearest target; this type of enemy does not mind engaging in melee:
-					if dist_to_nearest_valid_target == 0 {
+					if dist_to_nearest_valid_target == 0 && attacker_id.treacherous_count <= 0 && attacker_id.berserk_count <= 0 {
 						var melee_wep_item_id = global.item_reference_table[item_type.monstrous_claw];	
 						attacker_id.chosen_weapon = melee_wep_item_id;
 					}
@@ -1818,10 +1853,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						}
 					}
 					else {
-						var capitalized = scr_string_capitalize(attacker_id.name);
 						var plural_str = "";
 						if attacker_id.suppressed_count > 1 plural_str = "s";
-						scr_add_str_to_dialogue_ar($"\n{capitalized} wants to move closer to their target but they can't - they're suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");	
+						scr_add_str_to_dialogue_ar($"\n{scr_string_capitalize(attacker_id.name)} wants to move closer to their target but they can't - they're suppressed for {attacker_id.suppressed_count} more turn{plural_str}!");	
 					}
 				}
 			}
@@ -2635,6 +2669,14 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 										&& global.combat_prep_phase == false {
 											scr_evaluate_combat_conclusion("o_con step event: game_state == combat_assign_pc_combat: player just used an ability that does NOT require a target but DOES immediately end the cur char's turn.")	
 										}
+										//Just print our ranks again in such a case - the item doesn't actually really end our turn, 
+										//as we're still in the combat prep phase:
+										else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == true 
+										&& global.combat_prep_phase == true {
+											//Important: we need to actually return to combat_assign_pc_command game state:
+											global.cur_game_state = game_state.combat_assign_pc_command;
+											scr_print_combat_ranks(cur_char);
+										}
 										else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == false {
 											//Important: we need to actually return to combat_assign_pc_command game state:
 											global.cur_game_state = game_state.combat_assign_pc_command;
@@ -2861,6 +2903,11 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 		player_input_str = string_upper(player_input_str);
 		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
 		
+		//Define cur_char - as we could be accessing this screen from the main game state or from combat:
+		var cur_char = global.acting_char_struct_id;
+				
+		if global.combat_begun { cur_char = global.cur_combat_char; }
+		
 		if player_input_str == "B" || player_input_str == "BACK" {
 			global.cur_game_state = prev_game_state;	
 		}
@@ -2873,17 +2920,14 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 				
 				d($"o_con step event: game_state = passing item or using item: player_input_str == {player_input_str}");
 			
-				if index_int >= 0 && index_int < array_length(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar) {
+				if index_int >= 0 && index_int < array_length(cur_char.cur_room_id.pcs_in_room_ar) {
 					
 					valid_char_index = true;
 					
-					var item_target_char_struct_id = global.acting_char_struct_id.cur_room_id.pcs_in_room_ar[index_int];
+					var item_target_char_struct_id = cur_char.cur_room_id.pcs_in_room_ar[index_int];
 				}
 			}
 			catch(_exception) {
-				//scr_add_str_to_dialogue_ar("\n");
-				//scr_add_str_to_dialogue_ar("That is an invalid command, try again.",true);	
-				
 				show_debug_message(_exception.message);
 			    show_debug_message(_exception.longMessage);
 			    show_debug_message(_exception.script);
@@ -2891,10 +2935,6 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 			}
 			
 			if valid_char_index {
-				
-				//Define cur_char - as we could be accessing this screen from the main game state or from combat:
-				var cur_char = global.acting_char_struct_id;
-				if global.combat_begun cur_char = global.cur_combat_char;
 				
 				if global.cur_game_state == game_state.passing_item {
 					
@@ -2983,7 +3023,7 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 						
 						//if the use of the ability causes the g.cur_Combat_char to end their turn, then end it now;
 						//otherwise simply return to combat_assign_pc_command:
-						if cur_char.using_item_struct_id.abil_passes_turn_boolean == true {
+						if cur_char.using_item_struct_id.abil_passes_turn_boolean == true && global.combat_prep_phase == false {
 							global.cur_game_state = game_state.combat_assign_pc_command; //Might as well reset this, although we may or may not be going back there after scr_evaluate_combat_conclusion() finishes
 							scr_evaluate_combat_conclusion("\no_con step event: global.cur_game_state == game_state.use_target_item, just finished using an item or ability that required a target.");
 						}
@@ -3147,7 +3187,6 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		
 		else if player_input_str == "B" || player_input_str == "BIO" {
 			scr_add_str_to_dialogue_ar(char_bio_ar[global.acting_char_struct_id.char_type_enum]);
-			scr_add_str_to_dialogue_ar("\n");
 			scr_print_char_reminder(global.acting_char_struct_id);
 		}
 		
