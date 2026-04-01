@@ -19,12 +19,30 @@ function scr_trigger_dot_effects(char_struct_id){
 	var dot_result_str = "", collapsed_bool = false;
 	var char_name_str = char_struct_id.name;
 	
+	//In any case, this char is starting their new turn, they need to remove their id from the corresponding overwatch rank, if applicable:
+	scr_remove_char_from_overwatch_arrays(char_struct_id);
+	
+	//In any case, pc_is_combat_moving is only triggered through assign_pc_command, and considering this is the start of a new char's turn,
+	//this var needs to be reset:
+	char_struct_id.pc_is_combat_moving = false;
+	
+	if char_struct_id.evading_boolean == true {
+		char_struct_id.evasion -= EVADING_BUFF;	
+		char_struct_id.evading_boolean = false;
+	}
+	
 	if char_struct_id.treacherous_count > 0 {
 		char_struct_id.treacherous_count--;
 		
 		if char_struct_id.treacherous_count == 0 {
-			char_struct_id.char_team_enum = team_type.pc;
+			char_struct_id.char_team_enum = char_struct_id.origin_team;
 			dot_result_str += $"**{scr_string_capitalize(char_name_str)} has come to their senses and is no longer TREACHEROUS.**\n";
+			d($"****{char_struct_id.name} is NO LONGER TREACHEROUS, their team changed to pc.****");
+			/*We need to manually change next_combat_game_state to combat assign pc command here, the reason being that when scr_evaluate_combat_conclusion() 
+			was initially called for this character at the end the last combat_execute_action state, this character was still a enemy or a neutral, and
+			therefore execute action was chosen; so now we need to manually assign this char to combat_assign_pc_command instead.
+			*/
+			next_combat_game_state = game_state.combat_assign_pc_command;
 		}
 	}
 	
@@ -34,6 +52,12 @@ function scr_trigger_dot_effects(char_struct_id){
 		if char_struct_id.berserk_count == 0 {
 			char_struct_id.char_team_enum = team_type.pc;
 			dot_result_str += $"**{scr_string_capitalize(char_name_str)} has come to their senses and is no longer BERSERK.**\n";
+			d($"****{char_struct_id.name} is NO LONGER BERSERK, their team changed to pc.****");
+			/*We need to manually change next_combat_game_state to combat assign pc command here, the reason being that when scr_evaluate_combat_conclusion() 
+			was initially called for this character at the end the last combat_execute_action state, this character was still a enemy or a neutral, and
+			therefore execute action was chosen; so now we need to manually assign this char to combat_assign_pc_command instead.
+			*/
+			next_combat_game_state = game_state.combat_assign_pc_command;
 		}
 	}
 	
@@ -161,8 +185,8 @@ function scr_trigger_dot_effects(char_struct_id){
 			
 			char_struct_id.healing_factor_cd = 0; //Reset
 			
-			//Infection is healed first, but only outside of combat:
-			if global.combat_begun == false && char_struct_id.infection_count > 0 { 
+			//Infection is healed first:
+			if char_struct_id.infection_count > 0 { 
 				char_struct_id.infection_count -= HEALING_FACTOR_HEAL_VAL; 
 				dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has healed {HEALING_FACTOR_HEAL_VAL} infection point{hp_plural_str}, thanks to their healing factor.**\n";
 			}
@@ -179,7 +203,11 @@ function scr_trigger_dot_effects(char_struct_id){
 				
 				dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has healed {HEALING_FACTOR_HEAL_VAL} hit point{hp_plural_str}, thanks to their healing factor.**\n";
 				
-				//Check to see if this char (the ogre has revived):
+				//It's possible that any of the DOT damage from above could have triggered the 'collapsed_bool' to switch to true,
+				//then healing effects brought their hp above zero again; in this case, we need simply reset the bool again:
+				if collapsed_bool == true && char_struct_id.hp_cur > 0 { collapsed_bool = false; }
+				
+				//Check to see if this char has revived:
 				if char_struct_id.unconscious_bool == true && char_struct_id.hp_cur > 0 {
 					char_struct_id.unconscious_bool = false;
 					char_struct_id.unconscious_count = 0;
@@ -213,8 +241,12 @@ function scr_trigger_dot_effects(char_struct_id){
 			if REGEN_NANITES_HEAL_VAL > 1 hp_plural_str = "s";
 			
 			dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has healed {REGEN_NANITES_HEAL_VAL} hit point{plural_str}, thanks to the regeneration nanites in their blood stream.**\n";
-				
-			//Check to see if this char (the ogre has revived):
+			
+			//It's possible that any of the DOT damage from above could have triggered the 'collapsed_bool' to switch to true,
+			//then healing effects brought their hp above zero again; in this case, we need simply reset the bool again:
+			if collapsed_bool == true && char_struct_id.hp_cur > 0 { collapsed_bool = false; }
+			
+			//Check to see if this char has revived:
 			if char_struct_id.unconscious_bool == true && char_struct_id.hp_cur > 0 {
 				char_struct_id.unconscious_bool = false;
 				char_struct_id.unconscious_count = 0;

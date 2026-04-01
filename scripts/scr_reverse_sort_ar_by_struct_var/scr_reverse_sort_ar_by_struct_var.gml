@@ -37,8 +37,8 @@ function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str)
 					next_struct_id = global.item_reference_table[next_struct_id];
 				}
 				
-				if is_struct(initial_struct_id) && is_struct(next_struct_id) {
-				
+				if is_struct(initial_struct_id) && is_struct(next_struct_id) { 
+					
 					initial_struct_var_exists = variable_struct_exists(initial_struct_id, var_name_str);
 			
 					next_struct_var_exists = variable_struct_exists(next_struct_id, var_name_str);

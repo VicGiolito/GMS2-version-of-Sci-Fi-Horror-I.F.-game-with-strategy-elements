@@ -12,7 +12,7 @@ Important: if the associated status effect also applied some sort of stat debuff
 function scr_reset_status_effects(char_struct_id, called_from_str){
 	
 	if is_undefined(called_from_str) throw("scr_reset_status_effects: called_from_str undefined, we need to know where this script is being called.");
-	else d($"Entering scr_reset_status_effects, it was called from: {called_from_str}");
+	else d($"\nEntering scr_reset_status_effects, it was called from: {called_from_str}\n");
 	
 	char_struct_id.stun_count = 0;
 	
@@ -24,14 +24,16 @@ function scr_reset_status_effects(char_struct_id, called_from_str){
 	
 	if char_struct_id.treacherous_count > 0 {
 		char_struct_id.treacherous_count = 0;
-		char_struct_id.char_team_enum = team_type.pc;	
+		char_struct_id.char_team_enum = char_struct_id.origin_team;
+		d($"****{char_struct_id.name} is NO LONGER TREACHEROUS, their team changed to origin team.****");
 	}
 	
 	char_struct_id.cowering_bool = false;
 	
 	if char_struct_id.berserk_count > 0 {
 		char_struct_id.berserk_count = 0;
-		char_struct_id.char_team_enum = team_type.pc;	
+		char_struct_id.char_team_enum = char_struct_id.origin_team;	
+		d($"****{char_struct_id.name} is NO LONGER BERSERK, their team changed to origin team.****");
 	}
 	
 	if char_struct_id.suppressed_count > 0 {
@@ -58,5 +60,10 @@ function scr_reset_status_effects(char_struct_id, called_from_str){
 		char_struct_id.shield_bubble_count = 0;
 		char_struct_id.armor -= PERSONAL_SHIELD_ARMOR_BUFF;
 		char_struct_id.evasion -= PERSONAL_SHIELD_EVASION_BUFF;
+	}
+	
+	if char_struct_id.evading_boolean == true {
+		char_struct_id.evasion -= EVADING_BUFF;	
+		char_struct_id.evading_boolean = false;
 	}
 }

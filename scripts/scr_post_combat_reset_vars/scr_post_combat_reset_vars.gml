@@ -6,6 +6,8 @@
 
 function scr_post_combat_reset_vars(){
 	
+	d($"\nEntering scr_post_combat_reset_vars...\n");
+	
 	var iterate_count = 0, char_id, global_ar;
 	
 	repeat(3) {
@@ -19,8 +21,16 @@ function scr_post_combat_reset_vars(){
 			for(var i = 0; i < ar_len; i++) {
 				char_id = global_ar[i];
 				
-				if char_id.has_fled_combat_bool == true char_id.has_fled_combat_bool = false;
+				if char_id.has_fled_combat_bool == true { char_id.has_fled_combat_bool = false; }
+				
 				char_id.char_fleeing_from_broken_morale = false;
+				
+				//Reset their broken_morale_ar:
+				if is_array(char_id.broken_morale_ar) {
+					char_id.broken_morale_ar = -1;
+					char_id.broken_morale_ar = [];
+					array_copy(char_id.broken_morale_ar,0,char_id.permanent_broken_morale_ar, 0, array_length(char_id.permanent_broken_morale_ar) );
+				}
 				
 				scr_reset_status_effects(char_id,"scr_post_combat_reset_vars: which is itself called from o_con step event: init_combat game state: combat_begun == false.");
 			}
@@ -28,6 +38,4 @@ function scr_post_combat_reset_vars(){
 		
 		iterate_count++;
 	}
-	
-	
 }

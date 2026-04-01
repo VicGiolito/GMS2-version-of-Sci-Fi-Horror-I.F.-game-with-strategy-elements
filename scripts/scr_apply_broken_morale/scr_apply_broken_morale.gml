@@ -10,7 +10,9 @@ function scr_apply_broken_morale(char_struct_id){
 		results_str += $"The sanity of {scr_string_capitalize(char_struct_id.name)} has been broken!";
 		
 		//Choose random status effect from applicable options:
-		var ran_broken_morale_struct = char_struct_id.broken_morale_ar[irandom_range(0,array_length(char_struct_id.broken_morale_ar)-1)];
+		var ran_index = irandom_range(0,array_length(char_struct_id.broken_morale_ar)-1);
+		
+		var ran_broken_morale_struct = char_struct_id.broken_morale_ar[ran_index];
 		
 		var ran_broken_morale_status_effect_enum = ran_broken_morale_struct.broken_morale_status_effect_enum;
 	
@@ -28,9 +30,11 @@ function scr_apply_broken_morale(char_struct_id){
 		
 			//Set ai to ranged_stationary
 			char_struct_id.combat_ai_preference = enemy_combat_ai.ranged_stationary; //choose(enemy_combat_ai.melee, enemy_combat_ai.ranged_coward);	
-			
 		
 			immediate_dialogue_str = $"**{ran_broken_morale_struct.broken_morale_str}**\n";
+			
+			//Delete this position in their broken_morale_ar so we don't end up in a frozen game state if they continually become treacherous:
+			array_delete(char_struct_id.broken_morale_ar,ran_index,1);
 		}
 	
 		//Berserk:
@@ -59,6 +63,7 @@ function scr_apply_broken_morale(char_struct_id){
 			array_push(ran_flee_ar, { move_dir_x: 0, move_dir_y: -1 } ); //North
 			array_push(ran_flee_ar, { move_dir_x: 1, move_dir_y: 0 } ); //East
 			array_push(ran_flee_ar, { move_dir_x: 0, move_dir_y: 1 } ); //South
+			
 			repeat(4) {
 			
 				if array_length(ran_flee_ar) > 0 {

@@ -72,7 +72,7 @@ function scr_apply_status_effects(item_struct_id, target_char_id){
 					//Cancel dodge, overwatch, cooper's smoke bomb, things like that, etc.:
 					if target_char_id.evading_boolean == true {
 						target_char_id.evading_boolean = false;
-						target_char_id.evasion -= EVADE_BONUS;
+						target_char_id.evasion -= EVADING_BUFF;
 					}
 					if target_char_id.smoke_grenade_count > 0 {
 						target_char_id.smoke_grenade_count = 0;

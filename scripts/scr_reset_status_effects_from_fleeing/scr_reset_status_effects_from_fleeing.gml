@@ -15,14 +15,16 @@ function scr_reset_status_effects_from_fleeing(char_struct_id){
 	
 	if char_struct_id.berserk_count > 0 {
 		char_struct_id.berserk_count = 0;
-		char_struct_id.char_team_enum = team_type.pc;	
+		char_struct_id.char_team_enum = char_struct_id.origin_team;		
+		d($"****{char_struct_id.name} is NO LONGER BERSERK, their team changed to origin team.****");
 	}
 	
 	char_struct_id.char_fleeing_from_broken_morale = false;
 	
 	if char_struct_id.treacherous_count > 0 {
 		char_struct_id.treacherous_count = 0;
-		char_struct_id.char_team_enum = team_type.pc;	
+		char_struct_id.char_team_enum = char_struct_id.origin_team;	
+		d($"****{char_struct_id.name} is NO LONGER TREACHEROUS, their team changed to origin team.****");
 	}
 	
 	if char_struct_id.smoke_grenade_count > 0 {
@@ -34,6 +36,10 @@ function scr_reset_status_effects_from_fleeing(char_struct_id){
 		char_struct_id.shield_bubble_count = 0;
 		char_struct_id.armor -= PERSONAL_SHIELD_ARMOR_BUFF;
 		char_struct_id.evasion -= PERSONAL_SHIELD_EVASION_BUFF;
+	}
+	
+	if char_struct_id.evading_boolean == true {
+		char_struct_id.evasion -= EVADING_BUFF;	
 	}
 	
 	//We also need to apply this to any neutrals that may be fleeing with them:

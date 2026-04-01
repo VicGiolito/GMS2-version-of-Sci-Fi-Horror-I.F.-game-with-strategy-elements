@@ -17,6 +17,22 @@ function scr_delete_combat_chars(){
 		
 		char_struct_to_delete = global.combat_initiative_ar[i];
 		
+		//In any case, reset stunned, morale effects:
+		if char_struct_to_delete.stun_count > 0 {
+			char_struct_to_delete.cowering_bool = false;
+			char_struct_to_delete.stun_count = 0;
+		}
+		if char_struct_to_delete.berserk_count > 0 {
+			char_struct_to_delete.berserk_count = 0;
+			char_struct_to_delete.char_team_enum = char_struct_to_delete.origin_team;
+			d($"****{char_struct_id.name} is NO LONGER BERSERK, their team changed to origin team. (changed in scr_delete_combat_chars)****");
+		}
+		if char_struct_to_delete.treacherous_count > 0 {
+			char_struct_to_delete.treacherous_count = 0;
+			char_struct_to_delete.char_team_enum = char_struct_to_delete.origin_team;
+			d($"****{char_struct_id.name} is NO LONGER TREACHEROUS, their team changed to origin team. (changed in scr_delete_combat_chars)****");
+		}
+		
 		//If its dead, delete from corresponding room ar and corresponding global array:
 		if char_struct_to_delete.has_died_bool == true {
 			
@@ -53,5 +69,4 @@ function scr_delete_combat_chars(){
 	global.combat_rank_ar = -1;
 	global.combat_rank_ar = [];
 	scr_reset_global_overwatch_ar(); //Reset our global overwatch array.
-	scr_reset_pcs_filtered_abil_ars();
 }

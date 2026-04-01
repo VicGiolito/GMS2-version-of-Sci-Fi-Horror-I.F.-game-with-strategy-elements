@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_reset_certain_char_combat_vars",
+  "name": "scr_return_valid_team_chars_in_rank",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

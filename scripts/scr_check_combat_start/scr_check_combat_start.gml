@@ -102,7 +102,6 @@ function scr_check_combat_start(){
 					enemy_struct_id.has_fled_combat_bool = false; //reset
 				}
 				
-				
 				//Randomize, then sort global.combat_initiative_ar based upon speed, and a random value.
 				scr_shuffle_ar(global.combat_initiative_ar);
 				
@@ -110,10 +109,10 @@ function scr_check_combat_start(){
 				
 				scr_add_str_to_dialogue_ar($"\nYou are {char_struct_id.name}. There are enemies in the {cur_room_struct_id.room_name_str} that have discovered you and anyone else in the room that was also not hidden. There's no choice now--you'll have to fight for your lives!\n")
 				
-				d($"scr_check_combat_start: after building g.combat_initiative_ar, it looks like this:\n");
+				d($"\nscr_check_combat_start: after building g.combat_initiative_ar, it looks like this:\n");
 				for(var i = 0; i < array_length(global.combat_initiative_ar); i++) {
 					
-					d($"g.combat_initiative_ar[{i}].name == {global.combat_initiative_ar[i].name}");	
+					d($"\ng.combat_initiative_ar[{i}].name == {global.combat_initiative_ar[i].name}\n");	
 					
 				}
 				

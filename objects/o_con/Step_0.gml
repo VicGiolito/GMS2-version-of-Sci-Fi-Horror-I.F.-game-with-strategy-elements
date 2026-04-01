@@ -515,9 +515,11 @@ else if global.cur_game_state == game_state.init_combat {
 		//This is our very last code block between entering 'end' turn and re-entering the main game state.
 		if !combat_begun {
 			d($"scr_check_combat_start returned false.");
+			global.combat_begun = false; //This should be the ONLY place this bool is getting reset to false.
 			scr_post_combat_reset_vars();
 			global.cur_game_state = game_state.main_game;
-			global.acting_char_struct_id = global.pc_char_ar[0];
+			global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1,0,-1,global.pc_char_ar);
+			if global.acting_char_struct_id == -1 throw("o_con step event: init_combat game state: local var combat_begun == false: global.acting_char_struct_id returned -1 from scr_return_next_char_in_ar_direction(), and yet we're trying return to main game state. Something went wrong.")
 			scr_print_char_new_room_text(global.acting_char_struct_id);
 		} 
 	
@@ -604,8 +606,6 @@ else if global.cur_game_state == game_state.combat_paused && global.wait {
 			
 			if global.char_is_fleeing_bool == false && global.overwatch_mode_enabled == false {
 				
-				scr_reset_certain_char_combat_vars(global.cur_combat_char);
-				
 				char_is_still_alive = scr_trigger_dot_effects(global.cur_combat_char);
 			}
 			
@@ -632,9 +632,9 @@ else if global.cur_game_state == game_state.combat_paused && global.wait {
 		
 		//... Combat has concluded - either pcs or enemies have 'won' because all members of the opposite team are dead or fled:
 		else if next_combat_game_state == game_state.init_combat {
-			global.combat_begun = false;
 			global.cur_game_state = game_state.init_combat;
 			scr_delete_combat_chars();
+			scr_reset_global_overwatch_ar(); //Reset our global overwatch array.
 		}
 		
 		//Reset our player_input_str:
@@ -697,7 +697,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			scr_add_str_to_dialogue_ar($"{global.cur_combat_char.name} is acting defensively this turn (+1 evasion until the start of their next turn).\n");
 			
 			global.cur_combat_char.evading_boolean = true;
-			global.cur_combat_char.evasion += 1;
+			global.cur_combat_char.evasion += EVADING_BUFF;
 		}
 		
 		#endregion
@@ -762,13 +762,11 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 					scr_print_ranks_to_target(global.cur_combat_char);
 				}
 				else {
-					scr_add_str_to_dialogue_ar("\n");
-					scr_add_str_to_dialogue_ar($"You're out of ammo--you can't use overwatch fire!", true);
+					scr_add_str_to_dialogue_ar($"\nYou're out of ammo--you can't use overwatch fire!", true);
 				}
 			}
 			else {
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar($"Your currently equipped weapon doesn't support overwatch fire, try again.", true);	
+				scr_add_str_to_dialogue_ar($"\nYour currently equipped weapon doesn't support overwatch fire, try again.", true);	
 			}
 		}
 		
@@ -784,7 +782,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 				
 				if array_length(global.cur_combat_char.filtered_abil_ar) > 0 {
 					
-					prev_game_state = global.cur_game_state;
+					prev_game_state = game_state.combat_assign_pc_command;
 					
 					global.cur_game_state = game_state.choose_pc_abil;
 					
@@ -892,15 +890,18 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			var iterate_dir = 1;
 			if player_input_str == "<" iterate_dir = -1;
 			
-			var new_pc_combat_char_struct_id = scr_return_next_combat_char_in_ar_direction(iterate_dir,array_get_index(global.combat_initiative_ar,global.cur_combat_char),global.cur_combat_char);
+			var cur_combat_char_index = array_get_index(global.combat_initiative_ar, global.cur_combat_char);
 			
-			if new_pc_combat_char_struct_id != -1 {
+			if cur_combat_char_index != -1 {
 			
-				global.cur_combat_char = new_pc_combat_char_struct_id;
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar($"You have changed control to {global.cur_combat_char.name}.");
-				scr_add_str_to_dialogue_ar("\n");
-				scr_print_combat_ranks(global.cur_combat_char);
+				var new_pc_combat_char_struct_id = scr_return_next_char_in_ar_direction(iterate_dir, cur_combat_char_index ,global.cur_combat_char, global.combat_initiative_ar);
+			
+				if new_pc_combat_char_struct_id != -1 {
+			
+					global.cur_combat_char = new_pc_combat_char_struct_id;
+					scr_add_str_to_dialogue_ar($"\nYou have changed control to {global.cur_combat_char.name}.\n");
+					scr_print_combat_ranks(global.cur_combat_char);
+				}
 			}
 		}
 		
@@ -1102,12 +1103,8 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 																
 																d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: char_id.name= {char_id.name}, this WAS A VALID OPPORTUNITY ATTACKER.\n");
 																
-																
-														
 																valid_attacker_found = true;
 														
-		
-													
 																d($"\no_con step event: pc combat assign command: fleeing code: a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {char_id.chosen_weapon.item_name} with a range of: {char_id.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
 																
 																break;
@@ -1141,12 +1138,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 									//Immediately advance to execute action, which will pick up the next_combat_char as the attacker, and then when scr_evaluate_combat_end is called at the end of execute_action,
 									//it will pick up using the next g.cur_combat_char_index, which never changed; it will manually assign the defender_id = global.fleeing_combat_char_id, and will set num_attacks = 1.
 									if valid_attacker_found {
-										
-										//Assign vars for the opportunity attacker:
-											//next_combat_char = char_id;
-										//next_combat_char.chosen_weapon = item_struct_id;
-										//next_combat_char.targeted_rank = cur_char_rank; //Why is setting this necessary? Only to prevent scr_return_opposite_team_ar() from having an error.
-																
+															
 										//Assign vars for the fleeing char:
 										global.cur_combat_char.fleeing_dir_x = move_dir_x;
 										global.cur_combat_char.fleeing_dir_y = move_dir_y;
@@ -1422,11 +1414,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 	var defender_killed = false;
 	
 	//Reset ai vars:
-	if attacker_id.char_team_enum != team_type.pc {
-		attacker_id.enemy_ai_fight_boolean = false;
-		attacker_id.enemy_ai_move_boolean = false;
-		attacker_id.combat_move_dir = 0;
-	}
+	attacker_id.enemy_ai_fight_boolean = false;
+	attacker_id.enemy_ai_move_boolean = false;
 	
 	d($"\n...o_con step event: game_state == combat_execute_action: {attacker_id.name} is entering game_state execute action now, and G.CUR_COMBAT_CHAR_INDEX == {global.cur_combat_char_index}...");
 	
@@ -1450,6 +1439,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			
 			//Always retreats (either north or south) if nearest != their max_range, UNLESS their is overwatch in the rank they want to retreat to;
 			//naturally, due to the nature of this particularly combat system, they will generally retreat north.
+			
+			d($"o_con step event: combat_execute_action: Entering ranged_coward ai for char: {attacker_id.name}....");
 			
 			var valid_ranged_abil_found = false; //It is possible for pcs acting treacherous to not have a valid ranged weapon either in their abil_ar or in their inv_ar
 			
@@ -1567,25 +1558,34 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			
 				//Backup if we're not suppressed, there's room to do so, and we won't walk into over watch fire; otherwise, attack
 				else if dist_to_nearest_valid_target < wep_range {
-				
-					//Move 'north':
-					if attacker_id.cur_combat_rank-1 >= 0 && attacker_id.suppressed_count <= 0 && scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank-1) == -1 {
+					
+					//If the enemy has closed with us, just attack them; normally - they won't ever be able to close with us, this case only triggers
+					//when a pc goes treacherous and a neutral with this ai is in the same rank with them
+					if dist_to_nearest_valid_target == 0 {
+						attacker_id.targeted_rank = nearest_valid_rank_int;
+						attacker_id.enemy_ai_fight_boolean = true;	
+					}
+					
+					//Only true neutrals or true enemies use this ai preference - those with berserk_count > 0 choose melee, 
+					//and those with treacherous_count > 0 choose ranged stationary; therefore, we want neutrals to flee south, toward friendly lines;
+					//and enemies to flee north, toward enemy lines:
+					
+					//Move 'south':
+					else if attacker_id.char_team_enum == team_type.neutral && attacker_id.cur_combat_rank+1 < array_length(global.combat_rank_ar) 
+					&& attacker_id.suppressed_count <= 0 && scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank+1) == -1 {
 						attacker_id.combat_move_dir = -1;
 						attacker_id.enemy_ai_move_boolean = true;
 					}
+					
+					//Move 'north':
+					else if attacker_id.char_team_enum == team_type.enemy && attacker_id.cur_combat_rank-1 >= 0 
+					&& attacker_id.suppressed_count <= 0 && scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank-1) == -1 {
+						attacker_id.combat_move_dir = -1;
+						attacker_id.enemy_ai_move_boolean = true;
+					}
+					
 					//We're unable to move because of any of those conditions, just attack:
 					else {
-						//Choose an 'inferior' melee weapon if the player has cornered us into melee; this 'rewards' the player by being aggressive, in much
-						//the same way that enemies use weaker melee attacks in Darkest Dungeon when forced into the front ranks; this generally can only 
-						//happen if the enemy was suppressed, cornered by overwatch fire, or backed into the final rank:
-						if dist_to_nearest_valid_target == 0 {
-							if attacker_id.treacherous_count <= 0 {
-								attacker_id.chosen_weapon = global.item_reference_table[item_type.desperate_claw];
-							}
-							else {
-								attacker_id.chosen_weapon = scr_return_fists_item_struct_id(attacker_id);
-							}
-						}
 						attacker_id.targeted_rank = nearest_valid_rank_int;
 						attacker_id.enemy_ai_fight_boolean = true;
 					}
@@ -1638,7 +1638,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		if ai_type_enum == enemy_combat_ai.melee {
 			
 			//Those that use this ai act like berserkers - they simply move toward the nearest valid targets and engage in melee.
-	
+			
+			d($"o_con step event: combat_execute_action: Entering melee ai for char: {attacker_id.name}....");
+			
 			//All of this enemy's attacks are melee, choose one at random:
 			var chosen_wep_enum, chosen_wep_item_struct_id;
 			
@@ -1649,7 +1651,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				
 				if is_array(attacker_id.ability_ar) && array_length(attacker_id.ability_ar) > 0 {
 				
-					var temp_abil_ar = scr_filter_abil_ar_by_combat_only(attacker_id.ability_ar);
+					var temp_abil_ar = []
+					temp_abil_ar = scr_filter_abil_ar_by_combat_only(attacker_id.ability_ar);
 					
 					if array_length(temp_abil_ar) > 0 {
 					
@@ -1688,28 +1691,32 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			//d($"combat_execute_action: evaluating enemy ai: melee: attacker_id.chosen_weapon == {attacker_id.chosen_weapon.item_name}");
 			//d($"combat_execute_action: evaluating enemy ai: melee: attacker_id.chosen_weapon == {attacker_id.chosen_weapon.aoe_count}");
 			
-			attacker_id.targeted_rank = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
+			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
+			
+			var dist_to_nearest_valid_target = abs(attacker_id.cur_combat_rank - nearest_valid_rank_int);
+			
+			d($"\ncombat_execute_action: evaluating enemy ai: melee: Just finished calling scr_enemy_return_nearest_target_rank_pos: attacker_id.targeted_rank == {attacker_id.targeted_rank}, its chosen_weapon.name == {attacker_id.chosen_weapon.item_name}, and it's aoe_count == {attacker_id.chosen_weapon.aoe_count}, nearest_valid_rank_int = {nearest_valid_rank_int}, and dist_to_target == {dist_to_nearest_valid_target}")
 		
-			d($"\ncombat_execute_action: evaluating enemy ai: melee: Just finished calling scr_enemy_return_nearest_target_rank_pos: attacker_id.targeted_rank == {attacker_id.targeted_rank}, its chosen_weapon.name == {attacker_id.chosen_weapon.item_name}, and it's aoe_count == {attacker_id.chosen_weapon.aoe_count}")
-		
-			if attacker_id.targeted_rank != -1 {
+			if nearest_valid_rank_int != -1 {
 				//Move to melee attack:
-				if attacker_id.targeted_rank == attacker_id.cur_combat_rank {
+				if dist_to_nearest_valid_target == 0 {
 					attacker_id.enemy_ai_fight_boolean = true;
+					attacker_id.targeted_rank = nearest_valid_rank_int;
 				}
 				//We need to move:
 				else {
 					if attacker_id.suppressed_count <= 0 {
 						attacker_id.enemy_ai_move_boolean = true;
-						//Determine whether the target is north or south of us:
-							//Nearest target is north of us:
 						
-						if attacker_id.cur_combat_rank > attacker_id.targeted_rank {
+						//Determine whether the target is north or south of us:
+						
+							//Move north:
+						if attacker_id.cur_combat_rank > nearest_valid_rank_int {
 							//So move north:
 							attacker_id.combat_move_dir = -1;
 						}
 							//Nearest target us south of us:
-						else {
+						else if attacker_id.cur_combat_rank < nearest_valid_rank_int {
 							//So move south:
 							attacker_id.combat_move_dir = 1;
 						}
@@ -1733,6 +1740,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		#region AI type: ranged stationary:
 		
 		if ai_type_enum == enemy_combat_ai.ranged_stationary {
+			
+			d($"o_con step event: combat_execute_action: Entering ranged_stationary ai for char: {attacker_id.name}....");
 			
 			//This ai type never retreats; otherwise is identical to ranged_coward.
 			
@@ -1764,6 +1773,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					attacker_id.chosen_weapon = highest_range_item_id;
 					valid_abil_found = true;
 				}
+				else {
+					d($"o_con step event: combat_execute_action: sorted_by_range_abil_ar == -1 ({sorted_by_range_abil_ar}), which means this char didn't have an applicable ability in their ability_ar to use.");	
+				}
 			}
 			
 			//Search inv array instead:
@@ -1793,6 +1805,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						attacker_id.chosen_weapon = highest_range_item_id;
 						valid_abil_found = true;
 					}
+					else {
+						d($"o_con step event: combat_execute_action: sorted_by_range_abil_ar == -1 ({sorted_by_range_abil_ar}), which means this char didn't have an applicable item in their inv to use.");
+					}
 				}
 			}
 			
@@ -1802,6 +1817,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			}
 			
 			var wep_range = attacker_id.chosen_weapon.max_range;
+			
+			d($"\no_con step event: combat_execute_action: after checking ability ar, inv ar, and assigning a simple fists weapon IF the ability ar and inv ar came up empty, {attacker_id.name}'s chosen_weapon == {attacker_id.chosen_weapon.item_name}, and its max_range == {attacker_id.chosen_weapon.max_range}\n");
 				
 			//Assign nearest valid rank int:
 			var nearest_valid_rank_int = scr_return_nearest_target_rank_pos(attacker_id.cur_combat_rank, attacker_id);
@@ -1874,6 +1891,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			//This ai type never retreats, fires upon enemies within its range, and sets overwatch on its max range when targets are outside of it;
 			//Should have a weapon with at least a range of 1.
 			
+			d($"o_con step event: combat_execute_action: Entering stationary_overwatch ai for char: {attacker_id.name}....");
+			
 			//Create a temporary array of all of this enemy's available weapons from its abil_ar:
 			var temp_abil_ar = [], item_enum;
 			for(var i = 0; i < array_length(attacker_id.ability_ar); i++) {
@@ -1923,7 +1942,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					if maximum_targeted_rank < 0 maximum_targeted_rank = 0;
 					if maximum_targeted_rank >= array_length(global.combat_rank_ar) maximum_targeted_rank = array_length(global.combat_rank_ar)-1; 
 						
-					//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars:
+					//Assign as targeted rank - 
 					attacker_id.targeted_rank = maximum_targeted_rank;
 					
 					//Add to corresponding nested struct array in overwatch array:
@@ -1944,6 +1963,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		#region AI type: overwatch (coward):
 		
 		if ai_type_enum == enemy_combat_ai.overwatch_coward {
+			
+			d($"o_con step event: combat_execute_action: Entering overwatch_coward ai for char: {attacker_id.name}....");
 			
 			//Create a temporary array of all of this enemy's available weapons from its abil_ar:
 			var temp_abil_ar = [], item_enum;
@@ -1996,7 +2017,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					if maximum_targeted_rank < 0 maximum_targeted_rank = 0;
 					if maximum_targeted_rank >= array_length(global.combat_rank_ar) maximum_targeted_rank = array_length(global.combat_rank_ar)-1; 
 						
-					//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars
+					//Assign as targeted rank -
 					//(which itself calls scr_remove_char_from_overwatch_arrays):
 					attacker_id.targeted_rank = maximum_targeted_rank;
 					
@@ -2026,8 +2047,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						if maximum_targeted_rank < 0 maximum_targeted_rank = 0;
 						if maximum_targeted_rank >= array_length(global.combat_rank_ar) maximum_targeted_rank = array_length(global.combat_rank_ar)-1; 
 						
-						//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars
-						//(which itself calls scr_remove_char_from_overwatch_arrays):
+						//Assign as targeted rank - 
 						attacker_id.targeted_rank = maximum_targeted_rank;
 					
 						//Add to corresponding nested struct array in overwatch array:
@@ -2129,7 +2149,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 	if global.char_is_fleeing_bool == false && global.overwatch_mode_enabled == false &&
 	(attacker_id.enemy_ai_move_boolean == true || attacker_id.pc_is_combat_moving == true) {
 		d($"\n o_con step event: game_state == combat_execute_action: {attacker_id.name} has chosen to move.");
-		var move_str = "MOVING BITCHES";
+		
+		var move_str = "undefined";
 		
 		//Define move_str - 'advancing' or 'withdrawing' is subjective and depends upon whether this is an enemy or not;
 		//enemies 'advance' while moving down, and pcs and neutrals 'advance' while moving up; and etc.
@@ -2535,13 +2556,14 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
 		
 		if player_input_str == "B" || player_input_str == "BACK" {
-			if prev_game_state == game_state.main_game {
+			if global.combat_begun == false {
+				global.cur_game_state = game_state.main_game;
 				scr_print_char_reminder(cur_char);
 			}
-			else if global.combat_begun {
+			else if global.combat_begun == true {
+				global.cur_game_state = game_state.combat_assign_pc_command;
 				scr_print_combat_ranks(cur_char);	
 			}
-			global.cur_game_state = prev_game_state;
 		}
 		
 		//Check for number keypress here, then all of the other restrictions:
@@ -2585,8 +2607,6 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 					
 				else if global.cur_game_state == game_state.choose_pc_abil {
 					
-					//We already know this abil can be used in combat - our filtered_abil_ar should only contains 
-					//item structs that can be used here 
 					var abil_item_struct_id = cur_char.filtered_abil_ar[index_int];
 					
 					//Check to make sure we have sufficient AP:
@@ -2691,13 +2711,33 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 								
 									//Using this abil requires that we move to game_state.use_target_item
 									else if abil_item_struct_id.use_requires_target == true {
-										prev_game_state = global.cur_game_state;
-										cur_char.using_item_struct_id = abil_item_struct_id;
-										cur_char.using_item_index = index_int;
+										
+										//Make sure there's actually a valid char in this char's current rank:
+										var valid_target_available = false;
+										
+										if global.combat_begun {
+											var filtered_char_ar = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[cur_char.cur_combat_rank], team_type.pc);
+											
+											if array_length(filtered_char_ar) > 0 {
+												valid_target_available = true;
+											}
+										}
+										else {
+											valid_target_available = true;
+										}
+										
+										if valid_target_available {
+											cur_char.using_item_struct_id = abil_item_struct_id;
+											cur_char.using_item_index = index_int;
 							
-										global.cur_game_state = game_state.use_target_item;
+											global.cur_game_state = game_state.use_target_item;
 							
-										scr_print_pc_party(false, true);	
+											if global.combat_begun == false scr_print_pc_party(false, true);
+											else scr_print_char_ar(filtered_char_ar, true);
+										}
+										else {
+											scr_add_str_to_dialogue_ar("\nThere are no targets in your current rank that you can use that ability on, try again.", true);
+										}
 									}
 								}
 							}
@@ -2715,8 +2755,7 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 				}	
 			}
 			else if !valid_index { //A valid number, but not a valid character selection:
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar($"That is not a valid selection, try again.",true);		
+				scr_add_str_to_dialogue_ar($"\nThat is not a valid ability selection, try again, or enter 'B' to return to the previous screen.",true);		
 			}
 		}
 		
@@ -2841,7 +2880,7 @@ else if global.cur_game_state == game_state.combat_pc_target_rank && global.wait
 				}
 				else if global.overwatch_mode_enabled {
 					
-					//Assign as targeted rank - we'll need this var to remove this char id from the global array later in scr_reset_certain_char_combat_vars:
+					//Assign as targeted rank - 
 					global.cur_combat_char.targeted_rank = index_int;
 					
 					//Add to corresponding nested struct array in overwatch array:
@@ -2885,7 +2924,7 @@ else if global.cur_game_state == game_state.combat_pc_target_rank && global.wait
 
 #endregion
 
-#region game_state == use item or pass item:
+#region game_state == use item or pass item - whenever an item or ability requires a target, we get sent here.
 
 else if (global.cur_game_state == game_state.use_target_item || global.cur_game_state == game_state.passing_item) && global.wait {
 	
@@ -2909,7 +2948,16 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 		if global.combat_begun { cur_char = global.cur_combat_char; }
 		
 		if player_input_str == "B" || player_input_str == "BACK" {
-			global.cur_game_state = prev_game_state;	
+			if global.combat_begun {
+				global.cur_game_state = game_state.combat_assign_pc_command;
+				prev_game_state = game_state.combat_assign_pc_command;
+				scr_print_combat_ranks(global.cur_combat_char);
+			}
+			else {
+				global.cur_game_state = game_state.main_game;
+				prev_game_state = game_state.main_game;	
+				scr_print_char_reminder(global.acting_char_struct_id);
+			}
 		}
 		
 		//Check for number keypress here, then all of the other restrictions:
@@ -2919,12 +2967,26 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 				var index_int = real(player_input_str);
 				
 				d($"o_con step event: game_state = passing item or using item: player_input_str == {player_input_str}");
-			
-				if index_int >= 0 && index_int < array_length(cur_char.cur_room_id.pcs_in_room_ar) {
+				
+				//If we're in the main game state, limit the ability to whoever else is in the same room:
+				if global.combat_begun == false {
+					if index_int >= 0 && index_int < array_length(cur_char.cur_room_id.pcs_in_room_ar) {
 					
-					valid_char_index = true;
+						valid_char_index = true;
 					
-					var item_target_char_struct_id = cur_char.cur_room_id.pcs_in_room_ar[index_int];
+						var item_target_char_struct_id = cur_char.cur_room_id.pcs_in_room_ar[index_int];
+					}
+				}
+				else if global.combat_begun {
+					//We were able to get to this screen, so we know there must be at least 1 valid target:
+					var filtered_char_ar = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[cur_char.cur_combat_rank],team_type.pc);
+					
+					if index_int >= 0 && index_int < array_length(filtered_char_ar) {
+						
+						valid_char_index = true;
+					
+						var item_target_char_struct_id = filtered_char_ar[index_int];	
+					}
 				}
 			}
 			catch(_exception) {
@@ -2966,29 +3028,39 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 							
 							scr_add_str_to_dialogue_ar($"\n{item_target_char_struct_id.name} has picked up the {cur_char.passing_item_struct_id.item_name}",true);
 							
-							//Return to prev game state: main or assign pc combat command.
-							global.cur_game_state = prev_game_state;
-						}
-						else {
-							scr_add_str_to_dialogue_ar($"\n{item_target_char_struct_id.name} is already carrying too many items! They will need to drop or pass an item before receiving this one.");
-							//Send us back to our prev game state, it's less confusing this way:
-							global.cur_game_state = prev_game_state;
-							if global.cur_game_state == game_state.main_game {
+							//Return to main game state or combat assign pc command:
+							if global.combat_begun == false {
+								global.cur_game_state = game_state.main_game;
 								scr_print_char_reminder(cur_char);
 							}
-							else if global.cur_game_state == game_state.combat_assign_pc_command {
+							else if global.combat_begun == true {
+								global.cur_game_state = game_state.combat_assign_pc_command;
+								scr_print_combat_ranks(cur_char);	
+							}
+						}
+						else {
+							scr_add_str_to_dialogue_ar($"\n{item_target_char_struct_id.name} is already carrying too many items! They will need to drop or pass an item before receiving this one, try again.");
+							
+							//Return to main game state or combat assign pc command:
+							if global.combat_begun == false {
+								global.cur_game_state = game_state.main_game;
+								scr_print_char_reminder(cur_char);
+							}
+							else if global.combat_begun == true {
+								global.cur_game_state = game_state.combat_assign_pc_command;
 								scr_print_combat_ranks(cur_char);	
 							}
 						}
 					}
 					else {
-						scr_add_str_to_dialogue_ar("\nYou already possess this item; you cannot give it to yourself.",true);
-						//Send us back to our prev game state, it's less confusing this way:
-						global.cur_game_state = prev_game_state;
-						if global.cur_game_state == game_state.main_game {
+						scr_add_str_to_dialogue_ar("\nYou already possess this item, you cannot give it to yourself, try again.",true);
+						//Return to main game state or combat assign pc command:
+						if global.combat_begun == false {
+							global.cur_game_state = game_state.main_game;
 							scr_print_char_reminder(cur_char);
 						}
-						else if global.cur_game_state == game_state.combat_assign_pc_command {
+						else if global.combat_begun == true {
+							global.cur_game_state = game_state.combat_assign_pc_command;
 							scr_print_combat_ranks(cur_char);	
 						}
 					}
@@ -3008,7 +3080,7 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 					}
 					
 					//Return to main:
-					if prev_game_state == game_state.main_game || global.combat_begun == false {
+					if global.combat_begun == false {
 						//"You are {}. What will you do?"
 						scr_add_str_to_dialogue_ar(scr_return_cur_char_str(cur_char),true);
 						
@@ -3019,9 +3091,9 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 					
 					//Return to combat_assign_pc_command OR advance the cur_combat_char within the combat system, 
 					//if this ability causes you to finish your turn:
-					else if prev_game_state == game_state.choose_pc_abil && global.combat_begun {
+					else if global.combat_begun {
 						
-						//if the use of the ability causes the g.cur_Combat_char to end their turn, then end it now;
+						//if the use of the ability causes the g.cur_Combat_char to end their turn and it's not the prep phase, then end it now;
 						//otherwise simply return to combat_assign_pc_command:
 						if cur_char.using_item_struct_id.abil_passes_turn_boolean == true && global.combat_prep_phase == false {
 							global.cur_game_state = game_state.combat_assign_pc_command; //Might as well reset this, although we may or may not be going back there after scr_evaluate_combat_conclusion() finishes
@@ -3034,15 +3106,24 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 					}
 				}	
 			}
-			else if !valid_char_index { //A valid number, but not a valid character selection:
-				scr_add_str_to_dialogue_ar($"\nThat is not a valid character selection, try again.",true);
+			else if !valid_char_index { 
 				//Send us back to our prev game state, it's less confusing this way:
-				global.cur_game_state = prev_game_state;
-				if global.cur_game_state == game_state.main_game {
-					scr_print_char_reminder(cur_char);
+				if global.cur_game_state == game_state.passing_item {
+					
+					scr_add_str_to_dialogue_ar($"\nThat is not a valid character to pass this item to, try again.",true);
+					
+					if global.combat_begun == false {
+						global.cur_game_state = game_state.main_game;
+						scr_print_char_reminder(cur_char);
+					}
+					else if global.combat_begun == true {
+						global.cur_game_state = game_state.combat_assign_pc_command;
+						scr_print_combat_ranks(cur_char);	
+					}
 				}
-				else if global.cur_game_state == game_state.combat_assign_pc_command {
-					scr_print_combat_ranks(cur_char);	
+				//Let the player continue trying:
+				else {
+					scr_add_str_to_dialogue_ar($"\nThat is an invalid target for the ability or item, try again.");	
 				}
 			}
 		}
@@ -3108,8 +3189,15 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			if index_int >= 0 && index_int < array_length(global.pc_char_ar) {
 				//Changing pcs:
 				if !global.passing_item_boolean {
-					global.acting_char_struct_id_index = index_int;
-					changed_cur_char = true;
+					
+					if global.pc_char_ar[index_int].unconscious_count <= 0 && global.pc_char_ar[index_int].unconscious_bool == false {
+					
+						global.acting_char_struct_id_index = index_int;
+						changed_cur_char = true;
+					}
+					else {
+						scr_add_str_to_dialogue_ar($"{global.pc_char_ar[index_int].name} is still unconscious, you can't assume control of them.")
+					}
 				}
 			}	
 		}
@@ -3119,21 +3207,35 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		}
 		
 		if player_input_str == "<" || player_input_str == ">" {
-			changed_cur_char = true;
-			if player_input_str == "<" global.acting_char_struct_id_index --;
-			else global.acting_char_struct_id_index ++;
 			
-			//Cap:
-			if global.acting_char_struct_id_index < 0 global.acting_char_struct_id_index = array_length(global.pc_char_ar)-1;
-			else if global.acting_char_struct_id_index >= array_length(global.pc_char_ar) global.acting_char_struct_id_index = 0;
+			var iterate_dir;
+			
+			if player_input_str == "<" iterate_dir = -1;
+			else iterate_dir = 1;
+			
+			var new_acting_char = scr_return_next_char_in_ar_direction(iterate_dir, global.acting_char_struct_id_index, global.acting_char_struct_id, global.pc_char_ar);
+			
+			if new_acting_char != -1 && is_struct(new_acting_char) && new_acting_char.struct_type_enum == struct_type.Character {
+				
+				var new_char_index = array_get_index(global.pc_char_ar,new_acting_char);
+				
+				if new_char_index != -1 {
+					
+					var prev_cur_char = global.acting_char_struct_id;
+					
+					//Actually change char:
+					global.acting_char_struct_id = new_acting_char;
+					
+					global.acting_char_struct_id_index = new_char_index;
+					
+					changed_cur_char = true;
+				}
+			}
 		}
 		
 		if changed_cur_char {
 			
-			var prev_cur_char = global.acting_char_struct_id;
-			
-			global.acting_char_struct_id = global.pc_char_ar[global.acting_char_struct_id_index];
-			
+			//Print new room or just char reminder:
 			if scr_check_ar_for_val(prev_cur_char.cur_room_id.pcs_in_room_ar,global.acting_char_struct_id) == false {
 				new_char_is_in_different_room = true;	
 			}

@@ -450,7 +450,6 @@ function scr_define_macros_and_enums(){
 	#macro REGEN_NANITES_HEAL_VAL 3
 	#macro REGEN_NANITES_DURATION 4
 	#macro FIELD_MEDICINE_HP_BOOST 4
-	#macro EVADE_BONUS 1
 	#macro FIRE_DURATION 3
 	#macro BLEED_DURATION 2
 	#macro POISON_DURATION 2
@@ -460,6 +459,7 @@ function scr_define_macros_and_enums(){
 	#macro COWERING_STUNNED_DURATION 4
 	#macro TREACHEROUS_DURATION 4
 	#macro BERSERK_DURATION 4
+	#macro EVADING_BUFF 1
 	
 	#macro CRAGOS_ACC_DEBUFF 2
 	#macro CRAGOS_EVASION_DEBUFF 2

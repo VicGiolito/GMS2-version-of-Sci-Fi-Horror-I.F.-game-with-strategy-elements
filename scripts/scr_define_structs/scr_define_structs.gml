@@ -26,9 +26,13 @@ function scr_define_structs(){
 		
 		struct_type_enum = struct_type.Character;
 		
+		origin_team = team_enum; //Keeps track of what this char's original team was after they've gone berserk or treacherous.
+		
 		stationary_neutral_bool = false; //These neutrals don't ever from a room once they are placed there: such as security_camera and light_sentry_drone.
 		
-		broken_morale_ar = -1;
+		broken_morale_ar = -1; //Can be altered during course of combat
+		
+		permanent_broken_morale_ar = -1; //Is never altered.
 		
 		fleeing_str = "fleeing str not defined";
 		
@@ -42,8 +46,6 @@ function scr_define_structs(){
 		global.unique_struct_id_num++;
 		
 		flood_fill_path_grid = -1; //Is used as a ds_grid for flood fill pathing steps after character creation.
-		
-        add_to_room_list_boolean = add_to_room_list_bool;
 		
 		char_sprite_inst_id = -1;
 		
@@ -157,7 +159,6 @@ function scr_define_structs(){
 			cur_grid_y = -1
 		}
 
-        overwatch_rank = -1;
         will_overwatch_boolean = false;
 		char_fleeing_from_broken_morale = false;
 	
@@ -255,8 +256,11 @@ function scr_define_structs(){
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"{name} roars: \"Spit on me? Sneer at me? Lay hands on me? If you truly think me a monster--THEN LET ME SHOW YOU WHAT I CAN DO!\"" });
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"{name} rants and raves: \"Ceaseless toil and torment! Will the pain never end?! RAGE my constant companion! RAGE my only friend!\"" });
-		
+			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"{name} rants and raves: \"Ceaseless toil and torment! Will the pain never end?! RAGE my constant companion! RAGE my only friend!\"" });
+			
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
+			
 			scr_add_passive_ability(self,passive_abil_type.giant,"constructor event");
 			scr_add_passive_ability(self,passive_abil_type.healing_factor,"constructor event");
 			scr_add_passive_ability(self,passive_abil_type.thick_hide,"constructor event");
@@ -296,7 +300,10 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... I'm sorry!...\" {name} mutters, before turning to flee. \"I can't... I can't!...\"" });
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} clutches her knees to her chest, whispering: \"... Their hands, outstretched... Their eyes: pleading... I couldn't save them... Couldn't save them...\"" });
-		
+			
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
+			
 			scr_add_ability(self,item_type.field_medicine);
 			scr_add_ability(self,item_type.energizing_stim_prick);
 			scr_add_ability(self,item_type.improvised_medicine);
@@ -334,6 +341,9 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"... The voices of my kin are calling to me!...\" {name} tears at her own face and hands with fingers like claws. \"... I am sorry... I must answer their call!\"" });
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"\"Stay away from me!...\" {name} screams. \"... The transformation, it's unstable... I can't control it!\"" });
+		
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
 		}
 
         else if char_type_enum == character.engineer {
@@ -363,7 +373,10 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... They just keep coming!\" {name} cries, before routing. \"How do you stop them?! You can't... No one can!...\"" });
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} gazes off into space, remarking, to no one at all: \"... Nothing comes together as easily as it falls apart...\"" });
-		
+			
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
+			
 			scr_add_ability(self,item_type.spawn_light_sentry_gun);
 		}
 
@@ -428,8 +441,11 @@ function scr_define_structs(){
 			
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... Wait! I can still see the code of their consciousness, drifting away!...\" {name} has outstreched her slender hands, grasping for the ethereal form of some invisible phantasm. \"This way!... The currents flow this way, follow me!...\"" });
-			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"... Their voices, echoing inside my mind, like the whispers of so many dead children...\" {name} has slumped against the floor and refuses to move. \"... Now they're condemned to the purgatory of the void forever...\"" });
-		
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"... Their voices, echoing inside my mind, like the whispers of so many dead children...\" {name} has slumped against the floor and refuses to move. \"... Now they're condemned to the purgatory of the void forever...\"" });
+			
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
+			
 			scr_add_ability(self,item_type.spawn_light_buzzsaw_droid);
 			scr_add_ability(self,item_type.spawn_light_flamer_droid);
 			scr_add_ability(self,item_type.spawn_light_shotgun_droid);
@@ -469,7 +485,10 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, brandishing his myriad of weapons. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
 			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"This flesh--it burns!\" {name} gouges his face, pulls locks from his hair. \"Let me be rid of it, once and for all!\"" });
-		
+			
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
+			
 			//Abilities:
 			scr_add_passive_ability(self,passive_abil_type.hardened_skin," constructor event ");
 			scr_add_passive_ability(self,passive_abil_type.cybernetic,"constructor event");
@@ -481,7 +500,7 @@ function scr_define_structs(){
 		}
 
         else if char_type_enum == character.security_guard {
-            name = "Cooper, 'The Cop'";
+            name = "Cooper, 'The Guard'";
             hp_max = 10;
             hp_cur = 10;
             ability_points_cur = 14;
@@ -507,6 +526,9 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"Oh HELL no!\" {name} cries, bolting from his position. \"I didn't sign up for this shit!\""});
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Just two more weeks, they said... Just two more weeks...\" {name} stands dumbfounded, frozen with fear. \"... Now I'll never see my little girl again...\"" });
+			
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
 			
 			scr_add_ability(self,item_type.taser);
 			scr_add_ability(self,item_type.smoke_grenade);
@@ -539,7 +561,10 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"The human fight or flight response is very strong, you see...\" {name} says, while fleeing in the opposite direction. \"... And, well--it seems my feet have decided for me! Goodbye!\""});
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Millions of years of evolution... And it's all lead to this.\" {name} has assumed a thousand yard stare and refuses to move. \"How could we have been so blind?\""});
-		};
+		
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
+		}
 
         else if char_type_enum == character.criminal { //Probably get rid of this character too
             name = "Emeran, 'The Criminal'";
@@ -627,6 +652,9 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"The board members, they're counting on me!\" The words of {name} are already no more than a echo as she bolts from the battle field. \"I'm sure the rest of you can handle this just fine without me!"});
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"The eyes of {name} have glazed over. She mumbles: \"Are they the monsters, or are we?\"" });
+		
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
 		}
 
         else if char_type_enum == character.child {
@@ -661,7 +689,10 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"With a whimper and sob, {name} turns tail and flees."});
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} has assumed a fetal position and is screaming. \"MOMMA!\"" });
-		
+			
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
+			
 			scr_add_passive_ability(self,passive_abil_type.child,"constructor event");
 		}
 
@@ -692,6 +723,9 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"I'm really more of a general than a soldier--I work best from the back line...\" The feet of {name} are irresistibly guiding him from the battle field. \"I'll--I'll send help, okay?\""});
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} has curled into a ball, sheletering his head with his hands, and muttering: \"Be a man, he said... Just act like a man, for once in your goddamned life!... Then why can't I move my fucking FEET?!\"" });
+		
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
 		}
 
         else if char_type_enum == character.neutral_infected_scientist {
@@ -721,6 +755,9 @@ function scr_define_structs(){
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: "\"I--I can't be here! I'm sorry!\""});
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: "\"... What have I done?... Oh God, what have I done?...\"" });
+		
+			permanent_broken_morale_ar = [];
+			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
 		}
 
         else if char_type_enum == character.enemy_skittering_larva {
@@ -1837,6 +1874,7 @@ function scr_define_structs(){
             item_name = "MEDICAL KIT";
             equippable_boolean = false;
 			use_context = abil_use_context.both;
+			use_requires_target = true;
 		}
         else if item_enum == item_type.regen_nanites {
             single_use_boolean = true;
@@ -1844,6 +1882,7 @@ function scr_define_structs(){
             item_name = "PEN OF REGENERATION NANITES";
             equippable_boolean = false;
 			use_context = abil_use_context.both;
+			use_requires_target = true;
 		}
         else if item_enum == item_type.kiras_noisy_game {
             single_use_boolean = false
