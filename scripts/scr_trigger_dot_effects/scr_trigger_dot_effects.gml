@@ -147,7 +147,7 @@ function scr_trigger_dot_effects(char_struct_id){
 		if char_struct_id.adrenal_pen_count <= 0 {
 			dot_result_str += $"{char_name_str}({char_struct_id.unique_id}) is no longer adrenalized. They feel the world speed up. (-{ADRENAL_PEN_SPD_BUFF} speed, -{ADRENAL_PEN_ACC_BUFF} accuracy.)\n";
 			char_struct_id.spd -= ADRENAL_PEN_SPD_BUFF;
-			char_struct_id.accuracy_bonus -= ADRENAL_PEN_ACC_BUFF;
+			char_struct_id.accuracy -= ADRENAL_PEN_ACC_BUFF;
 		}
 	}
 	
@@ -237,8 +237,8 @@ function scr_trigger_dot_effects(char_struct_id){
 			//Cap:
 			if char_struct_id.hp_cur > char_struct_id.hp_max { char_struct_id.hp_cur = char_struct_id.hp_max; }
 			
-			var hp_plural_str = "";
-			if REGEN_NANITES_HEAL_VAL > 1 hp_plural_str = "s";
+			var plural_str = "";
+			if REGEN_NANITES_HEAL_VAL > 1 plural_str = "s";
 			
 			dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has healed {REGEN_NANITES_HEAL_VAL} hit point{plural_str}, thanks to the regeneration nanites in their blood stream.**\n";
 			
@@ -365,36 +365,57 @@ function scr_trigger_dot_effects(char_struct_id){
 					//The char_id we're iterating over is a valid candidate - whether they are a traitorous pc acting as an enemy or not,
 					//either way, if they don't have an applicable ability in their ability ar, they won't be considered as an opportunity attacker.
 					if applicable_char_found {
-									
-						if is_array(char_id.ability_ar) && array_length(char_id.ability_ar) > 0 {
-										
-							var temp_wep_ar = [];
-							temp_wep_ar = scr_shuffle_ar(char_id.ability_ar);
-							
-							d($"\nscr_trigger_dot_effects: fleeing code: after being shuffled, the ability_ar for char_id.name: {char_id.name} looks like:...\n");
-										
-							for(var item_i = 0; item_i < array_length(temp_wep_ar); item_i++) {
-								
-								var item_enum = temp_wep_ar[item_i];
-										
-								var item_struct_id = global.item_reference_table[item_enum];
-											
-								//Skip invalid abilities - this will only apply to pc or neutral characters that have a treacherous count > 0:
-								if item_struct_id.use_context != abil_use_context.combat_only continue;
-											
-								var item_range = item_struct_id.max_range;
-								
-								var dist = abs(cur_char_rank-rank_i);
-								
-								d($"\nscr_trigger_dot_effects: fleeing code: iterating through temp_wep_ar: For index: {item_i}, item: {item_struct_id.item_name}, its item range == {item_range}, cur_char_rank == {cur_char_rank}, the rank we are checking (rank_i) == {rank_i}, and dist == {dist}...\n");
-								
-								if dist <= item_range {
+													
+						//We'll iterate once through ability_ar, then again through inv_ar, if applicable:
+						var i_count = 0, ar_to_use;
+						repeat(2) {
+							//Define ar_to_use:
+							if i_count == 0 ar_to_use = char_id.ability_ar;
+							else if i_count == 1 ar_to_use = char_id.inv_ar;
 														
-									valid_attacker_found = true;
-									
-									break;
+							if is_array(ar_to_use) && array_length(ar_to_use) > 0 {
+													
+								var temp_wep_ar = [];
+								temp_wep_ar = scr_shuffle_ar(ar_to_use);
+							
+								for(var item_i = 0; item_i < array_length(temp_wep_ar); item_i++) {
+								
+									var item_struct_or_enum = temp_wep_ar[item_i];
+																
+									if item_struct_or_enum == -1 continue; //This is just an empty inventory position.
+																
+									var item_struct_id;
+																
+									if is_struct(item_struct_or_enum) && item_struct_or_enum.struct_type_enum == struct_type.Item {
+										item_struct_id = item_struct_or_enum;
+									}
+									else if !is_struct(item_struct_or_enum) {
+										item_struct_id = global.item_reference_table[item_struct_or_enum];	
+									}
+														
+									//Skip invalid abilities - this will only apply to pc or neutral characters that have a treacherous count > 0:
+									if item_struct_id.use_context != abil_use_context.combat_only continue;
+														
+									var item_range = item_struct_id.max_range;
+								
+									var dist = abs(cur_char_rank-rank_i);
+															
+									d($"\nscr_trigger_dot_effects(): fleeing code: the rank we are checking (rank_i) == {rank_i}, our cur rank we are checking from (cur_char_rank) == {cur_char_rank}, the char we are checking == {char_id.name}, the item_name == {item_struct_id.item_name}, its range == {item_struct_id.max_range}, and dist between the target and our self == {dist}.\n");
+															
+									if dist <= item_range {
+																
+										d($"\nscr_trigger_dot_effects(): fleeing code: char_id.name= {char_id.name}, this WAS A VALID OPPORTUNITY ATTACKER.\n");
+																
+										valid_attacker_found = true;
+														
+										d($"\nscr_trigger_dot_effects(): a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {char_id.chosen_weapon.item_name} with a range of: {char_id.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
+																
+										break;
+									}
 								}
 							}
+							if valid_attacker_found break;
+							i_count++;
 						}
 					}
 						

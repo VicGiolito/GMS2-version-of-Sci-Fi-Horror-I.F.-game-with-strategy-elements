@@ -12,7 +12,8 @@ Important: if the associated status effect also applied some sort of stat debuff
 function scr_reset_status_effects(char_struct_id, called_from_str){
 	
 	if is_undefined(called_from_str) throw("scr_reset_status_effects: called_from_str undefined, we need to know where this script is being called.");
-	else d($"\nEntering scr_reset_status_effects, it was called from: {called_from_str}\n");
+	
+	else d($"\nEntering scr_reset_status_effects FOR CHAR: {char_struct_id.name}, it was called from: {called_from_str}\n");
 	
 	char_struct_id.stun_count = 0;
 	
@@ -46,6 +47,7 @@ function scr_reset_status_effects(char_struct_id, called_from_str){
 		char_struct_id.adrenal_pen_count = 0;
 		char_struct_id.spd -= ADRENAL_PEN_SPD_BUFF;
 		char_struct_id.accuracy -= ADRENAL_PEN_ACC_BUFF;
+		d("\n\n*********ADRENAL PEN RESET************\n\n")
 	}
 	
 	//Regen nanites:

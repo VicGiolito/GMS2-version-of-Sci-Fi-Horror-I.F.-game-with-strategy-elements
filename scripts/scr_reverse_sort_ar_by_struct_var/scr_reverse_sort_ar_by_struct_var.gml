@@ -29,6 +29,8 @@ function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str)
 				initial_struct_id = arr[j];
 				next_struct_id = arr[j + 1];
 				
+				if initial_struct_id == -1 || next_struct_id == -1 continue; //-1 represents empty inv_ar positions; they would throw an error global.item_reference_table[initial_struct_id]
+				
 				//Convert to item structs, if applicable:
 				if is_struct(initial_struct_id) == false {
 					initial_struct_id = global.item_reference_table[initial_struct_id];
@@ -72,6 +74,8 @@ function scr_reverse_sort_ar_by_struct_var(arr, reverse_sort_bool, var_name_str)
 	            
 				initial_struct_id = arr[j];
 	            next_struct_id = arr[j + 1];
+				
+				if initial_struct_id == -1 || next_struct_id == -1 continue; //-1 represents empty inv_ar positions; they would throw an error global.item_reference_table[initial_struct_id]
 				
 				//Convert to item structs, if applicable:
 				if is_struct(initial_struct_id) == false {

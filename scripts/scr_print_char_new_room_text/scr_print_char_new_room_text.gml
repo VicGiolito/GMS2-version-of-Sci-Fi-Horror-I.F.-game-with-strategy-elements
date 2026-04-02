@@ -2,13 +2,13 @@
 function scr_print_char_new_room_text(char_struct_id){
 	
 	//Name of room:
-	scr_add_str_to_dialogue_ar("\n"+scr_return_room_name(char_struct_id.cur_room_id)+"\n");
+	scr_add_str_to_dialogue_ar("\n"+scr_return_room_name(char_struct_id.cur_room_id));
 	//Room description:
 	scr_add_str_to_dialogue_ar("\n");
 	scr_add_str_to_dialogue_ar(scr_return_room_desc_str(char_struct_id.cur_room_id));
-	scr_add_str_to_dialogue_ar("\n");
+	//scr_add_str_to_dialogue_ar("\n");
 	//Enemies, neutrals, pcs:
-	scr_add_str_to_dialogue_ar(scr_return_chars_str_in_room(char_struct_id.cur_room_id)+"\n");
+	scr_add_str_to_dialogue_ar("\n"+scr_return_chars_str_in_room(char_struct_id.cur_room_id));
 	//Hazards:
 	if is_array(char_struct_id.cur_room_id.hazard_ar) && array_length(char_struct_id.cur_room_id.hazard_ar) > 0 {
 		scr_add_str_to_dialogue_ar("\n"+scr_return_hazards_str_in_room(char_struct_id.cur_room_id));
@@ -22,7 +22,7 @@ function scr_print_char_new_room_text(char_struct_id){
 			
 			if ar_len >= scavenge_resource.total_resources {
 				
-				scr_add_str_to_dialogue_ar("Items in this room:\n");
+				scr_add_str_to_dialogue_ar("\nItems in this room:");
 				
 				var scavenge_item_enum_int;
 				for(var i = scavenge_resource.total_resources; i < ar_len; i++) {
@@ -31,7 +31,7 @@ function scr_print_char_new_room_text(char_struct_id){
 					
 					if scavenge_item_enum_int >= 0 {
 						var scavenge_item_name = global.item_reference_table[scavenge_item_enum_int].item_name;
-						scr_add_str_to_dialogue_ar($"{scavenge_item_name}\n");	
+						scr_add_str_to_dialogue_ar($"\n{scavenge_item_name}");	
 					}
 				}
 			}
@@ -40,5 +40,5 @@ function scr_print_char_new_room_text(char_struct_id){
 	//Available directions:
 	scr_add_str_to_dialogue_ar("\n"+scr_return_avail_directions_str(char_struct_id.cur_room_id));
 	//Current character reminder:
-	scr_add_str_to_dialogue_ar("\n"+scr_return_cur_char_str(char_struct_id)+"\n",true);
+	scr_add_str_to_dialogue_ar("\n"+scr_return_cur_char_str(char_struct_id),true);
 }

@@ -45,6 +45,7 @@ function scr_define_macros_and_enums(){
 		passing_item,
 		choose_door_dir,
 		choose_pc_abil,
+		change_neutral_ownership,
 		
 		combat_paused, 
 		combat_assign_pc_command,
@@ -64,6 +65,12 @@ function scr_define_macros_and_enums(){
 		enemies_won,
 		pcs_won,
 		combat_continues
+	}
+	
+	enum use_case_for_print_char_ar {
+		target_char_for_abil_or_item,
+		target_neutral_for_ownership_change,
+		target_pc_for_new_neutral_follower
 	}
 	
 	enum main_menu_options {
@@ -420,7 +427,7 @@ function scr_define_macros_and_enums(){
 	#macro AVG_ACC_VAL 7
 	#macro MIN_COMBAT_RAN_NUM 1
 	#macro MAX_COMBAT_RAN_NUM 10
-	#macro RAN_INITIATIVE_VAL 5
+	//#macro RAN_INITIATIVE_VAL 5 //Not in use
 	#macro ENERGENIZING_AP_BOOST 2
 	#macro SMOKE_GRENADE_EVADE_BUFF 2
 	#macro SMOKE_GRENADE_DURATION 4
@@ -428,13 +435,13 @@ function scr_define_macros_and_enums(){
 	#macro PERSONAL_SHIELD_EVASION_BUFF 1
 	#macro PERSONAL_SHIELD_DURATION 3
 	#macro ADRENAL_PEN_SPD_BUFF 2
-	#macro ADRENAL_PEN_ACC_BUFF 1
-	#macro OGRE_MELEE_ACC_BUFF 1
-	#macro OGRE_MELEE_MAX_DMG_BUFF 5
+	#macro ADRENAL_PEN_ACC_BUFF 2
+	#macro ADRENAL_PEN_DURATION 4
+
 	#macro BASE_DOOR_HP 20
 	#macro BASE_WALL_HP 50
 	#macro DOT_FIRE 5
-	#macro DOT_POISON 3
+
 	#macro UNCONSCIOUS_DURATION 4
 	#macro SUPPRESSED_EVASION_DEBUFF 2
 	#macro SUPPRESSED_SPEED_DEBUFF 6
@@ -457,8 +464,8 @@ function scr_define_macros_and_enums(){
 	#macro ANTI_ANXIETY_SANITY_BUFF 1
 	
 	#macro COWERING_STUNNED_DURATION 4
-	#macro TREACHEROUS_DURATION 4
-	#macro BERSERK_DURATION 4
+	#macro TREACHEROUS_DURATION 5
+	#macro BERSERK_DURATION 5
 	#macro EVADING_BUFF 1
 	
 	#macro CRAGOS_ACC_DEBUFF 2

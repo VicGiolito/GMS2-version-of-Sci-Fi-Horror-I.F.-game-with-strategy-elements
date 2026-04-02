@@ -42,6 +42,12 @@ function scr_reset_status_effects_from_fleeing(char_struct_id){
 		char_struct_id.evasion -= EVADING_BUFF;	
 	}
 	
+	if char_struct_id.adrenal_pen_count > 0 {
+		char_struct_id.adrenal_pen_count = 0;
+		char_struct_id.spd -= ADRENAL_PEN_SPD_BUFF;
+		char_struct_id.accuracy -= ADRENAL_PEN_ACC_BUFF;
+	}
+	
 	//We also need to apply this to any neutrals that may be fleeing with them:
 	if is_array(char_struct_id.neutrals_following_this_char_ar) && array_length(char_struct_id.neutrals_following_this_char_ar) > 0 {
 		var ar_len = array_length(char_struct_id.neutrals_following_this_char_ar);

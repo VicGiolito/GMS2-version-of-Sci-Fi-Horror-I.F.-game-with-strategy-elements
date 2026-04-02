@@ -28,7 +28,10 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		//Cap:
 		if target_char_struct_of_item.hp_cur > target_char_struct_of_item.hp_max { target_char_struct_of_item.hp_cur = target_char_struct_of_item.hp_max; }
 		
-		scr_reset_status_effects(target_char_struct_of_item, "scr_use_item_or_ability: medkit used");
+		//Clear burning, poisoned, and bleeding:
+		target_char_struct_of_item.burning_count = 0;
+		target_char_struct_of_item.poisoned_count = 0;
+		target_char_struct_of_item.bleeding_count = 0;
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} uses the {item_struct_id.item_name} on {target_char_struct_of_item.name}. (Their hit points have increased by {MEDKIT_HP_BOOST}; they now have {target_char_struct_of_item.hp_cur} hit points. They have also been cleared of any bleeding, poisoned, or burning status effects.)**");
 		
@@ -48,7 +51,10 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		//Cap:
 		if target_char_struct_of_item.hp_cur > target_char_struct_of_item.hp_max { target_char_struct_of_item.hp_cur = target_char_struct_of_item.hp_max; }
 		
-		scr_reset_status_effects(target_char_struct_of_item, "scr_use_item_or_ability: field_medicine used");
+		//Clear burning, poisoned, and bleeding:
+		target_char_struct_of_item.burning_count = 0;
+		target_char_struct_of_item.poisoned_count = 0;
+		target_char_struct_of_item.bleeding_count = 0;
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} dresses the wounds of {target_char_struct_of_item.name} with their {item_struct_id.item_name}. ({scr_string_capitalize(target_char_struct_of_item.name)}'s hit points have been increased by {FIELD_MEDICINE_HP_BOOST}; they now have {target_char_struct_of_item.hp_cur} hit points.)**");
 	
@@ -139,6 +145,15 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 			char_struct_using_item.spd += SUPPRESSED_SPEED_DEBUFF;
 			char_struct_using_item.evasion += SUPPRESSED_EVASION_DEBUFF;
 		}
+	}
+	
+	else if item_type_enum == item_type.adrenal_pen {
+		
+		target_char_struct_of_item.adrenal_pen_count = ADRENAL_PEN_DURATION;
+		target_char_struct_of_item.spd += ADRENAL_PEN_SPD_BUFF;
+		target_char_struct_of_item.accuracy += ADRENAL_PEN_ACC_BUFF;
+		
+		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} injects {target_char_struct_of_item.name} with the {item_struct_id.item_name}. (+{ADRENAL_PEN_SPD_BUFF} speed, +{ADRENAL_PEN_ACC_BUFF} accuracy for {ADRENAL_PEN_DURATION} turns.)**"); 
 	}
 	
 	else if item_type_enum == item_type.spawn_light_buzzsaw_droid || item_type_enum == item_type.spawn_light_flamer_droid || item_type_enum == item_type.spawn_light_sentinel_droid ||

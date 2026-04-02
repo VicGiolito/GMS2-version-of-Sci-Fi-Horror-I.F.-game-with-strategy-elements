@@ -15,7 +15,8 @@ function scr_setup_char_init_gear_and_abils(){
 		scr_add_item_to_inv(pc_char_struct,item_id,true);
 		var item_id = new global.Item(item_type.sniper_rifle);
 		scr_add_item_to_inv(pc_char_struct,item_id,true);
-		
+		var item_id = new global.Item(item_type.pulse_rifle);
+		scr_add_item_to_inv(pc_char_struct,item_id,true);
 		
 		//var item_id = new global.Item(item_type.concussion_grenade_launcher);
 		//scr_add_item_to_inv(pc_char_struct,item_id,true);

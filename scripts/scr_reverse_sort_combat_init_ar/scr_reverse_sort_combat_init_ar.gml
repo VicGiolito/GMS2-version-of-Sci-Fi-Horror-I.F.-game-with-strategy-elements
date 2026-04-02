@@ -22,7 +22,7 @@ function scr_reverse_sort_combat_init_ar(arr){
 			
 			// If the current element is LESS than the next,
 			// swap them so the larger value moves toward index 0
-			if (arr[j].spd) < (arr[j + 1].spd) {
+			if arr[j].spd < arr[j + 1].spd {
 				_temp = arr[j];
 				arr[j] = arr[j + 1];
 				arr[j + 1] = _temp;

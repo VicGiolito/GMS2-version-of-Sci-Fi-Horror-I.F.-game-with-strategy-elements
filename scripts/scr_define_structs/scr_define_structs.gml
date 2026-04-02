@@ -181,10 +181,7 @@ function scr_define_structs(){
 		berserk_count = 0;
 		
 		smoke_grenade_count = 0;
-		hold_the_line_count = 0;
 
-        resolve_dot_effects_boolean = true;
-        healing_passive_boolean = false;
         unconscious_bool = false;
 		unconscious_count = 0;
         has_died_bool = false;
@@ -192,13 +189,11 @@ function scr_define_structs(){
         healing_factor_boolean = false;
         healing_factor_cd = 0;
 
-        revived_dialogue_str_list = -1;
         shield_bubble_count = 0; //For things like torvald's personal shield
 
         already_fled_this_turn_boolean = false;
         fleeing_dir_x = -1;
         fleeing_dir_y = -1;
-        flee_directional_str = "";
 		
 		nick_name = undefined;
 		
@@ -265,8 +260,8 @@ function scr_define_structs(){
 			scr_add_passive_ability(self,passive_abil_type.healing_factor,"constructor event");
 			scr_add_passive_ability(self,passive_abil_type.thick_hide,"constructor event");
 			
-			scr_add_ability(self,item_type.headbutt);
-			scr_add_ability(self,item_type.feral_bite);
+			//scr_add_ability(self,item_type.headbutt);
+			//scr_add_ability(self,item_type.feral_bite);
 		}
 
         else if char_type_enum == character.doctor {
@@ -299,7 +294,7 @@ function scr_define_structs(){
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... I'm sorry!...\" {name} mutters, before turning to flee. \"I can't... I can't!...\"" });
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} clutches her knees to her chest, whispering: \"... Their hands, outstretched... Their eyes: pleading... I couldn't save them... Couldn't save them...\"" });
+			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} clutches her knees to her chest, whispering: \"... Their hands, outstretched... Their eyes: pleading... I couldn't save them... Couldn't save them...\"" });
 			
 			permanent_broken_morale_ar = [];
 			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
@@ -339,7 +334,7 @@ function scr_define_structs(){
 			
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"... The voices of my kin are calling to me!...\" {name} tears at her own face and hands with fingers like claws. \"... I am sorry... I must answer their call!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"... The voices of my kin are beckoning!...\" {name} tears at her own face and hands with fingers like claws. \"... I am sorry... I must answer their call!\"" });
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"\"Stay away from me!...\" {name} screams. \"... The transformation, it's unstable... I can't control it!\"" });
 		
 			permanent_broken_morale_ar = [];
@@ -483,8 +478,10 @@ function scr_define_structs(){
             //Base 'half-mechanical' resistences:
             
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, brandishing his myriad of weapons. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
+			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, brandishing his myriad of weapons. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
 			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"This flesh--it burns!\" {name} gouges his face, pulls locks from his hair. \"Let me be rid of it, once and for all!\"" });
+			//debug only:
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"COCK!\"" });
 			
 			permanent_broken_morale_ar = [];
 			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
@@ -975,9 +972,9 @@ function scr_define_structs(){
 			
 			scr_add_passive_ability(self,passive_abil_type.giant,"constructor event for transmogrified soldier char");
 			
-			scr_add_ability(self,item_type.pulse_rifle);
+			//scr_add_ability(self,item_type.pulse_rifle);
 			
-			/* //Exclude for now while testing overwatch:
+			//Exclude for now while testing overwatch:
 			
 			var ran_equip_int = irandom_range(1,6);
 			
@@ -1015,7 +1012,6 @@ function scr_define_structs(){
 				evasion += 2;
 				combat_ai_preference = enemy_combat_ai.melee;
 			}
-			*/
 		}
 
         else if char_type_enum == character.enemy_sodden_shambler {
@@ -1042,8 +1038,8 @@ function scr_define_structs(){
             spd = 0;
 			
 			//scr_add_ability(self,item_type.acid_cloud);
-			scr_add_ability(self,item_type.acid_spit);
-			//scr_add_ability(self,item_type.regurgitated_vomit);
+			//scr_add_ability(self,item_type.acid_spit);
+			scr_add_ability(self,item_type.regurgitated_vomit);
 		}
 
         else if char_type_enum == character.enemy_chittering_lurker {
@@ -1111,7 +1107,6 @@ function scr_define_structs(){
         dmg_min = 0;
         dmg_max = 0;
         requires_ammo_boolean = true;
-        accuracy_bonus = 0;
         max_range = 0; //If 0=melee only
 		
 		char_spawn_enum = -1; //Used with ability-type items that spawn other characters.
@@ -1334,8 +1329,7 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 			ability_cost_str = $"Spend {ability_point_cost} A.P.: clear the suppression status effect, and gain +{stat_boost_list[stat_boost.armor]} armor and +{stat_boost_list[stat_boost.evasion]} evasion for 3 turns. This ability does not stack.";
 		}
-
-        // 
+		
         else if item_enum == item_type.smoke_grenade {  // Cooper ability
             dmg_min = 0;
             dmg_max = 0;
@@ -1371,20 +1365,6 @@ function scr_define_structs(){
             max_range = 0;
             ability_point_cost = 3;
             ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF} infection points.";
-            non_attack_ability_boolean = true;
-            abil_passes_turn_boolean = true;
-            requires_ammo_boolean = false;
-			use_context = abil_use_context.both;
-			use_requires_target = true;
-		}
-		
-		else if item_enum == item_type.anti_anxiety_meds {  // Doctor ability
-            dmg_min = 0;
-            dmg_max = 0;
-            item_name = "ANTI-ANXIETY TABLETS";
-            max_range = 0;
-            ability_point_cost = 3;
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {ANTI_ANXIETY_SANITY_BUFF} sanity points.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
@@ -1686,8 +1666,8 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.acid_spit {
-            dmg_min = 4;
-            dmg_max = 8;
+            dmg_min = 4; //20; //4;
+            dmg_max = 8; //40; //8;
             item_name = "ACID BILE";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 2;
@@ -1695,15 +1675,15 @@ function scr_define_structs(){
             item_dmg_str = "melted";
             aoe_count = 3;
             can_overwatch_boolean = true;
-            poison_chance = 75;
+            poison_chance = 100; //75;
             infection_chance = 10;
             always_checks_status_effect_boolean = false;
-			dmg_type_enum = item_dmg_type.morale_only; //item_dmg_type.both;
+			dmg_type_enum = item_dmg_type.damage_only;
 			use_context = abil_use_context.combat_only;
 		}
 		else if item_enum == item_type.regurgitated_vomit {
-            dmg_min = 2;
-            dmg_max = 4;
+            dmg_min = 20; //2;
+            dmg_max = 40; //4;
             item_name = "UNDIGESTED VOMIT";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
             max_range = 2;
@@ -1761,15 +1741,15 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 		}
 		else if item_enum == item_type.terrifying_wail {
-			dmg_type_enum = item_dmg_type.morale_only;
-            dmg_min = 1;
-            dmg_max = 1;
+            dmg_min = 100;//1;
+            dmg_max = 100; //2;
             item_name = "TERRIFYING WAIL";
             equip_slot_list = [[equip_slot.rh,equip_slot.lh]]; //Indicates two-handed weapon
-            max_range = 5;
+            max_range = 4; //3
             item_verb = "screams with a";
             item_dmg_str = "stressed";
             aoe_count = -1;
+			dmg_type_enum = item_dmg_type.morale_only;
 			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.toxic_grenade_launcher {
@@ -1832,7 +1812,7 @@ function scr_define_structs(){
             dmg_max = 4;
             item_name = "MACHINE PISTOL";
             equip_slot_list = [equip_slot.rh,equip_slot.lh]; //Indicates either hand can equip
-            max_range = 2;
+            max_range = 3; //2;
             item_verb = "fires the";
             item_dmg_str = "shot";
             can_overwatch_boolean = true;
@@ -1876,6 +1856,19 @@ function scr_define_structs(){
 			use_context = abil_use_context.both;
 			use_requires_target = true;
 		}
+		else if item_enum == item_type.anti_anxiety_meds {  // Doctor ability
+            dmg_min = 0;
+            dmg_max = 0;
+            item_name = "ANTI-ANXIETY TABLETS";
+            max_range = 0;
+            ability_point_cost = 3;
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {ANTI_ANXIETY_SANITY_BUFF} sanity points.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+			use_context = abil_use_context.both;
+			use_requires_target = true;
+		}
         else if item_enum == item_type.regen_nanites {
             single_use_boolean = true;
             usable_boolean = true;
@@ -1883,6 +1876,16 @@ function scr_define_structs(){
             equippable_boolean = false;
 			use_context = abil_use_context.both;
 			use_requires_target = true;
+			requires_ammo_boolean = false;
+		}
+		else if item_enum == item_type.adrenal_pen {
+            single_use_boolean = true;
+            usable_boolean = true;
+            item_name = "ADRENAL PEN";
+            equippable_boolean = false;
+			use_context = abil_use_context.both;
+			use_requires_target = true;
+			requires_ammo_boolean = false;
 		}
         else if item_enum == item_type.kiras_noisy_game {
             single_use_boolean = false
@@ -1963,13 +1966,6 @@ function scr_define_structs(){
             stat_boost_list[stat_boost.fire_res] = 100;
 			stat_boost_list[stat_boost.spd] = -6;
 			use_context = abil_use_context.main_game_only;
-		}
-        else if item_enum == item_type.adrenal_pen {
-            single_use_boolean = true;
-            usable_boolean = true;
-            item_name = "ADRENAL PEN";
-            equippable_boolean = false;
-			use_context = abil_use_context.both;
 		}
         else if item_enum == item_type.dna_tester {
             single_use_boolean = false;
@@ -2250,7 +2246,7 @@ function scr_define_structs(){
 					"Klaxons blare, and an eerie red illumination seeps from the emergency lights in the floor. Rows of stasis pods have been arranged in this room, most of them damaged or inoperable. Those corpses who had sought refuge within them have met a truly ignoble end, asphyxiated in their sleep. You were one of the lucky few who managed to fight off hibernation and awaken--though only time will tell if your ultimate fate will be any different from their own. There's only one empty STASIS POD that still looks operational and inviting, gleaming pearl-white in the blood-hued gloom.\n",
                     "\nThe room itself has been badly damaged. Refuse and debris lay scattered about, along with piles of personal effects: whatever non-essential items the sleepers had hastily stripped from their bodies before clamboring inside the statis pods to seal their doom.\n",
                     "\nHull stresses and fractures have fissured the walls and ceiling, exposing pipes and electrical wires. One particularly damaged PIPE is rapidly venting a noxious white gas, caustic enough to make you sputter and gag. A nearby exposed service panel reveals two huge circular valves: a BRONZE VALVE and a STEEL VALVE.\n"
-				]
+				];
 				
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				

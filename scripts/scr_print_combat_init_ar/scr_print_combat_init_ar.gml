@@ -2,8 +2,7 @@
 
 function scr_print_combat_init_ar(){
 	
-	scr_add_str_to_dialogue_ar("\n");
-	scr_add_str_to_dialogue_ar($"This is the order of the intiative queue for round {global.cur_combat_round}:");
+	scr_add_str_to_dialogue_ar($"\nThis is the order of the intiative queue for round {global.cur_combat_round}:");
 	
 	var ar_len = array_length(global.combat_initiative_ar);
 	var char_struct_id;
@@ -21,4 +20,6 @@ function scr_print_combat_init_ar(){
 			scr_add_str_to_dialogue_ar($"{i}.) {char_struct_id.name}({char_struct_id.unique_id}){status_effects_str}");
 		}
 	}
+	
+	scr_add_str_to_dialogue_ar($"\nPress the ENTER key to view the combat rank positions and combat related commands again.");
 }

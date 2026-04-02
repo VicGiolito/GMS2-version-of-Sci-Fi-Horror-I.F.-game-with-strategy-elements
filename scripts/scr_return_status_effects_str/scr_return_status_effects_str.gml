@@ -51,14 +51,15 @@ function scr_return_status_effects_str(char_struct_id, print_active_title = true
 		}
 		if unconscious_bool {
 			status_effect_found = true;
-			var remaining_unconscious_duration = UNCONSCIOUS_DURATION - char_struct_id.unconscious_count;
+			var remaining_unconscious_duration = UNCONSCIOUS_DURATION - unconscious_count;
 			var plural_str = "";
 			if remaining_unconscious_duration > 1 plural_str = "s";
 			status_effects_str += $"Unconscious [{remaining_unconscious_duration} more turn{plural_str}] ";
 		}
 		
-		if char_struct_id.smoke_grenade_count > 0 {
-			status_effects_str += $"Smoke Grenade [{SMOKE_GRENADE_EVADE_BUFF} evasion] ";		
+		if smoke_grenade_count > 0 {
+			status_effect_found = true;	
+			status_effects_str += $"Smoke Grenade [+{SMOKE_GRENADE_EVADE_BUFF} evasion] ";		
 		}
 		
 		if inside_toxic_gas_boolean {
@@ -71,7 +72,7 @@ function scr_return_status_effects_str(char_struct_id, print_active_title = true
 		}
 		if healing_nanites_count > 0 {
 			status_effect_found = true;	
-			status_effects_str += $"Regenerating [+{REGEN_NANITES_HEAL_VAL} H.P. per turn.] ";
+			status_effects_str += $"Regenerating [+{REGEN_NANITES_HEAL_VAL} hit points per turn.] ";
 		}
 		if adrenal_pen_count > 0 {
 			status_effect_found = true;	
@@ -80,6 +81,11 @@ function scr_return_status_effects_str(char_struct_id, print_active_title = true
 		if suppressed_count > 0 {
 			status_effect_found = true;	
 			status_effects_str += $"Suppressed [can't move, -{SUPPRESSED_EVASION_DEBUFF} evasion, -{SUPPRESSED_SPEED_DEBUFF} speed.] ";
+		}
+		
+		if shield_bubble_count > 0 {
+			status_effect_found = true;	
+			status_effects_str += $"Personal Shield [+{PERSONAL_SHIELD_ARMOR_BUFF} armor, +{PERSONAL_SHIELD_EVASION_BUFF} evasion] ";	
 		}
 		
 		//We don't also need to know that the character is stunned if they are already cowering - it is implied.

@@ -28,6 +28,8 @@ function scr_return_nearest_target_rank_pos(cur_combat_rank_pos, cur_char_struct
 			for(var char_i = 0; char_i < nested_ar_len; char_i++) {
 			
 				char_struct_id = global.combat_rank_ar[iterating_down_index][char_i];
+				
+				if char_struct_id == cur_char_struct_id continue; //Don't bother checking yourself
 			
 				//Only check at all if the char has not died, fled, or is not unconscious... Stunned characters can be targeted for attack:
 				if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false && char_struct_id.unconscious_bool == false {
@@ -57,6 +59,8 @@ function scr_return_nearest_target_rank_pos(cur_combat_rank_pos, cur_char_struct
 			for(var char_i = 0; char_i < nested_ar_len; char_i++) {
 			
 				char_struct_id = global.combat_rank_ar[iterating_up_index][char_i];
+				
+				if char_struct_id == cur_char_struct_id continue; //Don't bother checking yourself
 			
 				//Only check at all if the char has not died, fled, or is not unconscious... Stunned characters can be targeted for attack:
 				if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false && char_struct_id.unconscious_bool == false  {

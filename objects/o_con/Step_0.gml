@@ -533,6 +533,7 @@ else if global.cur_game_state == game_state.init_combat {
 			//Our combat rank_ar and initiative_ar have been setup, it's time to head prep combat phase:
 			next_combat_game_state = game_state.combat_assign_pc_command;
 			global.cur_game_state = game_state.combat_paused;
+			
 			global.combat_prep_phase = true;
 			
 			global.cur_combat_char_index = 0;
@@ -606,7 +607,10 @@ else if global.cur_game_state == game_state.combat_paused && global.wait {
 			
 			if global.char_is_fleeing_bool == false && global.overwatch_mode_enabled == false {
 				
-				char_is_still_alive = scr_trigger_dot_effects(global.cur_combat_char);
+				//We don't trigger dot_effects when we first move into the combat_prep_phase:
+				if global.combat_prep_phase == false {
+					char_is_still_alive = scr_trigger_dot_effects(global.cur_combat_char);
+				}
 			}
 			
 			//Only allow execute action or pc_command if they not unconscious and not stunned;
@@ -686,9 +690,18 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 		
 		var multi_word_str_failed = false; //This bool merely indicates whether or not we should show the player an additional explanation message.
 		
+		#region We were looking at the combat initiative order - reset bool and show combat ranks instead:
+		
+		if global.just_view_combat_init_order == true {
+			global.just_view_combat_init_order = false; //Reset
+			scr_print_combat_ranks(global.cur_combat_char);
+		}
+		
+		#endregion
+		
 		#region Evade:
 		
-		if (player_input_str == "E" || player_input_str == "EVADE") && global.combat_prep_phase == false {
+		else if (player_input_str == "E" || player_input_str == "EVADE") && global.combat_prep_phase == false {
 			
 			valid_command = true;
 			immediately_move_to_next_char = true;
@@ -869,7 +882,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 		
 		else if (player_input_str == "V" || player_input_str == "VIEW") {
 			scr_print_combat_init_ar();
-			scr_print_combat_ranks(global.cur_combat_char);
+			global.just_view_combat_init_order = true;
 		}
 		
 		#endregion
@@ -1080,36 +1093,56 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 						
 												if applicable_char_found {
 													
-													if is_array(char_id.ability_ar) && array_length(char_id.ability_ar) > 0 {
+													//We'll iterate once through ability_ar, then again through inv_ar, if applicable:
+													var i_count = 0, ar_to_use;
+													repeat(2) {
+														//Define ar_to_use:
+														if i_count == 0 ar_to_use = char_id.ability_ar;
+														else if i_count == 1 ar_to_use = char_id.inv_ar;
+														
+														if is_array(ar_to_use) && array_length(ar_to_use) > 0 {
 													
-														var temp_wep_ar = [];
-														temp_wep_ar = scr_shuffle_ar(char_id.ability_ar);
+															var temp_wep_ar = [];
+															temp_wep_ar = scr_shuffle_ar(ar_to_use);
 							
-														for(var item_i = 0; item_i < array_length(temp_wep_ar); item_i++) {
+															for(var item_i = 0; item_i < array_length(temp_wep_ar); item_i++) {
 								
-															var item_enum = temp_wep_ar[item_i];
-															var item_struct_id = global.item_reference_table[item_enum];
+																var item_struct_or_enum = temp_wep_ar[item_i];
+																
+																if item_struct_or_enum == -1 continue; //This is just an empty inventory position.
+																
+																var item_struct_id;
+																
+																if is_struct(item_struct_or_enum) && item_struct_or_enum.struct_type_enum == struct_type.Item {
+																	item_struct_id = item_struct_or_enum;
+																}
+																else if !is_struct(item_struct_or_enum) {
+																	item_struct_id = global.item_reference_table[item_struct_or_enum];	
+																}
 														
-															//Skip invalid abilities - this will only apply to pc or neutral characters that have a treacherous count > 0:
-															if item_struct_id.use_context != abil_use_context.combat_only continue;
+																//Skip invalid abilities - this will only apply to pc or neutral characters that have a treacherous count > 0:
+																if item_struct_id.use_context != abil_use_context.combat_only continue;
 														
-															var item_range = item_struct_id.max_range;
+																var item_range = item_struct_id.max_range;
 								
-															var dist = abs(cur_char_rank-rank_i);
+																var dist = abs(cur_char_rank-rank_i);
 															
-															d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: the rank we are checking (rank_i) == {rank_i}, our cur rank we are checking from (cur_char_rank) == {cur_char_rank}, the char we are checking == {char_id.name}, the item_name == {item_struct_id.item_name}, its range == {item_struct_id.max_range}, and dist between the target and our self == {dist}.\n");
+																d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: the rank we are checking (rank_i) == {rank_i}, our cur rank we are checking from (cur_char_rank) == {cur_char_rank}, the char we are checking == {char_id.name}, the item_name == {item_struct_id.item_name}, its range == {item_struct_id.max_range}, and dist between the target and our self == {dist}.\n");
 															
-															if dist <= item_range {
+																if dist <= item_range {
 																
-																d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: char_id.name= {char_id.name}, this WAS A VALID OPPORTUNITY ATTACKER.\n");
+																	d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: char_id.name= {char_id.name}, this WAS A VALID OPPORTUNITY ATTACKER.\n");
 																
-																valid_attacker_found = true;
+																	valid_attacker_found = true;
 														
-																d($"\no_con step event: pc combat assign command: fleeing code: a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {char_id.chosen_weapon.item_name} with a range of: {char_id.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
+																	d($"\no_con step event: pc combat assign command: fleeing code: a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {char_id.chosen_weapon.item_name} with a range of: {char_id.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
 																
-																break;
+																	break;
+																}
 															}
 														}
+														if valid_attacker_found break;
+														i_count++;
 													}
 												}
 						
@@ -1265,8 +1298,10 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 					global.cur_combat_char.using_item_struct_id = item_struct_id;
 					global.cur_combat_char.using_item_index = index_int;
 					global.cur_game_state = game_state.use_target_item;
-					scr_reset_wait();
-					scr_print_pc_party(false, true);
+					
+					filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[global.cur_combat_char.cur_combat_rank], team_type.pc);
+					
+					scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
 				}
 				else if item_struct_id.usable_boolean == false {
 					multi_word_str_failed = true;
@@ -1573,7 +1608,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					//Move 'south':
 					else if attacker_id.char_team_enum == team_type.neutral && attacker_id.cur_combat_rank+1 < array_length(global.combat_rank_ar) 
 					&& attacker_id.suppressed_count <= 0 && scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank+1) == -1 {
-						attacker_id.combat_move_dir = -1;
+						attacker_id.combat_move_dir = 1;
 						attacker_id.enemy_ai_move_boolean = true;
 					}
 					
@@ -2279,12 +2314,16 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				}
 				else var total_attack_val = attacker_acc - defender_evasion;
 					
-				var ran_to_hit_val = irandom_range(MIN_COMBAT_RAN_NUM,MAX_COMBAT_RAN_NUM); //0-9
+				var ran_to_hit_val = irandom_range(MIN_COMBAT_RAN_NUM, MAX_COMBAT_RAN_NUM); //1-10
 					
 				attack_result_str += $"{attacker_id.name}({attacker_id.unique_id}) {attacker_id.chosen_weapon.item_verb} {attacker_id.chosen_weapon.item_name}.  Chance to hit: {attacker_acc} (accuracy) modified by {defender_evasion} (defender's evasion) = {total_attack_val}.{alternate_to_hit_str} Rolled: {ran_to_hit_val}.";
 				
 				//Reduce ammo, if applicable:
-				if attacker_id.char_team_enum != team_type.enemy { global.resources_ammo--; }
+				if (attacker_id.char_team_enum == team_type.pc || attacker_id.char_team_enum == team_type.neutral) &&
+				attacker_id.chosen_weapon.requires_ammo_boolean == true
+				{ 
+					global.resources_ammo--; 
+				}
 					
 				//Hit:
 				if total_attack_val >= ran_to_hit_val {
@@ -2308,7 +2347,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						defender_id.hp_cur -= total_dmg;
 						
 						var capitalized_str = scr_string_capitalize(defender_id.name);
-						attack_result_str += $"\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.**";	
+						attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.**";	
 					}
 					
 					//Calculate and apply morale damage:
@@ -2335,7 +2374,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 							}
 						
 							var capitalized_str = scr_string_capitalize(defender_id.name);
-							attack_result_str += $"\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} sanity damage!{immune_str}**";	
+							attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} sanity damage!{immune_str}**";	
 						}
 						
 					}
@@ -2716,9 +2755,10 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 										var valid_target_available = false;
 										
 										if global.combat_begun {
-											var filtered_char_ar = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[cur_char.cur_combat_rank], team_type.pc);
 											
-											if array_length(filtered_char_ar) > 0 {
+											filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[cur_char.cur_combat_rank], team_type.pc);
+											
+											if array_length(filtered_targets_ar_for_item_or_abil) > 0 {
 												valid_target_available = true;
 											}
 										}
@@ -2732,8 +2772,10 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 							
 											global.cur_game_state = game_state.use_target_item;
 							
-											if global.combat_begun == false scr_print_pc_party(false, true);
-											else scr_print_char_ar(filtered_char_ar, true);
+											if global.combat_begun == false { scr_print_pc_party(false, true); }
+											else {
+												scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
+											}
 										}
 										else {
 											scr_add_str_to_dialogue_ar("\nThere are no targets in your current rank that you can use that ability on, try again.", true);
@@ -2977,15 +3019,19 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 						var item_target_char_struct_id = cur_char.cur_room_id.pcs_in_room_ar[index_int];
 					}
 				}
+				//We were able to get to this screen, so we know there must be at least 1 valid target:
 				else if global.combat_begun {
-					//We were able to get to this screen, so we know there must be at least 1 valid target:
-					var filtered_char_ar = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[cur_char.cur_combat_rank],team_type.pc);
+					//Debug only:
+					d($"\n\no_con step event: game_state == use_target_item, we end up here if needed to target another char for an ability or item: in this case we accessed this game state from combat: filtered_targets_ar_for_item_or_abil looks like the following...\n\n");
+					for(var jj = 0; jj < array_length(filtered_targets_ar_for_item_or_abil); jj++) {
+						d($"\n.... In index {jj} of filtered_targets_ar_for_item_or_abil: {filtered_targets_ar_for_item_or_abil[jj].name}....\n");
+					}
 					
-					if index_int >= 0 && index_int < array_length(filtered_char_ar) {
+					if index_int >= 0 && index_int < array_length(filtered_targets_ar_for_item_or_abil) {
 						
 						valid_char_index = true;
 					
-						var item_target_char_struct_id = filtered_char_ar[index_int];	
+						var item_target_char_struct_id = filtered_targets_ar_for_item_or_abil[index_int];	
 					}
 				}
 			}
@@ -3187,16 +3233,22 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			var index_int = real(player_input_str);
 			
 			if index_int >= 0 && index_int < array_length(global.pc_char_ar) {
+				
 				//Changing pcs:
-				if !global.passing_item_boolean {
+				if global.passing_item_boolean == false {
 					
 					if global.pc_char_ar[index_int].unconscious_count <= 0 && global.pc_char_ar[index_int].unconscious_bool == false {
-					
+						
+						var prev_cur_char = global.acting_char_struct_id;
+						
+						//Actual change cur char:
 						global.acting_char_struct_id_index = index_int;
+						global.acting_char_struct_id = global.pc_char_ar[index_int];
+						
 						changed_cur_char = true;
 					}
 					else {
-						scr_add_str_to_dialogue_ar($"{global.pc_char_ar[index_int].name} is still unconscious, you can't assume control of them.")
+						scr_add_str_to_dialogue_ar($"{global.pc_char_ar[index_int].name} is still unconscious, you can't assume control of that character, try again.", true)
 					}
 				}
 			}	
@@ -3236,7 +3288,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		if changed_cur_char {
 			
 			//Print new room or just char reminder:
-			if scr_check_ar_for_val(prev_cur_char.cur_room_id.pcs_in_room_ar,global.acting_char_struct_id) == false {
+			if scr_check_ar_for_val(prev_cur_char.cur_room_id.pcs_in_room_ar, global.acting_char_struct_id) == false {
 				new_char_is_in_different_room = true;	
 			}
 			
@@ -3281,6 +3333,25 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			}
 			
 			global.cur_game_state = game_state.init_combat;
+		}
+		
+		#endregion
+		
+		#region 'D' or 'DROIDS' - change droid ownership:
+		
+		else if player_input_str == "D" || player_input_str == "DROID" || player_input_str == "DROIDS" {
+			
+			if is_array(global.acting_char_struct_id.cur_room_id.neutrals_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.neutrals_in_room_ar) > 0 {
+				
+				scr_print_char_ar(global.acting_char_struct_id.cur_room_id.neutrals_in_room_ar, use_case_for_print_char_ar.target_neutral_for_ownership_change);
+			
+				global.cur_game_state = game_state.change_neutral_ownership;
+				
+				global.choosing_neutral_char = true;
+			}
+			else {
+				scr_add_str_to_dialogue_ar("\nThere are no droids in this room, try again.", true);	
+			}
 		}
 		
 		#endregion
@@ -3508,9 +3579,10 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					global.acting_char_struct_id.using_item_index = index_int;
 					
 					if item_struct_id.use_requires_target == true {
+						
 						global.cur_game_state = game_state.use_target_item;
-						scr_reset_wait();
-						scr_print_pc_party(false, true);
+						
+						scr_print_char_ar(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar,use_case_for_print_char_ar.target_char_for_abil_or_item);
 					}
 					//Just use the item right away (it will be used on self):
 					else {
@@ -3701,6 +3773,131 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 	
 	#endregion	
 	
+}
+
+#endregion
+
+#region game_state == change_neutral_ownership:
+
+//Allows us to change the owner (who the neutral will follow) of a neutral:
+
+else if global.cur_game_state == game_state.change_neutral_ownership && global.wait {
+	
+	if keyboard_check_released(vk_enter) && global.wait {
+		
+		d($"o_con step event: game_state == change_neutral_ownership, enter key press detected...");
+		
+		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
+		global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str);
+		
+		//Format our string:
+		player_input_str = string(player_input_str);
+		player_input_str = string_upper(player_input_str);
+		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
+		
+		scr_reset_wait();
+		
+		//Logic for our string:
+		if player_input_str == "B" || player_input_str == "BACK" {
+			global.choosing_neutral_char = false; //reset
+			global.cur_game_state = game_state.main_game;
+			//Print cur char reminder:
+			scr_print_char_reminder(global.acting_char_struct_id);
+		}
+		
+		//Check for number keypress here, then all of the other restrictions:
+		else {
+			
+			var valid_index = false; //reset
+			
+			try {
+				var index_int = real(player_input_str);
+				
+				if global.choosing_neutral_char == true {
+					if index_int >= 0 && index_int < array_length(global.acting_char_struct_id.cur_room_id.neutrals_in_room_ar) { //We know this is an array because we checked it before we got here.
+						//Make sure this neutral isn't 'stationary': it can actually change owners:
+						if global.acting_char_struct_id.cur_room_id.neutrals_in_room_ar[index_int].stationary_neutral_bool == false {
+							
+							changing_neutral_id_owner = global.acting_char_struct_id.cur_room_id.neutrals_in_room_ar[index_int];
+							
+							//We know lobal.acting_char_struct_id.cur_room_id.pcs_in_room_ar is an array, otherwise we couldn't get here.
+							prev_follow_ar_of_neutral = scr_return_neutral_owner_id_or_ar(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar, changing_neutral_id_owner, true);
+							
+							if prev_follow_ar_of_neutral == -1 throw($"o_con step event: game_state == change_neutral_ownership: scr_return_neutral_owner_id_or_ar returned -1, and yet the neutral: {changing_neutral_id_owner.name} was not a stationary neutral, so it should belong in someone's neutrals_following_this_char_ar, so something went wrong.");
+							
+							global.choosing_neutral_char = false;
+							
+							valid_index = true;
+							
+							scr_print_char_ar(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar, use_case_for_print_char_ar.target_pc_for_new_neutral_follower);
+						}
+					}
+				}
+				
+				else if global.choosing_neutral_char == false {
+					if index_int >= 0 && index_int < array_length(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar) {
+						if global.acting_char_struct_id.cur_room_id.pcs_in_room_ar[index_int].unconscious_bool == false &&
+						global.acting_char_struct_id.cur_room_id.pcs_in_room_ar[index_int].unconscious_count <= 0 {
+							
+							new_neutral_owner_id = global.acting_char_struct_id.cur_room_id.pcs_in_room_ar[index_int];
+							
+							var ar_index = array_get_index(prev_follow_ar_of_neutral, changing_neutral_id_owner);
+							
+							if ar_index != -1 {
+								
+								array_delete(prev_follow_ar_of_neutral, ar_index, 1);
+								
+								if !is_array(new_neutral_owner_id.neutrals_following_this_char_ar) {
+									new_neutral_owner_id.neutrals_following_this_char_ar = [];	
+								}
+								
+								valid_index = true;
+								
+								array_push(new_neutral_owner_id.neutrals_following_this_char_ar, changing_neutral_id_owner);
+								
+								scr_add_str_to_dialogue_ar($"\nOwnership of the {changing_neutral_id_owner.name} has changed to {new_neutral_owner_id.name}. They will now follow their owner wherever they go.");
+								
+								global.cur_game_state = game_state.main_game;
+								
+								scr_print_char_reminder(global.acting_char_struct_id);
+							}
+						}
+						else {
+							scr_add_str_to_dialogue_ar($"\nThat character is unconscious and cannot assume control of the {changing_neutral_id_owner.name}, try again, or enter 'B' or 'BACKUP' to return to the main game.",true);	
+						}
+					}
+				}
+			}
+			catch(_exception) {
+				valid_index = false;	
+			}
+			
+			if valid_index == false {
+				scr_add_str_to_dialogue_ar("That is an invalid command, either try again or enter 'B' or 'BACKUP' to return to the previous screen.", true);	
+			}
+		}
+		
+		//Reset our player_input_str:
+		player_input_str = "";
+	}
+	
+	#region Accept input for player_input_str:
+
+	// Detect new character input
+	if (keyboard_lastchar != "") {
+	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left &&
+		keyboard_lastkey != vk_backspace {
+			player_input_str += keyboard_lastchar;
+			keyboard_lastchar = "";
+		}
+	}
+
+	// Handle backspace
+	if (keyboard_check_pressed(vk_backspace) && string_length(player_input_str) > 0) {
+	    player_input_str = string_copy(player_input_str, 1, string_length(player_input_str) - 1);
+	}
+
+	#endregion
 }
 
 #endregion

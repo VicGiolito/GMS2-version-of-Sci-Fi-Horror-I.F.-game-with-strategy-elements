@@ -265,3 +265,13 @@ global.overwatch_rank_ar = [];
 global.overwatch_attacker_index = -1;
 overwatch_attackers_ar = -1;
 scr_reset_global_overwatch_ar();
+
+global.choosing_neutral_char = false;
+
+changing_neutral_id_owner = -1;
+prev_follow_ar_of_neutral = -1;
+new_neutral_owner_id = -1;
+
+filtered_targets_ar_for_item_or_abil = -1;
+
+global.just_view_combat_init_order = false;

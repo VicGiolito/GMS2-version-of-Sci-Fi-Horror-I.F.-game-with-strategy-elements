@@ -10,7 +10,9 @@ function scr_filter_abil_ar_by_combat_only(arr){
 		for(var i = 0; i < ar_len; i++) {
 		
 			abil_enum = arr[i];
-		
+			
+			if abil_enum == -1 continue; //A -1 represents an empty position in the inv_array.
+			
 			if is_struct(abil_enum) == false {
 				item_struct_id = global.item_reference_table[abil_enum];
 				if item_struct_id.use_context == abil_use_context.combat_only {

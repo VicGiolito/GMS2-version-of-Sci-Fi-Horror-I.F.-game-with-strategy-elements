@@ -192,7 +192,7 @@ else if global.cur_game_state >= game_state.main_game {
 		//Status effects:
 		var status_effect_str = scr_return_status_effects_str(cur_char);
 		
-		if status_effect_str != "None" {
+		if status_effect_str != "" {
 			
 			//d($"o_con draw gui event: left window drawing stats code: global.left_window_width == {global.left_window_width}, global.left_win_w_percent == {global.left_win_w_percent}, global.left_window_text_offset_x * 2 == {global.left_window_text_offset_x * 2}");
 			

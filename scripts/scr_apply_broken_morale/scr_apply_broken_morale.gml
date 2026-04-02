@@ -31,7 +31,7 @@ function scr_apply_broken_morale(char_struct_id){
 			//Set ai to ranged_stationary
 			char_struct_id.combat_ai_preference = enemy_combat_ai.ranged_stationary; //choose(enemy_combat_ai.melee, enemy_combat_ai.ranged_coward);	
 		
-			immediate_dialogue_str = $"**{ran_broken_morale_struct.broken_morale_str}**\n";
+			immediate_dialogue_str = $"\n**{ran_broken_morale_struct.broken_morale_str}**\n";
 			
 			//Delete this position in their broken_morale_ar so we don't end up in a frozen game state if they continually become treacherous:
 			array_delete(char_struct_id.broken_morale_ar,ran_index,1);
@@ -47,7 +47,7 @@ function scr_apply_broken_morale(char_struct_id){
 		
 			char_struct_id.combat_ai_preference = enemy_combat_ai.melee;
 		
-			immediate_dialogue_str = $"**{ran_broken_morale_struct.broken_morale_str}**\n";
+			immediate_dialogue_str = $"\n**{ran_broken_morale_struct.broken_morale_str}**\n";
 		}
 	
 		//Fleeing:
@@ -104,7 +104,7 @@ function scr_apply_broken_morale(char_struct_id){
 			//Since cowering behaves just like stun, cancel dodge, overwatch, cooper's smoke bomb, things like that, etc.:
 			if char_struct_id.evading_boolean == true {
 				char_struct_id.evading_boolean = false;
-				char_struct_id.evasion -= EVADE_BONUS;
+				char_struct_id.evasion -= EVADING_BUFF;
 			}
 			if char_struct_id.smoke_grenade_count > 0 {
 				char_struct_id.smoke_grenade_count = 0;
