@@ -8,6 +8,9 @@ note that things like burning, poisoned, etc., do NOT get reset.
 
 function scr_reset_status_effects_from_fleeing(char_struct_id){
 	
+	//If this char was hiding, it's been canceled now that they've run:
+	char_struct_id.char_hiding_in_room = false;
+	
 	if char_struct_id.cowering_bool == true {
 		char_struct_id.cowering_bool = false;
 		char_struct_id.stun_count = 0;

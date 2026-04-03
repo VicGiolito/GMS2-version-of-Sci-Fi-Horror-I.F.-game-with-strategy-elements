@@ -24,12 +24,14 @@ function scr_post_combat_reset_vars(){
 				
 				char_id = global_ar[i];
 				
+				char_id.char_hiding_in_room = false; //Is only set to true when chars successfully hide in a room.
+				
 				if char_id.has_fled_combat_bool == true { char_id.has_fled_combat_bool = false; }
 				
 				char_id.char_fleeing_from_broken_morale = false;
 				
 				//Reset their broken_morale_ar:
-				if is_array(char_id.broken_morale_ar) {
+				if is_array(char_id.permanent_broken_morale_ar) && array_length(char_id.permanent_broken_morale_ar) > 0 {
 					char_id.broken_morale_ar = -1;
 					char_id.broken_morale_ar = [];
 					array_copy(char_id.broken_morale_ar,0,char_id.permanent_broken_morale_ar, 0, array_length(char_id.permanent_broken_morale_ar) );

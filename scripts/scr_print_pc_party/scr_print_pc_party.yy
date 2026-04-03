@@ -5,7 +5,7 @@
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Dialogue Window",
-    "path": "folders/Scripts/Dialogue Window.yy",
+    "name": "Print messages",
+    "path": "folders/Scripts/Print messages.yy",
   },
 }

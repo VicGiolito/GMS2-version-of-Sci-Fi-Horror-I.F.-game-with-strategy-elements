@@ -69,9 +69,8 @@ function scr_trigger_dot_effects(char_struct_id){
 		
 		//Show cowering string:
 		if char_struct_id.cowering_bool == true {
-			var broken_morale_status_effect_struct = scr_return_broken_status_effect_struct(char_struct_id, broken_morale_status_effects.cowering);
 			
-			dot_result_str +=$"**{broken_morale_status_effect_struct.broken_morale_str}**\n\n**{char_struct_id.name} is cowering!**\n";
+			dot_result_str +=$"**{char_struct_id.current_broken_morale_str}**\n\n**{char_struct_id.name} is cowering!**\n";
 		}
 		
 		else dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) is stunned, reeling in pain...**\n";
@@ -408,7 +407,7 @@ function scr_trigger_dot_effects(char_struct_id){
 																
 										valid_attacker_found = true;
 														
-										d($"\nscr_trigger_dot_effects(): a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {char_id.chosen_weapon.item_name} with a range of: {char_id.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
+										d($"\nscr_trigger_dot_effects(): a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {item_struct_id.item_name} with a range of: {item_struct_id.max_range}; the dist between this char and the fleeing char was: {dist}.");
 																
 										break;
 									}

@@ -46,6 +46,8 @@ function scr_define_macros_and_enums(){
 		choose_door_dir,
 		choose_pc_abil,
 		change_neutral_ownership,
+		attempting_hide,
+		add_hidden_chars_to_combat,
 		
 		combat_paused, 
 		combat_assign_pc_command,
@@ -447,7 +449,18 @@ function scr_define_macros_and_enums(){
 	#macro SUPPRESSED_SPEED_DEBUFF 6
 	#macro SUPPRESS_DURATION 2
 	#macro AVERAGE_EVASION_SCORE 0
-	#macro AVERAGE_ACCURACY_SCORE 7
+	
+	#macro AVG_STEALTH_VAL 4
+	#macro AVG_HIDE_DIFFICULTY_VAL 3
+	#macro EASY_HIDE_DIFFICULTY_VAL 5
+	#macro HARD_HIDE_DIFFICULTY_VAL 1
+	/*
+	hide_difficulty = 3 → average room (70% for a stealth-4 character)
+	hide_difficulty = 5 → easy room (lots of cover, dark, etc.) — 90% chance
+	hide_difficulty = 1 → hard room (open, well-lit, etc.) — 50% chance
+	*/
+	
+	
 	#macro BASE_MAX_INFECTION 8
 	#macro MAX_RAN_SPD_VAL 6
 	#macro POISON_PERCENT_VAL .2
@@ -470,6 +483,8 @@ function scr_define_macros_and_enums(){
 	
 	#macro CRAGOS_ACC_DEBUFF 2
 	#macro CRAGOS_EVASION_DEBUFF 2
+	
+	#macro ENEMY_HIDE_DIFFICULTY_PERCENT_VAL 0.5
 	
 	#macro GIANT_MELEE_DMG_BUFF 3
 	#macro AVERAGE_CHAR_SPEED 3

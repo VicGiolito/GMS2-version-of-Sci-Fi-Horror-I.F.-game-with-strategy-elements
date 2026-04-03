@@ -15,6 +15,21 @@ function scr_apply_broken_morale(char_struct_id){
 		var ran_broken_morale_struct = char_struct_id.broken_morale_ar[ran_index];
 		
 		var ran_broken_morale_status_effect_enum = ran_broken_morale_struct.broken_morale_status_effect_enum;
+		
+		//Delete this position in their broken_morale_ar so we don't end up in a frozen game state if they continually become treacherous;
+		//this also ensures that (eventually), all chars will just flee if their morale is broken enough times, even those that don't
+		//normally flee:
+		if ran_broken_morale_status_effect_enum != broken_morale_status_effects.fleeing {
+			array_delete(char_struct_id.broken_morale_ar,ran_index,1);
+		}
+		
+		//If their broken_morale_ar has become empty, supply a 'fleeing' status effect with a generic fleeing message:
+		if array_length(char_struct_id.broken_morale_ar) <= 0 {
+			array_push(char_struct_id.broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"{char_struct_id.name} panics and flees from the room!" })	
+		}
+		
+		//Assign our current_broken_morale_str: this is currently only used for displaying cowering message in scr_trigger_dot_effects()
+		char_struct_id.current_broken_morale_str = ran_broken_morale_struct.broken_morale_str;
 	
 		var immediate_dialogue_str = "";
 	
@@ -32,9 +47,6 @@ function scr_apply_broken_morale(char_struct_id){
 			char_struct_id.combat_ai_preference = enemy_combat_ai.ranged_stationary; //choose(enemy_combat_ai.melee, enemy_combat_ai.ranged_coward);	
 		
 			immediate_dialogue_str = $"\n**{ran_broken_morale_struct.broken_morale_str}**\n";
-			
-			//Delete this position in their broken_morale_ar so we don't end up in a frozen game state if they continually become treacherous:
-			array_delete(char_struct_id.broken_morale_ar,ran_index,1);
 		}
 	
 		//Berserk:

@@ -525,22 +525,51 @@ else if global.cur_game_state == game_state.init_combat {
 	
 		//Combat is warranted - go to pause, then assign pc command (combat prep phase)
 		else if combat_begun {
-			//Define our first g.cur_combat_char as just the first pc, just for the purposes of the prep combat phase:
-			global.cur_combat_char = global.combat_rank_ar[rank_pos.pc_far][0];
-			next_combat_char = global.cur_combat_char;
-		
-			d($"scr_check_combat_start returned true.");
-			//Our combat rank_ar and initiative_ar have been setup, it's time to head prep combat phase:
-			next_combat_game_state = game_state.combat_assign_pc_command;
-			global.cur_game_state = game_state.combat_paused;
 			
-			global.combat_prep_phase = true;
+			var ar_len = array_length(global.combat_initiative_ar);
+			hidden_chars_in_room_ar = -1;
+			hidden_chars_in_room_ar = []; //reset
 			
-			global.cur_combat_char_index = 0;
-			scr_add_str_to_dialogue_ar("\nPress any key to enter the combat preparation phase.\n");
+			var combat_char_id;
+			for(var i = 0; i < ar_len; i++) {
+				
+				combat_char_id = global.combat_initiative_ar[i];
+				
+				if combat_char_id.char_team_enum == team_type.pc && combat_char_id.char_hiding_in_room == true {
+					array_push(hidden_chars_in_room_ar, combat_char_id);
+				}
+			}
 			
-			//Center our cam (eventually pressing enter will give us a slow zoom before transitioning into the combat screen):
-			scr_center_map_window(global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y,global.map_cam,"\n\no_con step event: game_state == init_combat: combat begun == true: centering on the first pc in this group...")
+			if array_length(hidden_chars_in_room_ar) > 0 {
+				
+				var temp_ar = [];
+				
+				for(var i = 0; i < array_length(global.combat_initiative_ar); i++) {
+					
+					combat_char_id = global.combat_initiative_ar[i];
+				
+					if combat_char_id.char_team_enum == team_type.pc && combat_char_id.char_hiding_in_room == false {
+						array_push(temp_ar, combat_char_id);
+					}
+				}
+				
+				global.combat_initiative_ar = temp_ar;
+				
+				global.cur_game_state = game_state.add_hidden_chars_to_combat;
+				
+				scr_reset_wait();
+				
+				scr_add_str_to_dialogue_ar("\nThe following characters are involved in this combat:");
+				scr_print_combat_ranks(-1, true);
+				scr_add_str_to_dialogue_ar("\nThe following characters are hidden in the room, and do not necessarily need to join the combat:");
+				scr_print_hidden_chars_ar();
+				scr_add_str_to_dialogue_ar("\nEnter the number for the corresponding hidden character(s) that you want to add to this combat, if any. Enter 'C' or 'CONTINUE' when finished.");
+			}
+			
+			else {
+				
+				scr_enter_combat_final_step();
+			}
 		}
 		else {
 			throw("o_con step event: game_state == init_combat: scr_check_combat_start did not return true or false, something went wrong.");
@@ -1122,7 +1151,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 														
 																//Skip invalid abilities - this will only apply to pc or neutral characters that have a treacherous count > 0:
 																if item_struct_id.use_context != abil_use_context.combat_only continue;
-														
+																
 																var item_range = item_struct_id.max_range;
 								
 																var dist = abs(cur_char_rank-rank_i);
@@ -1130,12 +1159,12 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 																d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: the rank we are checking (rank_i) == {rank_i}, our cur rank we are checking from (cur_char_rank) == {cur_char_rank}, the char we are checking == {char_id.name}, the item_name == {item_struct_id.item_name}, its range == {item_struct_id.max_range}, and dist between the target and our self == {dist}.\n");
 															
 																if dist <= item_range {
-																
+																	
 																	d($"\no_con step event: game_state combat_assign_pc_command: 'run' command used: fleeing code: char_id.name= {char_id.name}, this WAS A VALID OPPORTUNITY ATTACKER.\n");
 																
 																	valid_attacker_found = true;
 														
-																	d($"\no_con step event: pc combat assign command: fleeing code: a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {char_id.chosen_weapon.item_name} with a range of: {char_id.chosen_weapon.max_range}; the dist between this char and the fleeing char was: {dist}.");
+																	d($"\no_con step event: pc combat assign command: fleeing code: a valid opportunity-of-attack char was found, it is: {char_id.name}, using a weapon: {item_struct_id.item_name} with a range of: {item_struct_id.max_range}; the dist between this char and the fleeing char was: {dist}.");
 																
 																	break;
 																}
@@ -3304,6 +3333,47 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		
 		#endregion
 		
+		#region Attempt 'H'IDE:
+		
+		else if player_input_str == "H" || player_input_str == "HIDE" {
+			
+			if global.acting_char_struct_id.char_hiding_in_room == false {
+			
+				if global.acting_char_struct_id.move_points_cur - 1 >= 0 {
+				
+					var neutrals_are_following_char = false;
+					if is_array(global.acting_char_struct_id.neutrals_following_this_char_ar) && array_length(global.acting_char_struct_id.neutrals_following_this_char_ar) > 0 {
+						neutrals_are_following_char = true;	
+					}
+				
+					if !neutrals_are_following_char {
+						var not_giant = false;
+						if is_array(global.acting_char_struct_id.passive_abil_ar) && array_length(global.acting_char_struct_id.passive_abil_ar) {
+							not_giant = scr_return_passive_enum_in_ar(global.acting_char_struct_id.passive_abil_ar,passive_abil_type.giant);
+						}
+						if !not_giant {
+							global.cur_game_state = game_state.attempting_hide;
+							scr_print_hide_attempt(global.acting_char_struct_id)
+						}
+						else {
+							scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} is of giant size and is unable to hide, try again.", true);
+						}
+					}
+					else {
+						scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} is unable to hide while being followed by allied droids, try again.", true);	
+					}
+				}
+				else {
+					scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} does not have enough move points to attempt to hide, try again.", true);	
+				}
+			}
+			else {
+				scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} is already hiding in this room, try again.", true);	
+			}
+		}
+		
+		#endregion
+		
 		#region End turn:
 		
 		else if player_input_str == "END" {
@@ -3463,7 +3533,10 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			if valid_direction {
 				
 				if global.acting_char_struct_id.move_points_cur > 0 {
-				
+					
+					//If this char was hiding, it's been canceled now that they've moved:
+					global.acting_char_struct_id.char_hiding_in_room = false;
+					
 					//Reduce movepoints:
 					global.acting_char_struct_id.move_points_cur -= 1;
 					
@@ -3901,3 +3974,168 @@ else if global.cur_game_state == game_state.change_neutral_ownership && global.w
 }
 
 #endregion
+
+#region game_state == attempting_hide:
+
+//Simply provides us with a message describing our chance to hide, and a Yes or No response
+
+else if global.cur_game_state == game_state.attempting_hide && global.wait {
+	
+	if keyboard_check_released(vk_enter) && global.wait {
+		
+		d($"o_con step event: game_state == attempting_hide, enter key press detected...");
+		
+		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
+		global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str);
+		
+		//Format our string:
+		player_input_str = string(player_input_str);
+		player_input_str = string_upper(player_input_str);
+		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
+		
+		scr_reset_wait();
+		
+		//Logic for our string:
+		if player_input_str == "N" || player_input_str == "NO" {
+			global.cur_game_state = game_state.main_game;
+			//Print cur char reminder:
+			scr_print_char_reminder(global.acting_char_struct_id);
+		}
+		
+		else if player_input_str == "Y" || player_input_str == "YES" {
+			
+			global.acting_char_struct_id.move_points_cur -= 1;
+			
+			var successful_hide = scr_check_hide_skill_test(global.acting_char_struct_id);
+			
+			if successful_hide {
+				global.acting_char_struct_id.char_hiding_in_room = true;
+				scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} has successfully hidden in this room, they will not automatically trigger combat with enemies in this room during the start of the next turn.");
+				global.cur_game_state = game_state.main_game;
+				scr_print_char_reminder(global.acting_char_struct_id);
+			}
+			else {
+				scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} was unable to hide in this room, either they were spotted by enemies or could not find a suitable hiding spot.");
+				global.cur_game_state = game_state.main_game;
+				scr_print_char_reminder(global.acting_char_struct_id);	
+			}
+		}
+		
+		//Reset our player_input_str:
+		player_input_str = "";
+	}
+	
+	#region Accept input for player_input_str:
+
+	// Detect new character input
+	if (keyboard_lastchar != "") {
+	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left &&
+		keyboard_lastkey != vk_backspace {
+			player_input_str += keyboard_lastchar;
+			keyboard_lastchar = "";
+		}
+	}
+
+	// Handle backspace
+	if (keyboard_check_pressed(vk_backspace) && string_length(player_input_str) > 0) {
+	    player_input_str = string_copy(player_input_str, 1, string_length(player_input_str) - 1);
+	}
+
+	#endregion
+}
+
+#endregion
+
+#region game_state == add_hidden_chars_to_combat:
+
+//From here we add (or not) hidden characters to the global.combat_init_ar so they can participate in the current combat in their room.
+
+else if global.cur_game_state == game_state.add_hidden_chars_to_combat && global.wait {
+	
+	if keyboard_check_released(vk_enter) && global.wait {
+		
+		d($"o_con step event: game_state == add_hidden_chars_to_combat, enter key press detected...");
+		
+		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
+		global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str);
+		
+		//Format our string:
+		player_input_str = string(player_input_str);
+		player_input_str = string_upper(player_input_str);
+		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
+		
+		scr_reset_wait();
+		
+		//Logic for our string:
+		if player_input_str == "C" || player_input_str == "CONTINUE" {
+			
+			scr_enter_combat_final_step();
+		}
+		
+		//Check for number keypress here, then all of the other restrictions:
+		else {
+			
+			var valid_index = false; //reset
+			
+			try {
+				var index_int = real(player_input_str);
+				
+				if index_int >= 0 && index_int < array_length(hidden_chars_in_room_ar) { //We know this is an array because we checked it before we got here.
+					//Add back to g.combat_init, and add to rank ar:
+					var hidden_char_id = hidden_chars_in_room_ar[index_int];
+					
+					array_push(global.combat_initiative_ar, hidden_char_id);
+					array_push(global.combat_rank_ar[rank_pos.pc_far], hidden_char_id);
+					
+					hidden_char_id.participated_in_new_turn_battle = true;
+					hidden_char_id.char_hiding_in_room = false;
+					
+					array_delete(hidden_chars_in_room_ar, index_int,1);
+					
+					scr_add_str_to_dialogue_ar($"\n{hidden_char_id.name} will come out of hiding to join the combat.");
+					
+					if array_length(hidden_chars_in_room_ar) <= 0 {
+						scr_enter_combat_final_step();
+					}
+					else {
+						scr_add_str_to_dialogue_ar($"\nThe following characters are still hidden in this room:");
+						scr_print_hidden_chars_ar();
+						scr_add_str_to_dialogue_ar("\nEnter the number for the corresponding hidden character(s) that you want to add to this combat, if any. Enter 'C' or 'CONTINUE' when finished.");
+					}
+				}
+			}
+			catch(_exception) {
+				valid_index = false;	
+			}
+			
+			if valid_index == false {
+				scr_add_str_to_dialogue_ar("That is an invalid command, either enter the corresponding number of the hidden character that you want to add to combat, or enter 'C' or 'CONTINUE' to continue to combat.", true);	
+			}
+		}
+		
+		//Reset our player_input_str:
+		player_input_str = "";
+	}
+	
+	#region Accept input for player_input_str:
+
+	// Detect new character input
+	if (keyboard_lastchar != "") {
+	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left &&
+		keyboard_lastkey != vk_backspace {
+			player_input_str += keyboard_lastchar;
+			keyboard_lastchar = "";
+		}
+	}
+
+	// Handle backspace
+	if (keyboard_check_pressed(vk_backspace) && string_length(player_input_str) > 0) {
+	    player_input_str = string_copy(player_input_str, 1, string_length(player_input_str) - 1);
+	}
+
+	#endregion
+}
+
+#endregion
+
+

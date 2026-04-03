@@ -1,11 +1,11 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_print_char_ar",
+  "name": "scr_enter_combat_final_step",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Print messages",
-    "path": "folders/Scripts/Print messages.yy",
+    "name": "Combat and Enemies",
+    "path": "folders/Scripts/Combat and Enemies.yy",
   },
 }

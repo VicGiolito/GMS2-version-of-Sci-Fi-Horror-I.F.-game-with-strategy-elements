@@ -1,8 +1,6 @@
 
 /* Fill our corresponding location grid with enums from a csv file
 
-
-
 */
 
 function scr_build_map_from_csv_file(location_enum){

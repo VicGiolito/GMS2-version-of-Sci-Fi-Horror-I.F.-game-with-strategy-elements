@@ -10,13 +10,13 @@ function scr_setup_char_init_gear_and_abils(){
 		
 		pc_char_enum = pc_char_struct.char_type_enum;
 		
-		//Debug: everyone gets a sniper rifle and a concussion grenade launcher:
-		var item_id = new global.Item(item_type.assault_rifle);
-		scr_add_item_to_inv(pc_char_struct,item_id,true);
+		//Debug: everyone gets these
+		//var item_id = new global.Item(item_type.assault_rifle);
+		//scr_add_item_to_inv(pc_char_struct,item_id,true);
 		var item_id = new global.Item(item_type.sniper_rifle);
 		scr_add_item_to_inv(pc_char_struct,item_id,true);
-		var item_id = new global.Item(item_type.pulse_rifle);
-		scr_add_item_to_inv(pc_char_struct,item_id,true);
+		//var item_id = new global.Item(item_type.pulse_rifle);
+		//scr_add_item_to_inv(pc_char_struct,item_id,true);
 		
 		//var item_id = new global.Item(item_type.concussion_grenade_launcher);
 		//scr_add_item_to_inv(pc_char_struct,item_id,true);
@@ -93,13 +93,11 @@ function scr_setup_char_init_gear_and_abils(){
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.machine_pistol);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
-			var item_id = new global.Item(item_type.police_truncheon);
-			scr_add_item_to_inv(pc_char_struct,item_id,true);
+			//var item_id = new global.Item(item_type.police_truncheon);
+			//scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.shotgun);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 			var item_id = new global.Item(item_type.shield_riot);
-			scr_add_item_to_inv(pc_char_struct,item_id,true);
-			var item_id = new global.Item(item_type.suit_security_vest);
 			scr_add_item_to_inv(pc_char_struct,item_id,true);
 		}
 	}

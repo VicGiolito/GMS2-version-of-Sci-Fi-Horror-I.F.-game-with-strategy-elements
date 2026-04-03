@@ -28,6 +28,10 @@ function scr_define_structs(){
 		
 		origin_team = team_enum; //Keeps track of what this char's original team was after they've gone berserk or treacherous.
 		
+		char_hiding_in_room = false;
+		
+		current_broken_morale_str = "undefined";
+		
 		stationary_neutral_bool = false; //These neutrals don't ever from a room once they are placed there: such as security_camera and light_sentry_drone.
 		
 		broken_morale_ar = -1; //Can be altered during course of combat
@@ -58,7 +62,7 @@ function scr_define_structs(){
         intelligence = 0;
         wisdom = 0;
         dexterity = 0;
-        accuracy = AVERAGE_ACCURACY_SCORE;
+        accuracy = AVG_ACC_VAL;
         stealth = 0; //When you consider that rooms add or subtract to this value based upon their cover amount, the average here can be lower than 7
         spd = AVERAGE_CHAR_SPEED; //9 is current max, so a char with with 9 base spd would have to roll a 0, and a character with a base spd of 0 would have to roll a 9 to beat them.
 
@@ -245,13 +249,13 @@ function scr_define_structs(){
                 $"'I've still got a few debts left to pay,' {nick_name} grumbles. He grins with a mouth full of jagged teeth, cracking his knuckles. 'And a few skulls left to split...'"
             ];
 
-            accuracy = AVERAGE_ACCURACY_SCORE-CRAGOS_ACC_DEBUFF; //Worse than average accuracy, only hits about 50% of the time, on average
+            accuracy = AVG_ACC_VAL-CRAGOS_ACC_DEBUFF; //Worse than average accuracy, only hits about 50% of the time, on average
             evasion = AVERAGE_EVASION_SCORE-CRAGOS_EVASION_DEBUFF; //Worse than average evasion
 			
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"{name} roars: \"Spit on me? Sneer at me? Lay hands on me? If you truly think me a monster--THEN LET ME SHOW YOU WHAT I CAN DO!\"" });
-			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"{name} rants and raves: \"Ceaseless toil and torment! Will the pain never end?! RAGE my constant companion! RAGE my only friend!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"{name} rants and raves: \"Ceaseless toil and torment! Will the pain never end?! RAGE my constant companion! RAGE my only friend!\"" });
 			
 			permanent_broken_morale_ar = [];
 			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
@@ -260,8 +264,8 @@ function scr_define_structs(){
 			scr_add_passive_ability(self,passive_abil_type.healing_factor,"constructor event");
 			scr_add_passive_ability(self,passive_abil_type.thick_hide,"constructor event");
 			
-			//scr_add_ability(self,item_type.headbutt);
-			//scr_add_ability(self,item_type.feral_bite);
+			scr_add_ability(self,item_type.headbutt);
+			scr_add_ability(self,item_type.feral_bite);
 		}
 
         else if char_type_enum == character.doctor {
@@ -280,7 +284,7 @@ function scr_define_structs(){
             security = 0;
             science = 5;
             scavenging = 0;
-            stealth = 5;
+            stealth = AVG_STEALTH_VAL;
 
             strength = 0;
             intelligence = 8;
@@ -294,7 +298,7 @@ function scr_define_structs(){
 			//Define broken_morale_ar:
 			broken_morale_ar = [];
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"... I'm sorry!...\" {name} mutters, before turning to flee. \"I can't... I can't!...\"" });
-			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} clutches her knees to her chest, whispering: \"... Their hands, outstretched... Their eyes: pleading... I couldn't save them... Couldn't save them...\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"{name} clutches her knees to her chest, whispering: \"... Their hands, outstretched... Their eyes: pleading... I couldn't save them... Couldn't save them...\"" });
 			
 			permanent_broken_morale_ar = [];
 			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
@@ -357,7 +361,7 @@ function scr_define_structs(){
             security = 0;
             science = 2;
             scavenging = 0;
-            stealth = 4;
+            stealth = AVG_STEALTH_VAL;
 
             strength = 2;
             intelligence = 6;
@@ -389,14 +393,13 @@ function scr_define_structs(){
             security = 2;
             science = 2;
             scavenging = 5;
-            stealth = 7;
+            stealth = AVG_STEALTH_VAL+1;
 
             strength = 2;
             intelligence = 4;
             wisdom = 4;
             dexterity = 2;
             spd = AVERAGE_CHAR_SPEED+1;
-			
 		}
 
         else if char_type_enum == character.mechanician {
@@ -413,7 +416,7 @@ function scr_define_structs(){
             security = 1;
             science = 2;
             scavenging = 1;
-            stealth = 5;
+            stealth = AVG_STEALTH_VAL;
 			
 			courage = AVG_COURAGE_VAL;
 
@@ -422,14 +425,6 @@ function scr_define_structs(){
             wisdom = 7;
             dexterity = 3;
             spd = AVERAGE_CHAR_SPEED;
-            //Base 'half-mechanical' resistences
-            res_fire = 50;
-            res_vacuum = 50;
-            res_gas = 50;
-            res_electric = -50;
-            char_max_infection = BASE_MAX_INFECTION + 4;
-            res_infect = 50;
-            res_poison = 25;
 
             subjective_pronoun = "she";
             possessive_pronoun = "her";
@@ -466,7 +461,7 @@ function scr_define_structs(){
             security = 8;
             science = 1;
             scavenging = 1;
-            stealth = 4;
+            stealth = AVG_STEALTH_VAL-2;
 
             strength = 8;
             intelligence = 3;
@@ -475,13 +470,12 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED+1;
 
             armor = 0; //Is increaed from from passive, as are his resistences.
-            //Base 'half-mechanical' resistences:
             
 			broken_morale_ar = [];
-			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, brandishing his myriad of weapons. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
-			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"This flesh--it burns!\" {name} gouges his face, pulls locks from his hair. \"Let me be rid of it, once and for all!\"" });
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, a myriad of weapons emerging from his body. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"This flesh--it burns!\" {name} gouges his face, pulls locks from his hair. \"Let me be rid of it, once and for all!\"" });
 			//debug only:
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"COCK!\"" });
+				//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"COCK!\"" });
 			
 			permanent_broken_morale_ar = [];
 			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
@@ -512,7 +506,7 @@ function scr_define_structs(){
             security = 7;
             science = 0;
             scavenging = 2;
-            stealth = 3;
+            stealth = AVG_STEALTH_VAL-2;
 
             strength = 7;
             intelligence = 1;
@@ -547,7 +541,7 @@ function scr_define_structs(){
             security = 0;
             science = 9;
             scavenging = 1;
-            stealth = 4;
+            stealth = AVG_STEALTH_VAL;
 
             strength = 0;
             intelligence = 9;
@@ -576,7 +570,7 @@ function scr_define_structs(){
             engineering = 2;
             security = 6;
             science = 2;
-            scavenging = 4;
+            scavenging = AVG_STEALTH_VAL;
             stealth = 8;
             spd = 6;
 
@@ -606,7 +600,7 @@ function scr_define_structs(){
             security = 6;
             science = 6;
             scavenging = 0;
-            stealth = 4;
+            stealth = AVG_STEALTH_VAL+1;
 
             strength = 9;
             intelligence = 4;
@@ -635,7 +629,7 @@ function scr_define_structs(){
             security = 0;
             science = 3;
             scavenging = 3;
-            stealth = 6;
+            stealth = AVG_STEALTH_VAL+1;
 
             strength = 1;
             intelligence = 3;
@@ -670,7 +664,7 @@ function scr_define_structs(){
             security = 0;
             science = 1;
             scavenging = 5;
-            stealth = 10;
+            stealth = AVG_STEALTH_VAL+3;
 
             strength = 0;
             intelligence = 2;
@@ -709,7 +703,7 @@ function scr_define_structs(){
             security = 1;
             science = 1;
             scavenging = 3;
-            stealth = 6;
+            stealth = AVG_STEALTH_VAL+1;
 
             strength = 3;
             intelligence = 2;
@@ -1118,7 +1112,6 @@ function scr_define_structs(){
        
         use_requires_target = false; //For items or abilities that are 'used', usually destroyed after, and require a target- such as the medkit, adrenal pen, healing nanites, etc.
         abil_passes_turn_boolean = false; //And when I say 'passes turn', I mean using it triggers advance_cur_combat_char being called after using it, such as cooper's smoke grenade.
-		use_script  = -1; //For items or abilities that are 'used'; not implemented.
 		
         is_shield_boolean = false; //Currently only used in scr_check_valid_item_equip()
         can_overwatch_boolean = false;
@@ -2095,6 +2088,8 @@ function scr_define_structs(){
 		struct_type_enum = struct_type.Room;
 		
 		scavenge_ar = -1; //Is used as an array; anything at or beyond *.total_resources is considered an item.
+		
+		room_hide_difficulty_val = AVG_HIDE_DIFFICULTY_VAL;
 		
 		powered_boolean = false;
 		

@@ -21,13 +21,17 @@ function scr_check_combat_start(){
 	temp_shuffled_ar = scr_shuffle_ar(temp_shuffled_ar);
 	
 	var char_struct_id, cur_room_struct_id, combat_initiated = false;
+	
 	for(var i = 0; i < ar_len; i++) {
 		
 		char_struct_id = temp_shuffled_ar[i]; //temp_shuffled_ar == pc_char_ar.
 		
 		d($"scr_check_combat_start: For char_struct_id: {char_struct_id.name}, participated_in_new_turn_battle == {char_struct_id.participated_in_new_turn_battle}, the name of its cur_room is: {char_struct_id.cur_room_id.room_name_str}");
-	
-		if char_struct_id.participated_in_new_turn_battle == false {
+		
+		//char_hiding_in_room is reset to false in scr_post_combat_reset_vars(), and only set to true if a char successfully passes a skill check with 'HIDE' in main game state.
+		if char_struct_id.char_hiding_in_room == true continue;
+		
+		if char_struct_id.participated_in_new_turn_battle == false { //participated_in_new_turn_battle is set to true below, and only reset to false again in scr_end_turn(), which is called whenever we 'END' the turn from the main game state.
 			
 			cur_room_struct_id = char_struct_id.cur_room_id;
 			
@@ -55,12 +59,21 @@ function scr_check_combat_start(){
 					for(var pc_i = 0; pc_i < array_length(cur_room_struct_id.pcs_in_room_ar); pc_i++) {
 					
 						pc_struct_id = cur_room_struct_id.pcs_in_room_ar[pc_i];
-					
+						
 						var starting_combat_rank = rank_pos.pc_far;
-						array_push(global.combat_rank_ar[starting_combat_rank],pc_struct_id);
+						
+						//Chars that are hidden don't automatically get added to the combat_rank_ar, as they may or may not join
+						//the battle:
+						if pc_struct_id.char_hiding_in_room == false {
+							array_push(global.combat_rank_ar[starting_combat_rank],pc_struct_id);
+						}
+						
 						//d($"scr_check_combat_start: At nested array at index 5, pc_struct_id.name == {pc_struct_id.name}");
-					
+						
+						//Hidden chars will, however, be added to the combat_init_ar (they will be removed again immediately after 
+						//this script), and they will have their other vars reset:
 						array_push(global.combat_initiative_ar,pc_struct_id);
+						pc_struct_id.char_fleeing_from_broken_morale = false;
 						pc_struct_id.participated_in_new_turn_battle = true; //reset
 						pc_struct_id.has_fled_combat_bool = false; //reset
 						pc_struct_id.cur_combat_rank = starting_combat_rank;
@@ -80,6 +93,7 @@ function scr_check_combat_start(){
 						//d($"scr_check_combat_start: At nested array at index 5, neutral_struct_id.name == {neutral_struct_id.name}");
 					
 						array_push(global.combat_initiative_ar,neutral_struct_id);
+						neutral_struct_id.char_fleeing_from_broken_morale = false;
 						neutral_struct_id.has_fled_combat_bool = false; //reset
 						neutral_struct_id.cur_combat_rank = starting_combat_rank;
 						d($"scr_check_combat_start: {neutral_struct_id.name} cur_combat_rank == {neutral_struct_id.cur_combat_rank}");
@@ -98,6 +112,7 @@ function scr_check_combat_start(){
 					
 					array_push(global.combat_initiative_ar,enemy_struct_id);
 					
+					enemy_struct_id.char_fleeing_from_broken_morale = false;
 					enemy_struct_id.cur_combat_rank = starting_combat_rank;
 					enemy_struct_id.has_fled_combat_bool = false; //reset
 				}

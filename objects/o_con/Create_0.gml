@@ -79,7 +79,7 @@ global.left_window_text_offset_x = 64;
 global.left_window_text_offset_y = 64;
 
 global.max_abilities = 6;
-global.max_player_inv = 12; //23; //Just my observation with this current font-window size etc. how many fit.
+global.max_player_inv = 20; //12; //23; //Just my observation with this current font-window size etc. how many fit.
 
 d($"global.center_x_of_upper_window: {global.center_x_of_upper_window}, global.center_y_of_upper_window: {global.center_y_of_upper_window}");
 
@@ -275,3 +275,5 @@ new_neutral_owner_id = -1;
 filtered_targets_ar_for_item_or_abil = -1;
 
 global.just_view_combat_init_order = false;
+
+hidden_chars_in_room_ar = -1; //Since we only use this in init_combat game state after calling scr_check_combat_start, it's not necessary to keep track of in every room struct.

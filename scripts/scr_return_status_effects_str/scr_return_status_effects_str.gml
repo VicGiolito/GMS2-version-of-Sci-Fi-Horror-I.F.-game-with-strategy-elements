@@ -13,6 +13,11 @@ function scr_return_status_effects_str(char_struct_id, print_active_title = true
 	
 	with(char_struct_id) {
 		
+		if char_hiding_in_room == true {
+			status_effect_found = true;	
+			status_effects_str += $"HIDING ";	
+		}
+		
 		if treacherous_count > 0 {
 			status_effect_found = true;	
 			status_effects_str += $"TREACHEROUS [{treacherous_count}] ";

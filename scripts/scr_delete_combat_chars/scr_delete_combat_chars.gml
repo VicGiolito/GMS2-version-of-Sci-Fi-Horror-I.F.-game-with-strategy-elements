@@ -32,6 +32,12 @@ function scr_delete_combat_chars(){
 			d($"****{char_struct_to_delete.name} is NO LONGER TREACHEROUS, their team changed to origin team. (changed in scr_delete_combat_chars)****");
 		}
 		
+		//Reset their broken_morale_ar:
+		if is_array(char_struct_to_delete.permanent_broken_morale_ar) && array_length(char_struct_to_delete.permanent_broken_morale_ar) > 0 {
+			char_struct_to_delete.broken_morale_ar = -1;
+			char_struct_to_delete.broken_morale_ar = [];
+			array_copy(char_struct_to_delete.broken_morale_ar,0,char_struct_to_delete.permanent_broken_morale_ar, 0, array_length(char_struct_to_delete.permanent_broken_morale_ar) );
+		}
 		//If its dead, delete from corresponding room ar and corresponding global array:
 		if char_struct_to_delete.has_died_bool == true {
 			
