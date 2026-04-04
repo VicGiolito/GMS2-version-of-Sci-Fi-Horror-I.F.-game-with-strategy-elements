@@ -346,7 +346,7 @@ else if global.cur_game_state == game_state.choose_chars {
 		//Parse player_input_str
 		
 		//Access help commands:
-		if player_input_str == "H" || player_input_str == "HELP" {
+		if player_input_str == "HELP" {
 			scr_add_str_to_dialogue_ar("\n");
 			scr_add_str_to_dialogue_ar(global.help_instructions_str_ar);
 			scr_add_str_to_dialogue_ar("\n");
@@ -535,7 +535,7 @@ else if global.cur_game_state == game_state.init_combat {
 				
 				combat_char_id = global.combat_initiative_ar[i];
 				
-				if combat_char_id.char_team_enum == team_type.pc && combat_char_id.char_hiding_in_room == true {
+				if combat_char_id.char_hiding_in_room == true {
 					array_push(hidden_chars_in_room_ar, combat_char_id);
 				}
 			}
@@ -548,7 +548,7 @@ else if global.cur_game_state == game_state.init_combat {
 					
 					combat_char_id = global.combat_initiative_ar[i];
 				
-					if combat_char_id.char_team_enum == team_type.pc && combat_char_id.char_hiding_in_room == false {
+					if combat_char_id.char_hiding_in_room == false {
 						array_push(temp_ar, combat_char_id);
 					}
 				}
@@ -918,7 +918,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 		
 		#region Access help commands:
 		
-		else if player_input_str == "H" || player_input_str == "HELP" {
+		else if player_input_str == "HELP" {
 			scr_add_str_to_dialogue_ar(global.help_instructions_str_ar);
 			scr_add_str_to_dialogue_ar("\n");
 			scr_print_combat_ranks(global.cur_combat_char);
@@ -1345,7 +1345,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			
 			else if valid_drop_item && valid_item_index {
 				
-				scr_drop_item_into_room(global.cur_combat_char,item_struct_id,index_int,global.cur_combat_char.cur_room_id);	
+				scr_drop_item_into_room(global.cur_combat_char,item_struct_id,global.cur_combat_char.cur_room_id);	
 			}
 			
 			#endregion
@@ -1391,31 +1391,25 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			
 			#region Equip or unequip an item in your inventory:
 			
+			#region Equip or unequip an item in your inventory:
+			
 			else if valid_equip_or_unequip && valid_item_index {
 				
 				//Determine if we're equipping, unequipping, or swapping items (unequipping, then equipping):
 					//Unequipping:
 				if index_int < equip_slot.total_slots {
 					
-					scr_equip_or_unequip_item(global.cur_combat_char,item_struct_id,index_int,false,false);
-					scr_print_combat_ranks(global.cur_combat_char);
+					scr_unequip_item(global.cur_combat_char, item_struct_id);
 				}
 				
 				//Equipping:
 				else if index_int >= equip_slot.total_slots {
 					
-					var valid_equip = scr_check_valid_equip(global.cur_combat_char,item_struct_id);
-					
-					if valid_equip {
-						scr_equip_or_unequip_item(global.cur_combat_char,item_struct_id,index_int,true,false);	
-						scr_print_combat_ranks(global.cur_combat_char);
-					}
-					else {
-						multi_word_str_failed = true;
-						scr_add_str_to_dialogue_ar($"\nYou can't equip the {item_struct_id.item_name}, make sure the corresponding equipment slot is free first.",true);
-					}
+					scr_equip_item(global.cur_combat_char, item_struct_id, false);
 				}
 			}
+
+			#endregion
 			
 			else if !valid_item_index && !valid_flee_command {
 				multi_word_str_failed = true;
@@ -3458,7 +3452,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			
 			if is_array(global.acting_char_struct_id.cur_room_id.scavenge_ar) && array_length(global.acting_char_struct_id.cur_room_id.scavenge_ar) > 0 {
 			
-				scr_scavenge_items_from_room(global.acting_char_struct_id,global.acting_char_struct_id.cur_room_id);
+				scr_scavenge_all_items_from_room(global.acting_char_struct_id, global.acting_char_struct_id.cur_room_id);
 				scr_print_char_reminder(global.acting_char_struct_id);
 			}
 			else {
@@ -3479,7 +3473,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		
 		#region Access help commands:
 		
-		else if player_input_str == "H" || player_input_str == "HELP" {
+		else if player_input_str == "HELP" {
 			scr_add_str_to_dialogue_ar(global.help_instructions_str_ar);
 			scr_print_char_reminder(global.acting_char_struct_id);
 		}
@@ -3675,7 +3669,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			
 			else if valid_drop_item && valid_item_index {
 				
-				scr_drop_item_into_room(global.acting_char_struct_id,item_struct_id,index_int,global.acting_char_struct_id.cur_room_id);	
+				scr_drop_item_into_room(global.acting_char_struct_id, item_struct_id, global.acting_char_struct_id.cur_room_id);	
 			}
 			
 			#endregion
@@ -3728,33 +3722,22 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					//Unequipping:
 				if index_int < equip_slot.total_slots {
 					
-					scr_equip_or_unequip_item(global.acting_char_struct_id,item_struct_id,index_int,false,false);
-					scr_print_char_reminder(global.acting_char_struct_id);
+					scr_unequip_item(global.acting_char_struct_id, item_struct_id);
 				}
 				
 				//Equipping:
 				else if index_int >= equip_slot.total_slots {
 					
-					var valid_equip = scr_check_valid_equip(global.acting_char_struct_id,item_struct_id);
-					
-					if valid_equip {
-						
-						scr_equip_or_unequip_item(global.acting_char_struct_id,item_struct_id,index_int,true,false);
-						scr_print_char_reminder(global.acting_char_struct_id);
-					}
-					else {
-						multi_word_str_failed = true;
-						scr_add_str_to_dialogue_ar($"\nYou can't equip the {item_struct_id.item_name}, make sure the corresponding equipment slot is free first.",true);
-					}
+					scr_equip_item(global.acting_char_struct_id, item_struct_id, false);
 				}
 			}
+
+			#endregion
 			
 			else if !valid_item_index {
 				multi_word_str_failed = true;
 				scr_add_str_to_dialogue_ar("\nThat is an invalid command, try again.",true);	
 			}
-			
-			#endregion
 		}
 		
 		#endregion
@@ -3995,14 +3978,19 @@ else if global.cur_game_state == game_state.attempting_hide && global.wait {
 		
 		scr_reset_wait();
 		
+		var valid_command = false;
+		
 		//Logic for our string:
 		if player_input_str == "N" || player_input_str == "NO" {
+			valid_command = true;
 			global.cur_game_state = game_state.main_game;
 			//Print cur char reminder:
 			scr_print_char_reminder(global.acting_char_struct_id);
 		}
 		
 		else if player_input_str == "Y" || player_input_str == "YES" {
+			
+			valid_command = true;
 			
 			global.acting_char_struct_id.move_points_cur -= 1;
 			
@@ -4019,6 +4007,10 @@ else if global.cur_game_state == game_state.attempting_hide && global.wait {
 				global.cur_game_state = game_state.main_game;
 				scr_print_char_reminder(global.acting_char_struct_id);	
 			}
+		}
+		
+		if !valid_command {
+			scr_add_str_to_dialogue_ar($"That was an invalid command, enter 'Y' or 'YES' to attempt to hide, or 'N' or 'NO' to return to the main screen.", true);	
 		}
 		
 		//Reset our player_input_str:
@@ -4081,6 +4073,9 @@ else if global.cur_game_state == game_state.add_hidden_chars_to_combat && global
 				var index_int = real(player_input_str);
 				
 				if index_int >= 0 && index_int < array_length(hidden_chars_in_room_ar) { //We know this is an array because we checked it before we got here.
+					
+					valid_index = true;
+					
 					//Add back to g.combat_init, and add to rank ar:
 					var hidden_char_id = hidden_chars_in_room_ar[index_int];
 					
@@ -4109,7 +4104,7 @@ else if global.cur_game_state == game_state.add_hidden_chars_to_combat && global
 			}
 			
 			if valid_index == false {
-				scr_add_str_to_dialogue_ar("That is an invalid command, either enter the corresponding number of the hidden character that you want to add to combat, or enter 'C' or 'CONTINUE' to continue to combat.", true);	
+				scr_add_str_to_dialogue_ar("That is an invalid command. Enter the corresponding number of the hidden character that you want to add to combat, or enter 'C' or 'CONTINUE' to continue to combat.", true);	
 			}
 		}
 		

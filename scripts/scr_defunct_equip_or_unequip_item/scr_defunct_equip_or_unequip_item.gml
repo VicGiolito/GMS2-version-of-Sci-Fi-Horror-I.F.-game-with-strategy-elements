@@ -2,7 +2,7 @@
 //We've already checked restrictions with scr_check_valid_equip before calling this script; this script 
 //merely performs the equip or unequip.
 
-function scr_equip_or_unequip_item(char_struct_id, item_struct_id, equip_slot_enum, equip_boolean, equipped_during_creation_boolean = false){
+function scr_defunct_equip_or_unequip_item(char_struct_id, item_struct_id, equip_slot_enum, equip_boolean, equipped_during_creation_boolean = false){
 	
 	var is_two_handed_item = scr_check_two_handed_item(item_struct_id);
 	

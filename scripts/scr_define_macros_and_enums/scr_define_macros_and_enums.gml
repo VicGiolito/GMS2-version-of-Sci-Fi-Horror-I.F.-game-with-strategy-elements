@@ -4,7 +4,9 @@ function scr_define_macros_and_enums(){
 	enum struct_type { //used with each struct's struct_type_enum
 		Room,
 		Character,
-		Item
+		Item,
+		Loot_drop,
+		Enemy_mob
 	}	
 	
 	enum icon_type { //used in o_con draw event with our local 'icon_ar'
@@ -289,6 +291,17 @@ function scr_define_macros_and_enums(){
 		total_door_states
 	}
 	
+	enum loot_drop_type {
+		item_enum, //all enums beyond this one must be resource types
+		resource_scrap,
+		resource_tech_basic,
+		resource_tech_advanced,
+		resource_food,
+		resource_ammo,
+		resource_engine_fuel,
+		total_loot_drop_types
+	}
+	
 	//Macros for door directions:
 	#macro DOOR_DIR_W 0
 	#macro DOOR_DIR_N 1
@@ -305,6 +318,15 @@ function scr_define_macros_and_enums(){
 		vacuum,
 		electric_current,
 		total_hazard_types
+	}
+	
+	enum item_equip_type 
+	{
+		none, //Can't be equipped
+		accessory,
+		body,
+		one_hand,
+		two_hands
 	}
 	
 	enum equip_slot {
@@ -369,10 +391,10 @@ function scr_define_macros_and_enums(){
 		scrap,
 		ammo,
 		engine_fuel,
-		total_resources //At and beyond this index, Item instances are stored
+		total_resources //At and beyond this index, Item instances are stored in the room_struct.scavenge_ar as enums (if they haven't been instantiated yet) or as item structs
 	}
 	
-	//Not even sure if I'll implement this - rooms have different 'cover' values:
+	//Not even sure if I'll implement this - rooms have different 'cover' values; currently just doing this with 3 different macros, defined in room struct constructor event.
 	enum cover_val {
 		none,
 		light,
@@ -494,6 +516,9 @@ function scr_define_macros_and_enums(){
 	#macro PASSIVE_THICK_HIDE_ARMOR_BUFF 1
 	#macro PASSIVE_HARDENED_FRAME_ARMOR_BUFF 1
 	#macro PASSIVE_CHILD_STEALTH_BUFF 2
+	
+	#macro MIN_HIDE_RAN_VAL 1
+	#macro MAX_HIDE_RAN_VAL 10
 	
 	#macro UNVISITED_CELL 0
 	#macro VISITED_CELL 1

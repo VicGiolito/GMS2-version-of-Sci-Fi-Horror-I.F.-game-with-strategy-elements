@@ -1,11 +1,11 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_add_item_to_room",
+  "name": "scr_defunct_check_room_for_scavenge",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Item and Abilities",
-    "path": "folders/Scripts/Item and Abilities.yy",
+    "name": "Defunct",
+    "path": "folders/Scripts/Defunct.yy",
   },
 }

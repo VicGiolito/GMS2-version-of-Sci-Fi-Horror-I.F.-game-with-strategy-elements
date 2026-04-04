@@ -1,6 +1,6 @@
 
 
-function scr_scavenge_items_from_room(char_struct_id,room_struct_id){
+function scr_defunct_scavenge_items_from_room(char_struct_id,room_struct_id){
 	
 	d($"Entering scr_scavenge_items_from_room...");
 	

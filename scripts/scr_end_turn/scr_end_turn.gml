@@ -15,6 +15,9 @@ function scr_end_turn(){
 	//Reduce global food:
 	global.resources_food--;
 	
+	//Cap: 
+	if global.resources_food < 0 { global.resources_food = 0; }
+	
 	//Check starvation damage:
 	
 	//Reset AP:

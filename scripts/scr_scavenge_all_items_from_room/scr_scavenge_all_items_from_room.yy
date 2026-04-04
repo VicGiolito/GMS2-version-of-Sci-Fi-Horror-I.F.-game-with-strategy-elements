@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_check_valid_equip",
+  "name": "scr_scavenge_all_items_from_room",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

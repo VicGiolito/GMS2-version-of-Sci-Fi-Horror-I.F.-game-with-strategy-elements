@@ -1,5 +1,5 @@
 
-function scr_check_valid_equip(char_struct_id,item_struct_id){
+function scr_defunct_check_valid_equip(char_struct_id, item_struct_id){
 	
 	var equip_slot_list = item_struct_id.equip_slot_list;
 	var inv_ar = char_struct_id.inv_ar; 

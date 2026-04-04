@@ -1,6 +1,6 @@
 
 
-function scr_check_room_for_scavenge(room_struct_id){
+function scr_defunct_check_room_for_scavenge(room_struct_id){
 	
 	d("Entering scr_check_room_for_scavenge...");
 	

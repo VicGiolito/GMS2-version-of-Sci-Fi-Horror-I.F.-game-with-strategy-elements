@@ -3,10 +3,13 @@
 function scr_apply_item_stat_changes(char_struct_id, item_struct_id, equip_boolean, equipped_during_creation_boolean = false){
 	
 	if is_array(item_struct_id.stat_boost_list) && array_length(item_struct_id.stat_boost_list) {
+		
 		var ar_len = array_length(item_struct_id.stat_boost_list);
+		
 		if equip_boolean {
 			var equip_val = 1;	
-		} else var equip_val = -1;
+		} 
+		else var equip_val = -1;
 		
 		for(var i = 0; i < ar_len; i++){
 			

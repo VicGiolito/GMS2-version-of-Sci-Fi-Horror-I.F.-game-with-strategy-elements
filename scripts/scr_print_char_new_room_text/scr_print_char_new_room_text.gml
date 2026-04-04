@@ -14,29 +14,8 @@ function scr_print_char_new_room_text(char_struct_id){
 		scr_add_str_to_dialogue_ar("\n"+scr_return_hazards_str_in_room(char_struct_id.cur_room_id));
 	}
 	//Scavenge:
-	if char_struct_id.cur_room_id.scavenged_once_boolean == true && scr_check_room_for_scavenge(char_struct_id.cur_room_id) {
-		
-		if is_array(char_struct_id.cur_room_id.scavenge_ar) {
-		
-			var ar_len = array_length(char_struct_id.cur_room_id.scavenge_ar);
-			
-			if ar_len >= scavenge_resource.total_resources {
-				
-				scr_add_str_to_dialogue_ar("\nItems in this room:");
-				
-				var scavenge_item_enum_int;
-				for(var i = scavenge_resource.total_resources; i < ar_len; i++) {
-					
-					scavenge_item_enum_int = char_struct_id.cur_room_id.scavenge_ar[i];
-					
-					if scavenge_item_enum_int >= 0 {
-						var scavenge_item_name = global.item_reference_table[scavenge_item_enum_int].item_name;
-						scr_add_str_to_dialogue_ar($"\n{scavenge_item_name}");	
-					}
-				}
-			}
-		}
-	}
+	scr_print_room_scavenge_ar(char_struct_id.cur_room_id);
+	
 	//Available directions:
 	scr_add_str_to_dialogue_ar("\n"+scr_return_avail_directions_str(char_struct_id.cur_room_id));
 	//Current character reminder:
