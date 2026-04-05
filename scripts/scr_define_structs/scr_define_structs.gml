@@ -1,6 +1,13 @@
 
 function scr_define_structs(){
 	
+	//The index position of the door struct within the room struct's directional_ar indicates what direction the door is in.
+	global.door_struct = function (door_enum_, door_hp_, door_jam_diff_val_) constructor {	
+		door_enum = door_enum_;
+		door_hp = door_hp_;
+		door_jam_diff_val = door_jam_diff_val_;
+	}
+	
 	//if loot_drop_type_enum == loot_drop_type.item_enum, item_enum_ must == the actual item type enum; if not, item_enum_ and resource_quantity can == -1
 	global.loot_drop_struct = function (loot_drop_type_enum_, item_enum_, resource_quantity_) constructor {
 		
@@ -2085,6 +2092,12 @@ function scr_define_structs(){
 		
 		powered_boolean = false;
 		
+		override_door_defaults = false; //if true, then the door structs, and the direction they face, will be customized by a script.
+		
+		override_enemy_mob_defaults = false; //if true, then the base amount and composition of enemies in this room will be customized by a script.
+		
+		override_loot_in_room_defaults = false; //if true, then the base amount and composition of loot in this room will be customized by a script.
+		
 		cover_enum = cover_val.none; //May not even implement this; provides a static buff or debuff to pcs during combat, making some rooms more suitable as defensive choke points.
 		
 		pre_event_unpowered_room_desc = "undefined";
@@ -2098,10 +2111,12 @@ function scr_define_structs(){
 		keyword_interaction_str_ar = -1 //Is used as an array
 		
 		directional_ar = []; //Array containing structs
-		//Default is defined to open space - vacuum
+		//Default is defined to open space - vacuum //(door_enum_, door_hp_, door_jam_diff_val_) constructor { }
 		repeat(4) {
-			array_push(directional_ar,{ door_enum: door_state.open_space, dir_hp: -1 })	
+			array_push(directional_ar, new global.door_struct(door_state.open_space, -1, AVG_DOOR_JAM_VAL) );
 		}
+		
+		setup_dir_ar = [];
 		
 		enemies_in_room_ar = -1;
 		pcs_in_room_ar = -1
@@ -2137,10 +2152,22 @@ function scr_define_structs(){
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
+				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
+				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
+				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "EAST-WEST CORRIDOR";	
 			}

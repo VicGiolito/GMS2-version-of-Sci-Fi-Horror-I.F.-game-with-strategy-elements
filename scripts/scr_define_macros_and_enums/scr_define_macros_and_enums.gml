@@ -495,7 +495,7 @@ function scr_define_macros_and_enums(){
 	#macro FIRE_DURATION 3
 	#macro BLEED_DURATION 2
 	#macro POISON_DURATION 2
-	#macro IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF 1 //Does cure infectino - merely prolongs it
+	#macro IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF 1 //Does not cure infection - merely prolongs it
 	#macro ANTI_ANXIETY_SANITY_BUFF 1
 	
 	#macro COWERING_STUNNED_DURATION 4
@@ -519,6 +519,10 @@ function scr_define_macros_and_enums(){
 	
 	#macro MIN_HIDE_RAN_VAL 1
 	#macro MAX_HIDE_RAN_VAL 10
+	
+	#macro HARD_DOOR_JAM_VAL 0
+	#macro AVG_DOOR_JAM_VAL 3
+	#macro EASY_DOOR_JAM_VAL 6
 	
 	#macro UNVISITED_CELL 0
 	#macro VISITED_CELL 1
