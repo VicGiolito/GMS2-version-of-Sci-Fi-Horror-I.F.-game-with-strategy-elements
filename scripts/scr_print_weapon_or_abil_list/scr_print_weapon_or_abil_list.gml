@@ -1,14 +1,14 @@
 
 //if print_weapon_list_bool == false, we print the char's abil list instead
 
-function scr_print_weapon_or_abil_list(print_weapon_list_bool, cur_char_id){
+function scr_print_weapon_or_abil_list(print_weapon_list_bool, cur_char_id, update_scroll_pos = true){
 	
 	if print_weapon_list_bool {
-		scr_add_str_to_dialogue_ar("\nYou have the following weapon's equipped:");
+		scr_add_str_to_dialogue_ar("\nYou have the following weapon's equipped:", false, update_scroll_pos);
 	}
 	
 	else {
-		scr_add_str_to_dialogue_ar($"\n{cur_char_id.name} has access to the following skills and abilities:\n");	
+		scr_add_str_to_dialogue_ar($"\n{cur_char_id.name} has access to the following skills and abilities:\n", false, update_scroll_pos);	
 	}
 	
 	if is_array(cur_char_id.filtered_abil_ar) && array_length(cur_char_id.filtered_abil_ar) > 0 {
@@ -67,15 +67,15 @@ function scr_print_weapon_or_abil_list(print_weapon_list_bool, cur_char_id){
 				abil_str = $"\n{i}.) {item_struct_id.item_name}: "+string(item_struct_id.ability_cost_str);	
 			}
 			
-			scr_add_str_to_dialogue_ar($"{abil_str}\n");
+			scr_add_str_to_dialogue_ar($"{abil_str}\n", false, update_scroll_pos);
 			
 			//$"Spend {ability_point_cost} AP: Deal {dmg_min}-{dmg_max} to up to {aoe_count} enemies. Range: {max_range}. Burn: {burn_chance}% Bleed: {bleed_chance}% Suppress: {suppress_chance}% Stun: {stun_chance}%";
 		}
 	}
 	//No items or abilities were present from scr_build_weps_or_abils_list:
 	else {
-		scr_add_str_to_dialogue_ar("None.");	
+		scr_add_str_to_dialogue_ar("None.", false, update_scroll_pos);	
 	}
 	
-	if global.cur_game_state != game_state.choose_chars scr_add_str_to_dialogue_ar("\nEnter the corresponding weapon or ability number, or enter 'B' or 'BACKUP' to return to the previous game state.", true);
+	if global.cur_game_state != game_state.choose_chars scr_add_str_to_dialogue_ar("\nEnter the corresponding weapon or ability number, or enter 'B' or 'BACKUP' to return to the previous game state.", true, update_scroll_pos);
 }

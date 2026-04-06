@@ -313,16 +313,16 @@ else if global.cur_game_state == game_state.choose_chars {
 		
 		//Clear our txt buffer and add the corresponding strings from the char_stat_ar and temp char struct:
 		scr_clear_dialogue_ar();
-		scr_add_str_to_dialogue_ar(char_stats_ar[cursor_pos]);
+		scr_add_str_to_dialogue_ar(char_stats_ar[cursor_pos], false, false);
 		var temp_char_id_for_display_passive_abils = new global.Character(cursor_pos,0,0,global.cur_grid,team_type.pc,false);
 		if is_array(temp_char_id_for_display_passive_abils.ability_ar) && array_length(temp_char_id_for_display_passive_abils.ability_ar) > 0 {
 			temp_char_id_for_display_passive_abils.filtered_abil_ar = scr_return_filtered_abil_ar(temp_char_id_for_display_passive_abils);
-			scr_print_weapon_or_abil_list(false,temp_char_id_for_display_passive_abils);
+			scr_print_weapon_or_abil_list(false,temp_char_id_for_display_passive_abils, false);
 		}
 		if is_array(temp_char_id_for_display_passive_abils.passive_abil_ar) && array_length(temp_char_id_for_display_passive_abils.passive_abil_ar) > 0 {
-			scr_print_passive_abils_list(temp_char_id_for_display_passive_abils);
+			scr_print_passive_abils_list(temp_char_id_for_display_passive_abils, false);
 		}
-		scr_print_char_select_instructions();
+		scr_print_char_select_instructions(false);
 		delete temp_char_id_for_display_passive_abils;
 	}
 	
@@ -438,8 +438,8 @@ else if global.cur_game_state == game_state.choose_chars {
 		#region Display character bio:
 		
 		else if player_input_str == "B" || player_input_str == "BIO" {
-			scr_add_str_to_dialogue_ar(char_bio_ar[cursor_pos]);
-			scr_print_char_select_instructions();
+			scr_add_str_to_dialogue_ar(char_bio_ar[cursor_pos], false, false);
+			scr_print_char_select_instructions(false);
 		}
 		
 		#endregion
@@ -957,6 +957,12 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			global.cur_combat_round = 1; //reset
 			scr_add_str_to_dialogue_ar($"\nRound {global.cur_combat_round} of combat has begun.\n");
 			
+			//Randomize and reorder the g.combat_init_ar, in case neutrals were added during the combat prep phase:
+			var temp_ran_init_ar = [];
+			temp_ran_init_ar = scr_shuffle_ar(global.combat_initiative_ar);
+			
+			global.combat_initiative_ar = scr_reverse_sort_combat_init_ar(temp_ran_init_ar);
+			
 			global.cur_combat_char_index = 0;
 			global.cur_combat_char = global.combat_initiative_ar[0];
 			
@@ -1211,9 +1217,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 										//next_combat_game_state = game_state.combat_execute_action;
 										global.cur_game_state = game_state.combat_execute_action;
 					
-										scr_add_str_to_dialogue_ar("\n");
-										var capitalized_str = scr_string_capitalize(global.cur_combat_char.name);
-										scr_add_str_to_dialogue_ar($"{scr_string_capitalize(global.cur_combat_char.name)} is attempting to flee through enemies that are within range, press any key to continue...");
+										scr_add_str_to_dialogue_ar($"\n{scr_string_capitalize(global.cur_combat_char.name)} is attempting to flee through enemies that are within range, press any key to continue...");
 										multi_word_str_failed = true;
 										
 										//Change the g.cur_char to the opportunity attacker:
@@ -1370,26 +1374,37 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 				//First, make sure there's another actual character in the room to give the item to:
 				if array_length(global.cur_combat_char.cur_room_id.pcs_in_room_ar) > 1 {
 					
-					prev_game_state = global.cur_game_state;
+					if array_length(global.combat_rank_ar[global.cur_combat_char.cur_combat_rank]) > 1 {
+						
+						filtered_targets_ar_for_item_or_abil = -1;
+						filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[global.cur_combat_char.cur_combat_rank], team_type.pc);
+						
+						if array_length(filtered_targets_ar_for_item_or_abil) > 0 {
+						
+							prev_game_state = global.cur_game_state;
 					
-					global.cur_game_state = game_state.passing_item;
+							global.cur_game_state = game_state.passing_item;
 					
-					global.cur_combat_char.passing_item_struct_id = item_struct_id;
-					global.cur_combat_char.passing_item_index = index_int;
+							global.cur_combat_char.passing_item_struct_id = item_struct_id;
+							global.cur_combat_char.passing_item_index = index_int;
 				
-					scr_print_pc_party(true,false);
+							scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_item_pass);
 				
-					global.passing_item_boolean = true;
+							global.passing_item_boolean = true;
+						}
+					}
+					else {
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar("\nThere are no other playable characters in your same combat position to give the item to, try again.", true);	
+					}
 				}
 				else {
 					multi_word_str_failed = true;
-					scr_add_str_to_dialogue_ar("\nThere are no other playable characters in this room to give the item to.");	
+					scr_add_str_to_dialogue_ar("\nThere are no other playable characters in this room to give the item to, try again.", true);	
 				}
 			}
 			
 			#endregion
-			
-			#region Equip or unequip an item in your inventory:
 			
 			#region Equip or unequip an item in your inventory:
 			
@@ -1415,9 +1430,6 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 				multi_word_str_failed = true;
 				scr_add_str_to_dialogue_ar("\nThat is an invalid combat command, try again.",true);	
 			}
-			
-			#endregion
-			
 		}
 		
 		#endregion
@@ -1468,8 +1480,12 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 
 else if global.cur_game_state == game_state.combat_execute_action {
 	
+	//Define attacker_id:
 	var attacker_id = global.cur_combat_char;
+	
+	//Reset local vars:
 	var defender_killed = false;
+	var defenders_morale_broken = false;
 	
 	//Reset ai vars:
 	attacker_id.enemy_ai_fight_boolean = false;
@@ -1704,6 +1720,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			
 			//Give us a randomized, ability with range == 0:
 			if attacker_id.treacherous_count > 0 || attacker_id.berserk_count > 0 {
+				
+				//If this char is not Nikano, who will always use her melee ABILITIES, then proceed...
 				
 				var valid_melee_abil_found = false;
 				
@@ -2232,8 +2250,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			//Add to new array:
 		array_push(global.combat_rank_ar[attacker_id.cur_combat_rank],attacker_id);
 		
-		var attacker_capitalized_str = scr_string_capitalize(attacker_id.name);
-		scr_add_str_to_dialogue_ar($"\n{attacker_capitalized_str}({attacker_id.unique_id}) {move_str}.");
+		scr_add_str_to_dialogue_ar($"\n{scr_string_capitalize(attacker_id.name)}({attacker_id.unique_id}) {move_str}.");
 		
 		//Now check and see if they have triggered overwatch fire:
 		var overwatch_ar_to_check = scr_check_overwatch_in_target_rank(attacker_id, attacker_id.cur_combat_rank);
@@ -2245,7 +2262,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			global.overwatch_attacker_index = 0;
 			overwatch_attackers_ar = overwatch_ar_to_check;
 			
-			scr_add_str_to_dialogue_ar($"\n{attacker_capitalized_str} has triggered overwatch fire!");
+			scr_add_str_to_dialogue_ar($"\n{scr_string_capitalize(attacker_id.name)} has triggered overwatch fire!");
 		}
 	}
 	
@@ -2297,7 +2314,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 			if global.resources_ammo > 0 || attacker_id.char_team_enum == team_type.enemy || 
 			attacker_id.chosen_weapon.requires_ammo_boolean == false {
 				d("\n o_con step event: game_state == combat_execute_action: There was either sufficient ammo (> 0) or the attacker did not a pc, calculating attack now...");
-					
+				
+				var dmg_pierced_armor = true; //reset
+				
 				//Define defender_id:
 				var defender_id = filtered_ar[attack_index];
 			
@@ -2351,6 +2370,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				//Hit:
 				if total_attack_val >= ran_to_hit_val {
 					
+					hit_landed = true;
+					
 					//Calculate and apply physical damage:
 					if attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.damage_only || attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.both {
 					
@@ -2362,6 +2383,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						}
 					
 						var total_dmg = dmg_roll - defender_id.armor;
+						
+						//Switch bool var:
+						if total_dmg <= 0 dmg_pierced_armor = false;
 					
 						//Cap:
 						if total_dmg < 0 total_dmg = 0;
@@ -2369,8 +2393,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						//Reduce target hp:
 						defender_id.hp_cur -= total_dmg;
 						
-						var capitalized_str = scr_string_capitalize(defender_id.name);
-						attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.**";	
+						attack_result_str += $"\n\n**{scr_string_capitalize(defender_id.name)}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} damage - {defender_id.armor} armor, for a total of {total_dmg} damage.**";	
 					}
 					
 					//Calculate and apply morale damage:
@@ -2396,8 +2419,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 								immune_str = $"--But {defender_id.name} is impervious to this assault!--"	
 							}
 						
-							var capitalized_str = scr_string_capitalize(defender_id.name);
-							attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} sanity damage!{immune_str}**";	
+							attack_result_str += $"\n\n**{scr_string_capitalize(defender_id.name)}({defender_id.unique_id}) has been {attacker_id.chosen_weapon.item_dmg_str} for {dmg_roll} sanity damage!{immune_str}**";	
 						}
 						
 					}
@@ -2412,14 +2434,14 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						
 						if defender_id.char_team_enum != team_type.pc && defender_id.berserk_count <= 0 && defender_id.treacherous_count <= 0 {
 							defender_id.has_died_bool = true;
-							attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has been killed!**";
+							attack_result_str += $"\n\n**{scr_string_capitalize(defender_id.name)}({defender_id.unique_id}) has been killed!**";
 						}
 						//Render unconscious instead:
 						else {
 							defender_id.unconscious_bool = true;
 							//Reset all of their DOTs - we don't want chars to continue taking DOT while unconscious:
 							scr_reset_status_effects(defender_id,$"o_con step event: combat execute action game state: defender_id.name: {defender_id.name} was just rendered unconscious.");
-							attack_result_str += $"\n\n**{capitalized_str}({defender_id.unique_id}) has collapsed!**";
+							attack_result_str += $"\n\n**{scr_string_capitalize(defender_id.name)}({defender_id.unique_id}) has collapsed!**";
 						}
 					}
 						
@@ -2430,14 +2452,15 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				else {
 					var enemy_the_str = "";
 					if defender_id.char_team_enum != team_type.pc enemy_the_str = "the ";
-					attack_result_str += $"\n--{scr_string_capitalize(attacker_id.name)}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!--";
+					attack_result_str += $"\n\n--{scr_string_capitalize(attacker_id.name)}({attacker_id.unique_id}) misses {enemy_the_str}{defender_id.name}({defender_id.unique_id}) with their attack!--";
 				}
 				
 				//Whether it was a hit or miss, or whether damage was applied or not, we need to print our attack_result_str now:
 				scr_add_str_to_dialogue_ar("\n"+attack_result_str);
 				
-				//Check to see if we need to apply status effects, if the defender is still alive:
-				if defender_id.hp_cur > 0 {
+				#region Check to see if we need to apply status effects:
+				
+				if defender_id.hp_cur > 0 && dmg_pierced_armor == true {
 					//A hit may or may not have been scored, either way we check to apply status effects:
 					if attacker_id.chosen_weapon.always_checks_status_effect_boolean == true {
 						scr_apply_status_effects(attacker_id.chosen_weapon, defender_id);
@@ -2452,6 +2475,9 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						//Only apply again if they are not already in the throes of a mental break down:
 						if defender_id.berserk_count <= 0 && defender_id.treacherous_count <= 0 
 						&& defender_id.cowering_bool == false && defender_id.char_fleeing_from_broken_morale == false {
+							
+							defenders_morale_broken = true;
+							
 							scr_apply_broken_morale(defender_id);	
 						}
 						//If any of those are true, our defender could end up with 0 sanity even while in the throes of a mental breakdown, so keep them just shy of max_sanity instead,
@@ -2461,6 +2487,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 						}
 					}
 				}
+				
+				#endregion
 				
 			} //End of if an attack was actually executed
 			else {
@@ -2476,7 +2504,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 	
 	#region Char successfully fled - If applicable, show 'successfully fled' message, and execute fled logic:
 	
-	if defender_killed == false && global.char_is_fleeing_bool && global.overwatch_mode_enabled == false && defender_id.stun_count <= 0 {
+	if defender_killed == false && defenders_morale_broken == false && global.char_is_fleeing_bool == true && global.overwatch_mode_enabled == false 
+	&& defender_id.stun_count <= 0 {
 		
 		d($"\no_con step event: cur_game_state == combat_execute_action: EXECUTING CODE FOR IF DEFENDER_KILLED == false AND CHAR_IS_FLEEING_BOOL == TRUE")
 		
@@ -3073,23 +3102,28 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 					if cur_char != item_target_char_struct_id {
 						
 						//Make sure the character we're trying to pass the item actually has the inventory space to accomodate it:
-						if scr_check_backpack_size_restriction(item_target_char_struct_id) == true { //We -4 b.c we don't include the equipment slots; we add 1 b.c we're considering whether or not the player's inv_space can accomodate 1 more item.
+						if scr_check_backpack_size_restriction(item_target_char_struct_id) == true { 
 						
 							//Remove item from corresponding index in acting struct:
 								//Remove from backpack:
 							if cur_char.passing_item_index >= equip_slot.total_slots {
 								array_delete(cur_char.inv_ar,cur_char.passing_item_index,1);	
 							}
-							//Unequip item:
+							//Unequip item, apply stat changes:
 							else {
+								
+								scr_add_str_to_dialogue_ar($"\n{cur_char.name} has unequipped the {cur_char.passing_item_struct_id.item_name}.");
+								
 								//Check if its a two handed item first:
-								if scr_check_two_handed_item(cur_char.passing_item_struct_id) == false {
+								if cur_char.passing_item_struct_id.item_equip_enum != item_equip_type.two_hands {
 									cur_char.inv_ar[cur_char.passing_item_index] = -1;
 								}
-								else {
+								else if cur_char.passing_item_struct_id.item_equip_enum == item_equip_type.two_hands {
 									cur_char.inv_ar[equip_slot.lh] = -1;
 									cur_char.inv_ar[equip_slot.rh] = -1;
 								}
+								
+								scr_apply_item_stat_changes(cur_char, cur_char.passing_item_struct_id, false);
 							}
 							
 							//Add item to first empty backpack slot of character:
@@ -3108,7 +3142,7 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 							}
 						}
 						else {
-							scr_add_str_to_dialogue_ar($"\n{item_target_char_struct_id.name} is already carrying too many items! They will need to drop or pass an item before receiving this one, try again.");
+							scr_add_str_to_dialogue_ar($"\n{item_target_char_struct_id.name} is already carrying too many items! They will need to drop or pass an item before receiving this one, try again.", true);
 							
 							//Return to main game state or combat assign pc command:
 							if global.combat_begun == false {
@@ -3192,7 +3226,7 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 				}
 				//Let the player continue trying:
 				else {
-					scr_add_str_to_dialogue_ar($"\nThat is an invalid target for the ability or item, try again.");	
+					scr_add_str_to_dialogue_ar($"\nThat is an invalid target for the ability or item, try again.", true);	
 				}
 			}
 		}
@@ -3456,8 +3490,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				scr_print_char_reminder(global.acting_char_struct_id);
 			}
 			else {
-				scr_add_str_to_dialogue_ar("\n");
-				scr_add_str_to_dialogue_ar("There are no items or resources in this room to collect.", true);	
+				scr_add_str_to_dialogue_ar("\nThere are no items or resources in this room to collect.", true);	
 			}
 		}
 		

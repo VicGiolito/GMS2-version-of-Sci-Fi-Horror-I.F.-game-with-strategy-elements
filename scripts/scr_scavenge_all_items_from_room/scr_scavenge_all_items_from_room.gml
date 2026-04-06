@@ -25,26 +25,36 @@ function scr_scavenge_all_items_from_room(char_struct_id, room_struct_id){
 					
 					var loot_drop_enum = loot_drop_or_item_struct.loot_drop_type_enum;
 					
-					var resource_quant = resource_quantity;
+					var resource_quant = loot_drop_or_item_struct.resource_quantity;
+					
+					var resource_str = "undefined";
 					
 					if loot_drop_enum == loot_drop_type.resource_tech_basic {
-						global.resources_basic_tech += resource_quant;	
+						global.resources_basic_tech += resource_quant;
+						resource_str = "basic technology";
 					}
 					else if loot_drop_enum == loot_drop_type.resource_tech_advanced {
-						global.resources_advanced_tech += resource_quant;	
+						global.resources_advanced_tech += resource_quant;
+						resource_str = "advanced technology";
 					}
 					else if loot_drop_enum == loot_drop_type.resource_food {
 						global.resources_food += resource_quant;	
+						resource_str = "food";
 					}
 					else if loot_drop_enum == loot_drop_type.resource_scrap {
-						global.resources_scrap += resource_quant;	
+						global.resources_scrap += resource_quant;
+						resource_str = "scrap";
 					}
 					else if loot_drop_enum == loot_drop_type.resource_engine_fuel {
 						global.resources_engine_fuel += resource_quant;	
+						resource_str = "engine fuel";
 					}
 					else if loot_drop_enum == loot_drop_type.resource_ammo {
-						global.resources_ammo += resource_quant;	
+						global.resources_ammo += resource_quant;
+						resource_str = "ammunition";
 					}
+					
+					scr_add_str_to_dialogue_ar($"\n{char_struct_id.name} has collected {resource_quant} {resource_str}.");
 				}
 				
 				//This is an item enum - instantiate, then add to char_inv_ar:

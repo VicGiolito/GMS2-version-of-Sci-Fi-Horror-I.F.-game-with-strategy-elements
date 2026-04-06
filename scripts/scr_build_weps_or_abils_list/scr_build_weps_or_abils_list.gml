@@ -8,13 +8,15 @@
 function scr_build_weps_or_abils_list(ar_to_pass, char_struct_id, build_weps_list_bool){
 	
 	if build_weps_list_bool {
+		
 		var item_struct_id;
+		
 		for(var i = equip_slot.rh; i <= equip_slot.lh; i++) {
 			
 			item_struct_id = char_struct_id.inv_ar[i];
 			
 			if item_struct_id != -1 && is_struct(item_struct_id) && item_struct_id.struct_type_enum == struct_type.Item { 
-				if item_struct_id.is_shield_boolean == false {
+				if item_struct_id.is_shield_boolean == false && item_struct_id.use_context == abil_use_context.combat_only {
 					array_push(ar_to_pass, item_struct_id);
 				}
 			}

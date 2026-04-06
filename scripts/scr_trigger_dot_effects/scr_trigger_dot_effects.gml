@@ -284,9 +284,17 @@ function scr_trigger_dot_effects(char_struct_id){
 		
 		//Switch boolean, show death message:
 		if char_struct_id.unconscious_count >= UNCONSCIOUS_DURATION {
+			
 			dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has gasped their last breath!**\n";
 			char_struct_id.has_died_bool = true;
 			char_still_alive_bool = false;
+			
+			//Drop all of their inventory:
+			scr_drop_all_char_inv(char_struct_id, false);
+			
+			//Reassign their neutrals, if necessary; even though this code is in scr_delete_combat_chars(), scr_trigger_dot_effects() also triggers from
+			//the main game state, so we need to include it here as well:
+			scr_auto_reassign_neutrals_owner(char_struct_id);
 		}
 		
 		//Show message:

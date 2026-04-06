@@ -89,7 +89,7 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 	
 	else if item_type_enum == item_type.regen_nanites {
 		
-		target_char_struct_of_item.healing_nanites_count = REGEN_NANITES_DURATION;
+		target_char_struct_of_item.healing_nanites_count = REGEN_NANITES_DURATION; //Does not stack.
 		
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} injects {target_char_struct_of_item.name} with the {item_struct_id.item_name}. (Their hit points will increase by {REGEN_NANITES_HEAL_VAL} for {REGEN_NANITES_DURATION} turns.)**");
 	}

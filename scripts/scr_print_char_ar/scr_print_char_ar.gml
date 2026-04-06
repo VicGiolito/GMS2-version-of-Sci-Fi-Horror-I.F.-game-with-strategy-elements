@@ -8,6 +8,10 @@ function scr_print_char_ar(ar_to_use, use_case_enum){
 		if use_case_enum == use_case_for_print_char_ar.target_neutral_for_ownership_change {
 			scr_add_str_to_dialogue_ar("\nThis a list of the droids in your current room:\n");
 		}
+		
+		if use_case_enum == use_case_for_print_char_ar.target_char_for_item_pass {
+			scr_add_str_to_dialogue_ar("\nThis a list of the characters in your same combat position that you can pass this item to:\n");	
+		}
 	
 		for(var i = 0; i < ar_len; i++) {
 		
@@ -46,6 +50,9 @@ function scr_print_char_ar(ar_to_use, use_case_enum){
 		}
 		else if use_case_enum == use_case_for_print_char_ar.target_pc_for_new_neutral_follower {
 			scr_add_str_to_dialogue_ar("\nEnter the number of the character who will become the droid's new owner. The droid will then follow that character until instructed otherwise. Press 'B' or 'BACKUP' to return to the main game.", true);	
+		}
+		else if use_case_enum == use_case_for_print_char_ar.target_char_for_item_pass {
+			scr_add_str_to_dialogue_ar("\nEnter the number of the character you will pass the item to.", true); 	
 		}
 	}
 	else {

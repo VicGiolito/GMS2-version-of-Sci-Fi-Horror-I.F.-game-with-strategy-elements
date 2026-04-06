@@ -74,7 +74,8 @@ function scr_define_macros_and_enums(){
 	enum use_case_for_print_char_ar {
 		target_char_for_abil_or_item,
 		target_neutral_for_ownership_change,
-		target_pc_for_new_neutral_follower
+		target_pc_for_new_neutral_follower,
+		target_char_for_item_pass
 	}
 	
 	enum main_menu_options {
@@ -481,7 +482,9 @@ function scr_define_macros_and_enums(){
 	hide_difficulty = 5 → easy room (lots of cover, dark, etc.) — 90% chance
 	hide_difficulty = 1 → hard room (open, well-lit, etc.) — 50% chance
 	*/
-	
+	#macro BASE_AP_REGAIN 2
+	#macro STARVING_HP_LOSS 1
+	#macro AVG_MOVE_POINT_VAL 3
 	
 	#macro BASE_MAX_INFECTION 8
 	#macro MAX_RAN_SPD_VAL 6

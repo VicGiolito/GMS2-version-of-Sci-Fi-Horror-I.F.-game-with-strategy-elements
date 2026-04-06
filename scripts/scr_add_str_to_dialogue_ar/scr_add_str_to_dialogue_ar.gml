@@ -6,7 +6,7 @@ should be run from the scope of o_con
 
 */
 
-function scr_add_str_to_dialogue_ar(str_to_add, add_prompt_character = false){
+function scr_add_str_to_dialogue_ar(str_to_add, add_prompt_character = false, update_scroll_position = true){
 	
 	var formatted_str = scr_add_spaces_for_tabs(str_to_add);
 	
@@ -32,5 +32,5 @@ function scr_add_str_to_dialogue_ar(str_to_add, add_prompt_character = false){
 	to figure out what is happening.
 	*/
 	
-	global.scroll_position = global.max_scroll;
+	if update_scroll_position { global.scroll_position = global.max_scroll; }
 }

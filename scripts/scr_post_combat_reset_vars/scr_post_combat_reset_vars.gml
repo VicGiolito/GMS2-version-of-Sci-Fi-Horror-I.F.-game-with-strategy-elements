@@ -24,6 +24,8 @@ function scr_post_combat_reset_vars(){
 				
 				char_id = global_ar[i];
 				
+				char_id.participated_in_new_turn_battle = false; //Is also reset to false in scr_end_turn
+				
 				char_id.char_hiding_in_room = false; //Is only set to true when chars successfully hide in a room.
 				
 				if char_id.has_fled_combat_bool == true { char_id.has_fled_combat_bool = false; }

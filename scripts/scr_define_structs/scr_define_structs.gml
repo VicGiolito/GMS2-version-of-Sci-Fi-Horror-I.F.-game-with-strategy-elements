@@ -100,7 +100,7 @@ function scr_define_structs(){
         ability_points_max = 0;
         sanity_cur = 0;
         sanity_max = 0;
-		move_points_max = 2;
+		move_points_max = AVG_MOVE_POINT_VAL;
 		move_points_cur = move_points_max;
 		
 		courage = AVG_COURAGE_VAL; //Acts just like evasion, but for morale attacks.
@@ -493,7 +493,8 @@ function scr_define_structs(){
             armor = 0; //Is increaed from from passive, as are his resistences.
             
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, a myriad of weapons emerging from his body. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.treacherous, broken_morale_str: $"\"You're infected--all of you! Skin, hair, sweat--it's vile! Obscene!\" {name} wheels about, his eyes feverish, brandishing a myriad of weapons that sprout from his skin. \"You've all been tainted by flesh! Here--stand still--let me purge it from your bones!\'"});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"\"BURN! You will all burn!\" {name} bites into his own hand like a rabid animal, drawing forth blood and a heavy-bored barrel. Behind a veil of bedraggled hair, his eyes gleam bright with the promise of violence. \"BURN, and be purified by flame!\"" });
 			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"This flesh--it burns!\" {name} gouges his face, pulls locks from his hair. \"Let me be rid of it, once and for all!\"" });
 			//debug only:
 				//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"COCK!\"" });
@@ -872,6 +873,7 @@ function scr_define_structs(){
             ability_points_cur = 3;
             ability_points_max = 3;
             sanity_max = 20;
+			
             spd = AVERAGE_CHAR_SPEED;
 			
 			nick_name = "Sentinel";
@@ -1052,9 +1054,9 @@ function scr_define_structs(){
 
             spd = 0;
 			
-			//scr_add_ability(self,item_type.acid_cloud);
-			//scr_add_ability(self,item_type.acid_spit);
-			scr_add_ability(self,item_type.regurgitated_vomit);
+			scr_add_ability(self,item_type.acid_cloud);
+			scr_add_ability(self,item_type.acid_spit);
+			//scr_add_ability(self,item_type.regurgitated_vomit);
 		}
 
         else if char_type_enum == character.enemy_chittering_lurker {
@@ -1312,7 +1314,7 @@ function scr_define_structs(){
             dmg_max = 6;
             item_name = "MONSTROUS MAW";
             max_range = 0;
-            item_verb = "screams and lunges with a";
+            item_verb = "snarls and lunges with a";
             item_dmg_str = "bitten";
             aoe_count = 1;
             bleed_chance = 100;
@@ -1674,8 +1676,8 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.acid_spit {
-            dmg_min = 4; //20; //4;
-            dmg_max = 8; //40; //8;
+            dmg_min = 4;  
+            dmg_max = 8;
             item_name = "ACID BILE";
             item_equip_enum = item_equip_type.one_hand;
             max_range = 2;
@@ -1683,7 +1685,7 @@ function scr_define_structs(){
             item_dmg_str = "melted";
             aoe_count = 3;
             can_overwatch_boolean = true;
-            poison_chance = 100; //75;
+            poison_chance = 75; //75;
             infection_chance = 10;
             always_checks_status_effect_boolean = false;
 			dmg_type_enum = item_dmg_type.damage_only;
@@ -2152,11 +2154,6 @@ function scr_define_structs(){
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				
-				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
-				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
-				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
-				setup_dir_ar[DOOR_DIR_W] = door_state.unlocked;
-				
 				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
 				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
 				
@@ -2183,12 +2180,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+		
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "NORTH-SOUTH CORRIDOR";
 			}
@@ -2209,11 +2212,17 @@ function scr_define_structs(){
 				
 				room_name_str = "STORAGE ROOM"
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 			}
 			
 			else if room_enum == research_vessel_room.hydroponics_lab {
@@ -2229,12 +2238,18 @@ function scr_define_structs(){
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
 				room_name_str = "HYDROPONICS LAB"
+		
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 			}
 			
 			else if room_enum == research_vessel_room.stasis_chamber {
@@ -2267,11 +2282,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 			}
 			
 			else if room_enum == research_vessel_room.sc_corridor_west {
@@ -2288,12 +2309,18 @@ function scr_define_structs(){
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
 				
 				room_name_str = "EAST-WEST CORRIDOR";
+	
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				keyword_interaction_map = ds_map_create();
 				ds_map_add(keyword_interaction_map,"CORPSE",keyword_event.research_vessel_hall_east_of_sr);
@@ -2322,12 +2349,18 @@ function scr_define_structs(){
 				
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
+		
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				pre_event_unpowered_room_desc = "This is the room with the friendly scientist in it.";
 				pre_event_powered_room_desc = "This is the room with the friendly scientist in it.";
@@ -2343,11 +2376,17 @@ function scr_define_structs(){
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				pre_event_unpowered_room_desc = "The door to this room opens upon a narrow chamber with a second story catwalk, but the red emergency lighting recessed within the floor does little to illuminate your surroundings beyond your next step.\n\nThere are rows of narrow locked cabinets receded within the walls, but in the sanguine gloom you can't make out the labeling that identifies them. The banks of computer monitors beside each locker no longer grant access to the contents within; the consoles are utterly dead.\n";
 				pre_event_powered_room_desc = "Beneath the white wash of the flood lamps from the ceiling, you can finally pick your way through the contents of this room. The computer consoles beside each locker are alive with chittering and scrolling green text. It is an easy thing to navigate their file structures, and the corresponding lockers pop open with a hiss after just a few key strokes.";
@@ -2360,11 +2399,18 @@ function scr_define_structs(){
 				
 				room_name_str = "BRIDGE";
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
+				
 				
 				pre_event_unpowered_room_desc = "You breath a sigh of relief upon realizing that you have at last discovered the central processing unit of this ship: the bridge. The cushioned chairs, the banks of computer monitors, and the raised, rotating gyroscope supporting the pilot's seat all leave little doubt in your mind that you have finally found the command station of this vessel.\n\nThe room is still without power, however. Stumbling through the bloodied gloom, you collapse within the cushioned embrace of an officer's chair, to find your own wearied expression staring back at you from one of the dead facades of a computer monitor. Until the power is restored, you won't be able to accomplish anything here.";
 				pre_event_powered_room_desc = "You breath a sigh of relief upon realizing that you have at last discovered the central processing unit of this ship: the bridge. The cushioned chairs, the banks of computer monitors, and the raised, rotating gyroscope supporting the pilot's seat all leave little doubt in your mind that you have finally found the command station of this vessel.\n\nThere are more than a dozen blinking interfaces that whir to life as you pass by, and it looks like their security systems have already been disabled. You sit surrounded by blinking screens that display propulsion, nagivation, communications, sub-systems and more. You could OPERATE any one of them with little trouble.";
@@ -2377,11 +2423,17 @@ function scr_define_structs(){
 				
 				room_name_str = "BARRACKS";
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				pre_event_unpowered_room_desc = "This room is long and wide, with mess tables welded to the floor along its central line. It looks like shaded screens conceal military bunks in the walls.\n\nBeyond that, it's difficult to make out much in the gloom--although your eyes are quick tp imagine leaping and contorted forms cast by the shadows of the whirling gaze of the emergency lights."
 				pre_event_powered_room_desc = "This room is long and wide, with mess tables welded to the floor along its central line. It looks like shaded screens conceal military bunks in the walls.\n\nWith the power restored, you can make out the lockers inlaid within the walls beside each bunk. It looks like their security consoles have been disabled: the cabinets open easily."
@@ -2394,11 +2446,17 @@ function scr_define_structs(){
 				
 				room_name_str = "MATERIAL AIRLOCK";
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
 				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
@@ -2411,11 +2469,17 @@ function scr_define_structs(){
 				
 				room_name_str = "MATERIAL AIRLOCK";
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
 				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
@@ -2428,11 +2492,17 @@ function scr_define_structs(){
 				
 				room_name_str = "MATERIAL AIRLOCK";
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
 				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
@@ -2445,11 +2515,17 @@ function scr_define_structs(){
 				
 				room_name_str = "MATERIAL AIRLOCK";
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				pre_event_unpowered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nA yawning darkness stretches overhead, from which you imagine an ominous chittering, and darker, scurrying shadows.";
 				pre_event_powered_room_desc = "This large logistics center once clearly functioned as a material airlock for the station--although some considered havoc has occurred here since then. Material scaffolding has been smashed and toppled, while storage crates and transport machinery have been splattered by blood and a disconcerting black ichor. There are armor plated, shuttle bay doors on three sides of the room, large enough to accomodate small to medium sized ships.\n\nWith the power restored, you can easily access the computer terminals that control the shuttle bay doors. It looks as though their safety protocols have been deliberately destroyed.";
@@ -2462,11 +2538,17 @@ function scr_define_structs(){
 				
 				room_name_str = "OFFICER'S QUARTERS"; //We find some lore here, perhaps? Can spend action points to regain sanity here, perhaps?
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				pre_event_unpowered_room_desc = "Officer's Quarters.";
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2479,11 +2561,17 @@ function scr_define_structs(){
 				
 				room_name_str = "ENGINEERING BAY"; 
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				pre_event_unpowered_room_desc = "Engineering Bay.";
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2496,11 +2584,17 @@ function scr_define_structs(){
 				
 				room_name_str = "ENVIRONMENTAL CONTROL"; 
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				pre_event_unpowered_room_desc = "Environmental Control.";
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
@@ -2519,12 +2613,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+			
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2540,11 +2640,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2560,11 +2666,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2580,11 +2692,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2596,12 +2714,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+			
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2613,12 +2737,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+			
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2631,11 +2761,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2648,11 +2784,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "INTERSECTION";
 			}
@@ -2665,11 +2807,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "ARBORETUM";
 			}
@@ -2682,11 +2830,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "ARBORETUM";
 			}
@@ -2699,11 +2853,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "ARBORETUM";
 			}
@@ -2716,11 +2876,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "ARBORETUM";
 			}
@@ -2732,12 +2898,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+			
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "ARBORETUM";
 			}
@@ -2750,11 +2922,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "ARBORETUM";
 			}
@@ -2767,11 +2945,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "ARBORETUM";
 			}
@@ -2784,11 +2968,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "COMMISSARY";
 			}
@@ -2800,12 +2990,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+		
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "ARMORY";
 			}
@@ -2818,11 +3014,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "CONTROL ROOM";
 			}
@@ -2834,12 +3036,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "MEDICAL BAY";
 			}
@@ -2852,11 +3060,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "ENGINE ROOM";
 			}
@@ -2869,11 +3083,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = { door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = { door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "SHUTTLE BAY";
 			}
@@ -2886,11 +3106,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "CREW QUARTERS";
 			}
@@ -2903,11 +3129,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "RESEARCH LABORATORY";
 			}
@@ -2920,11 +3152,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "ROBOTICS BAY";
 			}
@@ -2937,11 +3175,17 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
+				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_WALL_HP;
 				
 				room_name_str = "RECYCLING STATION";
 			}
@@ -2953,12 +3197,18 @@ function scr_define_structs(){
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
+			
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar = [];
-				directional_ar[DOOR_DIR_S] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_N] = {door_enum: door_state.wall, dir_hp: BASE_WALL_HP };
-				directional_ar[DOOR_DIR_W] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
-				directional_ar[DOOR_DIR_E] = {door_enum: door_state.unlocked, dir_hp: BASE_DOOR_HP };
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				
+				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;
+				
+				directional_ar[DOOR_DIR_S].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_S].dir_hp = BASE_DOOR_HP;
 				
 				room_name_str = "ANIMAL LABORATORY";
 			}

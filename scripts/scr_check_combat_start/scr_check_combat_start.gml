@@ -31,7 +31,7 @@ function scr_check_combat_start(){
 		//char_hiding_in_room is reset to false in scr_post_combat_reset_vars(), and only set to true if a char successfully passes a skill check with 'HIDE' in main game state.
 		if char_struct_id.char_hiding_in_room == true continue;
 		
-		if char_struct_id.participated_in_new_turn_battle == false { //participated_in_new_turn_battle is set to true below, and only reset to false again in scr_end_turn(), which is called whenever we 'END' the turn from the main game state.
+		if char_struct_id.participated_in_new_turn_battle == false { //participated_in_new_turn_battle is set to true below, and only reset to false again in scr_post_combat_reset_vars(), and scr_end_turn(), which is called whenever we 'END' the turn from the main game state.
 			
 			cur_room_struct_id = char_struct_id.cur_room_id;
 			
