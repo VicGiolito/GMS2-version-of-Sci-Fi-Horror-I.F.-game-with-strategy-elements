@@ -43,7 +43,7 @@ function scr_print_char_ar(ar_to_use, use_case_enum){
 		}
 		
 		if use_case_enum == use_case_for_print_char_ar.target_char_for_abil_or_item {
-			scr_add_str_to_dialogue_ar("\nEnter a number to target a character with the ability or item, or enter 'B' or 'BACKUP' to return to the previous screen.", true);	
+			scr_add_str_to_dialogue_ar("\nEnter the corresponding number of the character you want to target with the ability or item, or enter 'B' or 'BACKUP' to return to the previous screen.", true);	
 		}
 		else if use_case_enum == use_case_for_print_char_ar.target_neutral_for_ownership_change {
 			scr_add_str_to_dialogue_ar("\nEnter the number of the droid to change their owner. The droid will then follow their new owner until instructed otherwise. Press 'B' or 'BACKUP' to return to the main game.", true);	

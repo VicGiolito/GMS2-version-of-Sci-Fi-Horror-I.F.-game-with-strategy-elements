@@ -220,6 +220,10 @@ function scr_define_structs(){
         fleeing_dir_x = -1;
         fleeing_dir_y = -1;
 		
+		party_moving_dir_x = -1;
+		party_moving_dir_y = -1;
+		party_moving_dir_str = "";
+		
 		nick_name = undefined;
 		
 		//more combat related stats:
@@ -1054,7 +1058,7 @@ function scr_define_structs(){
 
             spd = 0;
 			
-			scr_add_ability(self,item_type.acid_cloud);
+			//scr_add_ability(self,item_type.acid_cloud);
 			scr_add_ability(self,item_type.acid_spit);
 			//scr_add_ability(self,item_type.regurgitated_vomit);
 		}
@@ -1685,7 +1689,7 @@ function scr_define_structs(){
             item_dmg_str = "melted";
             aoe_count = 3;
             can_overwatch_boolean = true;
-            poison_chance = 75; //75;
+            poison_chance = 400; //75; 
             infection_chance = 10;
             always_checks_status_effect_boolean = false;
 			dmg_type_enum = item_dmg_type.damage_only;

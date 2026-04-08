@@ -1,6 +1,6 @@
 
 
-function scr_check_ar_for_val(arr,val_to_check){
+function scr_check_ar_for_val(arr, val_to_check){
 	
 	var ar_len = array_length(arr);
 	

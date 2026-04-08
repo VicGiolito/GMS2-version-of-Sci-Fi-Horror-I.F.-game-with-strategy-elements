@@ -6,6 +6,6 @@
   "isDnD": false,
   "parent": {
     "name": "A Star",
-    "path": "folders/Scripts/Path Finding and Enemy Movement/A Star.yy",
+    "path": "folders/Scripts/Path Finding and Movement/A Star.yy",
   },
 }

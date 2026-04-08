@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_check_valid_door_dir",
+  "name": "scr_filter_ar_for_movement_party",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

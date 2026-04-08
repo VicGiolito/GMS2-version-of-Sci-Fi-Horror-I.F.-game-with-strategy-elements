@@ -5,7 +5,7 @@
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Path Finding and Enemy Movement",
-    "path": "folders/Scripts/Path Finding and Enemy Movement.yy",
+    "name": "Path Finding and Movement",
+    "path": "folders/Scripts/Path Finding and Movement.yy",
   },
 }

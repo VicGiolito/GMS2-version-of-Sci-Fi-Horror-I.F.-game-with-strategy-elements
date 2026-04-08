@@ -1758,6 +1758,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 					attacker_id.chosen_weapon = scr_return_fists_item_struct_id(attacker_id);
 				}
 			}
+			//If a 'pure' enemy, we don't need to sort their ability ar: all item_enums within it have a range of 0:
 			else {
 				chosen_wep_enum = attacker_id.ability_ar[irandom_range(0,array_length(attacker_id.ability_ar)-1)];
 				var chosen_wep_item_struct_id = global.item_reference_table[chosen_wep_enum];
@@ -2370,8 +2371,6 @@ else if global.cur_game_state == game_state.combat_execute_action {
 				//Hit:
 				if total_attack_val >= ran_to_hit_val {
 					
-					hit_landed = true;
-					
 					//Calculate and apply physical damage:
 					if attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.damage_only || attacker_id.chosen_weapon.dmg_type_enum == item_dmg_type.both {
 					
@@ -2527,7 +2526,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 									
 		//Now update vars to reflect room change:
 		d($"\n o_con step event: game_state == combat_execute_action: ABOUT TO UPDATE the fleeing char's cur grid x and y vars, cur_grid_x == {fled_char_id.cur_grid_x}, y == {fled_char_id.cur_grid_y}; its fleeing_dir_x == {fled_char_id.fleeing_dir_x}, fleeing_dir_y == {fled_char_id.fleeing_dir_y}.");
-		//Update char x and y vars:
+			//Update char x and y vars:
 		fled_char_id.cur_grid_x += fled_char_id.fleeing_dir_x;
 		fled_char_id.cur_grid_y += fled_char_id.fleeing_dir_y;
 		
@@ -3554,7 +3553,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			if player_input_str == "S" || player_input_str == "SOUTH" { move_dir_y = 1; move_str = "SOUTH"; }
 			
 			//Check to see if that's a valid direction sides:
-			var valid_direction = scr_check_valid_door_dir(global.acting_char_struct_id.cur_room_id,move_dir_x,move_dir_y);
+			var valid_direction = scr_check_valid_door_dir(global.acting_char_struct_id.cur_room_id, move_dir_x, move_dir_y);
 			
 			//Move:
 			if valid_direction {
@@ -3607,7 +3606,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					scr_update_visibility();
 				
 					//Display move result:
-					scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} moves {move_str}.\n\n");
+					scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} moves {move_str}.\n");
 					scr_print_char_new_room_text(global.acting_char_struct_id);
 				}
 				else {
@@ -3628,18 +3627,90 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			
 			var multi_word_ar = scr_return_multi_word_ar(player_input_str);
 			
-			var valid_drop_item = false, valid_equip_or_unequip = false, valid_item_index = false;
-			var valid_give_item = false, valid_use_item = false, valid_look_item = false;
+			var valid_drop_item = false, valid_equip_or_unequip = false, valid_item_index = false, valid_assign_move_chars = false;
+			var valid_give_item = false, valid_use_item = false, valid_look_item = false, valid_move_all = false;
 			
-			if multi_word_ar[0] == "D" || multi_word_ar[0] == "DROP" valid_drop_item = true;
+			if (multi_word_ar[0] == "M" || multi_word_ar[0] == "MOVE") && (multi_word_ar[1] == "*" || multi_word_ar[1] == "ALL") 
+			{ 
+				if array_length(multi_word_ar) == 3 {
+					
+					var third_str = multi_word_ar[2];
+				
+					var party_move_dir_x = 0, party_move_dir_y = 0, move_str = "undefined";
+				
+					if third_str == "W" || third_str == "WEST" {
+						party_move_dir_x = -1;
+						move_str = "WEST";
+					}
+					else if third_str == "N" || third_str == "NORTH" {
+						party_move_dir_y = -1;
+						move_str = "NORTH";
+					}	
+					else if third_str == "E" || third_str == "EAST" {
+						party_move_dir_x = 1;	
+						move_str = "EAST";
+					}
+					else if third_str == "S" || third_str == "SOUTH" { 
+						party_move_dir_y = 1;	
+						move_str = "SOUTH";
+					}
+				
+					if party_move_dir_x != 0 || party_move_dir_y != 0 {
+
+						valid_move_all = true; 
+					}
+				}
+				else {
+					multi_word_str_failed = true;
+					scr_add_str_to_dialogue_ar("You need to indicate WHERE you want the party to move, try again.", true);		
+				}
+			}
 			
-			else if multi_word_ar[0] == "E" || multi_word_ar[0] == "EQUIP" valid_equip_or_unequip = true;
+			else if (multi_word_ar[0] == "M" || multi_word_ar[0] == "MOVE") && (multi_word_ar[1] == "P" || multi_word_ar[1] == "PARTY") {
+				
+				if array_length(multi_word_ar) == 3 {
+					
+					var third_str = multi_word_ar[2];
+				
+					var party_move_dir_x = 0, party_move_dir_y = 0, move_str = "undefined";
+				
+					if third_str == "W" || third_str == "WEST" {
+						party_move_dir_x = -1;
+						move_str = "WEST";
+					}
+					else if third_str == "N" || third_str == "NORTH" {
+						party_move_dir_y = -1;
+						move_str = "NORTH";
+					}	
+					else if third_str == "E" || third_str == "EAST" {
+						party_move_dir_x = 1;	
+						move_str = "EAST";
+					}
+					else if third_str == "S" || third_str == "SOUTH" { 
+						party_move_dir_y = 1;	
+						move_str = "SOUTH";
+					}
+				
+					if party_move_dir_x != 0 || party_move_dir_y != 0 {
+
+						valid_assign_move_chars = true; 
+					}
+				}
+				else {
+					multi_word_str_failed = true;
+					scr_add_str_to_dialogue_ar("You need to indicate WHERE you want the party to move, try again.", true);		
+				}
+			}
 			
-			else if multi_word_ar[0] == "G" || multi_word_ar[0] == "GIVE" valid_give_item = true;
+			else if multi_word_ar[0] == "D" || multi_word_ar[0] == "DROP" { valid_drop_item = true; }
 			
-			else if multi_word_ar[0] == "U" || multi_word_ar[0] == "USE" valid_use_item = true;
+			else if multi_word_ar[0] == "E" || multi_word_ar[0] == "EQUIP" { valid_equip_or_unequip = true; }
 			
-			else if multi_word_ar[0] == "EX" || multi_word_ar[0] == "EXAMINE" valid_look_item = true;
+			else if multi_word_ar[0] == "G" || multi_word_ar[0] == "GIVE" { valid_give_item = true; }
+			
+			else if multi_word_ar[0] == "U" || multi_word_ar[0] == "USE" { valid_use_item = true; }
+			
+			else if multi_word_ar[0] == "EX" || multi_word_ar[0] == "EXAMINE" { valid_look_item = true; }
 			
 			//Make sure its a valid item in the inventory:
 			try {
@@ -3669,9 +3740,185 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			    show_debug_message(_exception.stacktrace);
 			}
 			
+			#region Change game state to add_chars_to_movement_party:
+			
+			if valid_assign_move_chars {
+				
+				//Check valid direction:
+				if scr_check_valid_door_dir(global.acting_char_struct_id.cur_room_id, party_move_dir_x, party_move_dir_y) == true {
+					
+					local_party_ar = -1;
+					
+					local_party_ar = scr_filter_ar_for_movement_party(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar);
+					
+					if array_length(local_party_ar) > 1 {
+						
+						//Reset, define:
+						moving_party_ar = -1;
+						moving_party_ar = [];
+						
+						party_moving_dir_x = party_move_dir_x;
+						party_moving_dir_y = party_move_dir_y;
+						party_moing_dir_str = move_str;
+						
+						global.cur_game_state = game_state.add_chars_to_movement_party;
+						
+						scr_print_add_movement_chars_screen(move_str);
+					}
+					
+					#region Just move this one specific char, the player shouldn't really have been using this command just for this anyway:
+					
+					else if array_length(local_party_ar) == 1 {
+						
+						var char_to_move = local_party_ar[0];
+						
+						//Set as the new acting_char_inst (just in case it changed):
+						global.acting_char_struct_id = char_to_move;
+						
+						//Reduce movepoints:
+						char_to_move.move_points_cur -= 1;
+					
+						//Remove from current room:
+						scr_add_remove_char_room_ar(char_to_move.cur_room_id, char_to_move, false);
+					
+						//Update char x and y vars:
+						char_to_move.cur_grid_x += party_move_dir_x;
+						char_to_move.cur_grid_y += party_move_dir_y;
+				
+						//Update cur_room_id:
+						char_to_move.cur_room_id = global.cur_grid[# char_to_move.cur_grid_x, char_to_move.cur_grid_y];
+				
+						//Add to next room array:
+						scr_add_remove_char_room_ar(char_to_move.cur_room_id, char_to_move, true);
+					
+						//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
+						scr_update_neutrals_movement_vars(char_to_move.neutrals_following_this_char_ar, char_to_move.cur_grid_x, char_to_move.cur_grid_y);	
+					
+						//Re-position it's sprite vars:
+						scr_update_char_sprite_position_vars(char_to_move);
+						
+						//Update camera:
+						scr_center_map_window(char_to_move.cur_grid_x,char_to_move.cur_grid_y,global.map_cam,"\n\no_con step event: player just successfully moved a pc to another room.");
+				
+						//Add room to tilemap, if it hasn't already been done:
+						if char_to_move.cur_room_id.explored_boolean == false {
+							scr_add_cell_to_tilemap(global.tile_main_lay_id,char_to_move.cur_room_id.room_enum,char_to_move.cur_grid_x,char_to_move.cur_grid_y);
+						}
+						//Add doors to room, if it hasn't already been done:
+						if char_to_move.cur_room_id.doors_already_added_boolean == false {
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id,char_to_move.cur_grid_x,char_to_move.cur_grid_y);
+						}
+				
+						//Update the room's boolean vars:
+						char_to_move.cur_room_id.explored_boolean = true;
+						char_to_move.cur_room_id.doors_already_added_boolean = true;
+			
+						//Call scr_reset_visibility(), then update visibility:
+						scr_reset_visibility();
+						scr_update_visibility();
+				
+						//Display move result:
+						scr_add_str_to_dialogue_ar($"{char_to_move.name} moves {move_str}.\n");
+						scr_print_char_new_room_text(char_to_move);	
+					}
+					
+					#endregion
+					
+					else if array_length(local_party_ar) == 0 {
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar("There are no playable characters in this room with any remaining move points, try again.", true);		
+					}
+				}
+				else {
+					multi_word_str_failed = true;
+					scr_add_str_to_dialogue_ar("That is not a valid move direction, try again.", true);	
+				}
+			}
+			
+			#endregion
+			
+			#region Move every pc in room:
+			
+			else if valid_move_all {
+				
+				//Check valid direction:
+				if scr_check_valid_door_dir(global.acting_char_struct_id.cur_room_id, party_move_dir_x, party_move_dir_y) == true {
+					
+					local_party_ar = -1;
+					
+					local_party_ar = scr_filter_ar_for_movement_party(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar);
+					
+					if array_length(local_party_ar) > 0 {
+						
+						//Move the entire party:
+						var move_party_char_id;
+						for(var i = 0; i < array_length(local_party_ar); i++) {
+							
+							move_party_char_id = local_party_ar[i];
+							
+							//Reduce movepoints:
+							move_party_char_id.move_points_cur -= 1;
+					
+							//Remove from current room:
+							scr_add_remove_char_room_ar(move_party_char_id.cur_room_id,move_party_char_id,false);
+					
+							//Update char x and y vars:
+							move_party_char_id.cur_grid_x += party_move_dir_x;
+							move_party_char_id.cur_grid_y += party_move_dir_y;
+				
+							//Update cur_room_id:
+							move_party_char_id.cur_room_id = global.cur_grid[# move_party_char_id.cur_grid_x, move_party_char_id.cur_grid_y];
+				
+							//Add to next room array:
+							scr_add_remove_char_room_ar(move_party_char_id.cur_room_id, move_party_char_id, true);
+					
+							//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
+							scr_update_neutrals_movement_vars(move_party_char_id.neutrals_following_this_char_ar, move_party_char_id.cur_grid_x, move_party_char_id.cur_grid_y);	
+					
+							//Re-position it's sprite vars:
+							scr_update_char_sprite_position_vars(move_party_char_id);
+						}
+						
+						//Update camera:
+						scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"\n\no_con step event: player just successfully moved a pc to another room.");
+				
+						//Add room to tilemap, if it hasn't already been done:
+						if global.acting_char_struct_id.cur_room_id.explored_boolean == false {
+							scr_add_cell_to_tilemap(global.tile_main_lay_id,global.acting_char_struct_id.cur_room_id.room_enum,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+						}
+						//Add doors to room, if it hasn't already been done:
+						if global.acting_char_struct_id.cur_room_id.doors_already_added_boolean == false {
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+						}
+				
+						//Update the room's boolean vars:
+						global.acting_char_struct_id.cur_room_id.explored_boolean = true;
+						global.acting_char_struct_id.cur_room_id.doors_already_added_boolean = true;
+			
+						//Call scr_reset_visibility(), then update visibility:
+						scr_reset_visibility();
+						scr_update_visibility();
+				
+						//Display move result:
+						scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} leads the party {move_str}.\n");
+						scr_print_char_new_room_text(global.acting_char_struct_id);
+					}
+					else {
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar("There are no playable characters in this room with any remaining move points, try again.", true);		
+					}
+				}
+				else {
+					multi_word_str_failed = true;
+					scr_add_str_to_dialogue_ar("That is not a valid move direction, try again.", true);	
+				}
+			}
+			
+			#endregion
+			
 			#region 'USE' an item:
 			
-			if valid_use_item && valid_item_index {
+			else if valid_use_item && valid_item_index {
 				//Make sure this is a useable item:
 				if item_struct_id.usable_boolean == true {
 					prev_game_state = global.cur_game_state;
@@ -4141,6 +4388,233 @@ else if global.cur_game_state == game_state.add_hidden_chars_to_combat && global
 			}
 		}
 		
+		//Reset our player_input_str:
+		player_input_str = "";
+	}
+	
+	#region Accept input for player_input_str:
+
+	// Detect new character input
+	if (keyboard_lastchar != "") {
+	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left &&
+		keyboard_lastkey != vk_backspace {
+			player_input_str += keyboard_lastchar;
+			keyboard_lastchar = "";
+		}
+	}
+
+	// Handle backspace
+	if (keyboard_check_pressed(vk_backspace) && string_length(player_input_str) > 0) {
+	    player_input_str = string_copy(player_input_str, 1, string_length(player_input_str) - 1);
+	}
+
+	#endregion
+}
+
+#endregion
+
+#region game_state == add_chars_to_movement_party:
+
+//From here we add characters who will moving as a party:
+
+else if global.cur_game_state == game_state.add_chars_to_movement_party && global.wait {
+	
+	if keyboard_check_released(vk_enter) && global.wait {
+		
+		d($"o_con step event: game_state == add_chars_to_movement_party, enter key press detected...");
+		
+		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
+		global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str);
+		
+		//Format our string:
+		player_input_str = string(player_input_str);
+		player_input_str = string_upper(player_input_str);
+		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
+		
+		scr_reset_wait();
+		
+		//Logic for our string:
+		
+		//Check for number keypress here, then all of the other restrictions:
+			
+		var valid_index = false, error_msg_already_printed = false; //reset
+			
+		try {
+			var index_int = real(player_input_str);
+				
+			if index_int >= 0 && index_int < array_length(local_party_ar) { //We know this is an array because we checked it before we got here.
+					
+				var char_to_add_to_movement_party = local_party_ar[index_int];
+					
+				//Check to see if this char is already in the moving_party_ar or not - we know at this point that moving_party_ar is already an array with at least a len of 0:
+				if scr_check_ar_for_val(moving_party_ar, char_to_add_to_movement_party) == false {
+					
+					valid_index = true;
+						
+					array_delete(local_party_ar,array_get_index(local_party_ar,char_to_add_to_movement_party), 1);
+						
+					array_push(moving_party_ar, char_to_add_to_movement_party);
+						
+					scr_add_str_to_dialogue_ar($"\n{char_to_add_to_movement_party.name} joins the party that is moving {party_moing_dir_str}.");
+						
+					//There is no one left to pick from here, automatically move the moving_party_ar:
+					if array_length(local_party_ar) <= 0 {
+						
+						//Iterate through our moving_party_ar, moving chars:
+						var move_char_id;
+					
+						for(var i = 0; i < array_length(moving_party_ar); i ++) {
+							move_char_id = moving_party_ar[i];
+							
+							//Reduce movepoints:
+							move_char_id.move_points_cur -= 1;
+					
+							//Remove from current room:
+							scr_add_remove_char_room_ar(move_char_id.cur_room_id,move_char_id,false);
+					
+							//Update char x and y vars:
+							move_char_id.cur_grid_x += party_move_dir_x;
+							move_char_id.cur_grid_y += party_move_dir_y;
+				
+							//Update cur_room_id:
+							move_char_id.cur_room_id = global.cur_grid[# move_char_id.cur_grid_x, move_char_id.cur_grid_y];
+				
+							//Add to next room array:
+							scr_add_remove_char_room_ar(move_char_id.cur_room_id, move_char_id, true);
+					
+							//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
+							scr_update_neutrals_movement_vars(move_char_id.neutrals_following_this_char_ar, move_char_id.cur_grid_x, move_char_id.cur_grid_y);	
+					
+							//Re-position it's sprite vars:
+							scr_update_char_sprite_position_vars(move_char_id);
+						}
+						
+						//Reassign global.acting_char_struct_id as the first char in the moving_party_ar:
+						global.acting_char_struct_id = moving_party_ar[0];
+						
+						//Update camera:
+						scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"\n\no_con step event: player just successfully moved a pc to another room.");
+				
+						//Add room to tilemap, if it hasn't already been done:
+						if global.acting_char_struct_id.cur_room_id.explored_boolean == false {
+							scr_add_cell_to_tilemap(global.tile_main_lay_id,global.acting_char_struct_id.cur_room_id.room_enum,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+						}
+						//Add doors to room, if it hasn't already been done:
+						if global.acting_char_struct_id.cur_room_id.doors_already_added_boolean == false {
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+						}
+				
+						//Update the room's boolean vars:
+						global.acting_char_struct_id.cur_room_id.explored_boolean = true;
+						global.acting_char_struct_id.cur_room_id.doors_already_added_boolean = true;
+			
+						//Call scr_reset_visibility(), then update visibility:
+						scr_reset_visibility();
+						scr_update_visibility();
+						
+						//Return to main game state:
+						global.cur_game_state = game_state.main_game;
+				
+						//Display move result:
+						scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} leads the party {move_str}.\n");
+						scr_print_char_new_room_text(global.acting_char_struct_id);
+					}
+						
+					else if array_length(local_party_ar) > 0 {
+						scr_print_add_movement_chars_screen(party_moing_dir_str);
+					}
+				}
+				else {
+					error_msg_already_printed = true;
+					scr_add_str_to_dialogue_ar("That character is already moving with the party, try again.", true);
+				}
+					
+			}
+		}
+		catch(_exception) {
+			valid_index = false;	
+		}
+			
+		//We couldn't convert the index_int to a real_num, therefore we may be trying to enter another command:
+		if valid_index == false {
+				
+			//Actually move our movement_party_ar:
+			if player_input_str == "C" || player_input_str == "CONTINUE" {
+				error_msg_already_printed = true;
+				
+				//Iterate through our moving_party_ar, moving chars:
+				var move_char_id;
+					
+				for(var i = 0; i < array_length(moving_party_ar); i ++) {
+					move_char_id = moving_party_ar[i];
+							
+					//Reduce movepoints:
+					move_char_id.move_points_cur -= 1;
+					
+					//Remove from current room:
+					scr_add_remove_char_room_ar(move_char_id.cur_room_id,move_char_id,false);
+					
+					//Update char x and y vars:
+					move_char_id.cur_grid_x += party_move_dir_x;
+					move_char_id.cur_grid_y += party_move_dir_y;
+				
+					//Update cur_room_id:
+					move_char_id.cur_room_id = global.cur_grid[# move_char_id.cur_grid_x, move_char_id.cur_grid_y];
+				
+					//Add to next room array:
+					scr_add_remove_char_room_ar(move_char_id.cur_room_id, move_char_id, true);
+					
+					//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
+					scr_update_neutrals_movement_vars(move_char_id.neutrals_following_this_char_ar, move_char_id.cur_grid_x, move_char_id.cur_grid_y);	
+					
+					//Re-position it's sprite vars:
+					scr_update_char_sprite_position_vars(move_char_id);
+				}
+						
+				//Reassign global.acting_char_struct_id as the first char in the moving_party_ar:
+				global.acting_char_struct_id = moving_party_ar[0];
+						
+				//Update camera:
+				scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"\n\no_con step event: player just successfully moved a pc to another room.");
+				
+				//Add room to tilemap, if it hasn't already been done:
+				if global.acting_char_struct_id.cur_room_id.explored_boolean == false {
+					scr_add_cell_to_tilemap(global.tile_main_lay_id,global.acting_char_struct_id.cur_room_id.room_enum,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+				}
+				//Add doors to room, if it hasn't already been done:
+				if global.acting_char_struct_id.cur_room_id.doors_already_added_boolean == false {
+					scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+				}
+				
+				//Update the room's boolean vars:
+				global.acting_char_struct_id.cur_room_id.explored_boolean = true;
+				global.acting_char_struct_id.cur_room_id.doors_already_added_boolean = true;
+			
+				//Call scr_reset_visibility(), then update visibility:
+				scr_reset_visibility();
+				scr_update_visibility();
+				
+				//Return to main game state:
+				global.cur_game_state = game_state.main_game;
+				
+				//Display move result:
+				scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} leads the party {move_str}.\n");
+				scr_print_char_new_room_text(global.acting_char_struct_id);
+			}
+		
+			//Return to main game:
+			else if player_input_str == "B" || player_input_str == "BACKUP" {
+				error_msg_already_printed = true;
+				global.cur_game_state = game_state.main_game;
+				scr_print_char_reminder(global.acting_char_struct_id);
+			}
+				
+			//Show invalid command message:
+			if valid_index == false && error_msg_already_printed == false {
+				scr_add_str_to_dialogue_ar("That is an invalid command. Enter the corresponding number of the character that you want to your movement party, or enter 'C' or 'CONTINUE' to move with the party you currently have, or 'B' or 'BACKUP' to return to the main game state.", true);	
+			}
+		}
+			
 		//Reset our player_input_str:
 		player_input_str = "";
 	}

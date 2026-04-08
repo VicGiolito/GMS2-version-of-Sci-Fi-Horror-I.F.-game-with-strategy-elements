@@ -50,6 +50,8 @@ function scr_define_macros_and_enums(){
 		change_neutral_ownership,
 		attempting_hide,
 		add_hidden_chars_to_combat,
+		add_chars_to_movement_party,
+		resolve_room_event,
 		
 		combat_paused, 
 		combat_assign_pc_command,
@@ -101,22 +103,22 @@ function scr_define_macros_and_enums(){
 		barracks, //7 done: can find useful weapons, armor, and equipment here. Contains tier 1 or 2 level items.
 		armory, //8 done: similar to barracks but contains tier 3 level items. Also contains explosives to change locked or jammed doors into destroyed doors; has a small chance of creating a hull breach and therefore vacuum in a room afterwards.
 		control_room, //9 done: replaced by the operations of the bridge, should be removed.
-		bridge, //10 done: from here the player can unlock or lock doors that are not jammed or destroyed, so long as the room is powered. For locked doors that are unlocked for the first time, the pc must first pass a difficult science-skill test to represent 'hacking the power system' open. The bridge must also be powered in order to use the engine_room, and therefore power the rest of the ship. The player will need to install a portable power cell here first in order to use the bridge, which is initially found in the engine room. The power cell automatically powers a room - the player does not need assign power here again during their turn by operating the engine room. So for now, the bridge intially allows the player to power rooms, and afterwards, allows the player to open and close doors. It also allows for certain game-critical events to unfold, like communicating with the pirates.
-		environmental_control, //11 done: create presurrize or de-pressurize other powered rooms, which either creates or removes the vacuum room hazard, which in turn removes any fire or toxic gas hazard in this location (if vacuum was applied and the room is not a contant toxic gas generator)
+		bridge, //10 done: from here the player can unlock or lock doors that are not jammed or destroyed, so long as the room is powered. For locked doors that are unlocked for the first time, the pc must first pass a difficult science-skill test to represent 'hacking the power system' open. Not all doors can be hacked open in this way, some require a key card or must be destroyed (like the door that leads to the south side of the ship). The bridge must also be powered in order to use the engine_room, and therefore power the rest of the ship. The player will need to install a portable power cell here first in order to use the bridge, which is initially found in the engine room. The power cell automatically powers the room - the player does not need assign power here again during their turn by operating the engine room. So for now, the bridge intially allows the player to power rooms, and afterwards, allows the player to open and close doors. It also allows for certain game-critical events to unfold, like communicating with the pirates.
+		environmental_control, //11 done: 'hacking' science based skill test: create presurrize or de-pressurize other powered rooms, which either creates or removes the vacuum room hazard, which in turn removes any fire or toxic gas hazard in this location (if vacuum was applied and the room is not a contant toxic gas generator)
 		airlock, //12 - not in use
 		medbay, //13 done: Spend M.P. and/or AP and/or resources like scrap: The character operating in this room can heal a certain amount of H.P. based upon their science skill, or create a medkit item, or create 'The Cure' item, which clears a character of all infection. 
 		engine_room, //14 done: Costs 1 movement point: can spend fuel here to power rooms each turn. The amount of rooms and fuel you can spend here with each movement point in order to power rooms is == to your engineering skill.
 		shuttle_bay, //15 done: this is the primary point from which the pcs will escape and beat the game. Requires advanced component resources to build, and chars with high engineering skills to pass the skill tests. Resources are not wasted if the pc fails the skill check.
 		engineer_bay, //16 done: the only room where you can convert basic technology into advanced technology. Requires passing a skill test and/or M.P. and/or A.P. Can only fabricate some weapons, items, armor here at the cost of ap/mp/skill check. 
-		crew_quarters, //17 done: can spend 2 movement points here to restore sanity. Essentially an infinite sanity restoration well, but forces the player to spend at least 3 turns there: at least 1 turn to get there, 1 turn to sleep and restore some sanity (2-3 points), then another turn to leave; not mention the inconvenience of traveling there in the first place.
+		crew_quarters, //17 done: can spend 2 movement points + 2 ability points here to restore sanity. Essentially an infinite sanity restoration well, but forces the player to spend at least 3 turns there: at least 1 turn to get there, 1 turn to sleep and restore some sanity (2-3 points), then another turn to leave; not mention the inconvenience of traveling there in the first place.
 		supply_closet, //18 done: simply contains useful resources, items and equipment.
 		hydroponics_lab, //19 done: Spend 1-2 movement point and/or AP and/or pass a science based skill test: receive 1-2 food. Must be powered. So this is a potentially limitless source of food, but best operated upon by science-based characters.
 		communication_station, //20 - not in use
 		arboretum_n_s_e_w, //21 done
 		storage_room, //22 done: contains useful resources, items and equipment, some of which may be necessary to complete the game. 
-		research_lab, //23 done: upon successfully science skill test and/or MP and/or AP: convert a certain amount of bio-matter resource into 
+		research_lab, //23 done: ultimate quest room: upon successfully science skill test and/or MP and/or AP: convert a certain amount of bio-matter resource into 'research files'; once you accumulate enough of them, you can learn how to craft the device that can close the rupture in space-time through which the aliens are emerging into our reality; the crux being (and the player won't find this out until they finally enter the boss room and its revealed), the space-time tear actually exists inside a person - the infected/corrupted lead Keth scientist - the same man who Cragos swore he would kill. So this person acts like a boss in more ways than one, because once killed - the enemy mobs will stop spawning; so this room basically allows you to finish the game; other functions of this room include: more information about an enemy, starting with the lowest (weakest) forms, like skittering larva, and progressing upward from there. 
 		rec_room, //24 - not in use
-		robotics_bay, //25 done: spend scrap here to create neutral droids.
+		robotics_bay, //25 done: spend scrap here to create neutral droids. Must pass a difficult engineer skill test which increases in difficulty according to the value of the droid.
 		recycler, //26 done: possibly the most important room in the game: Spend 1 MP to convert an inputted amount of scrap and/or bio-matter into engine fuel. 
 		astrometrics, //27 - not in use
 		animal_lab, //28 done: perhaps this room just periodically spawns some particularly nasty enemy mobs. There's some dark shit going on in here.
@@ -145,6 +147,8 @@ function scr_define_macros_and_enums(){
 		arboretum_n_s_e, //47 done
 		arboretum_n_e, //48 done
 		arboretum_n_w, //49 done
+		
+		cloning_bay, //50 - not in use: could potentially create a new, inferior, semi-randomized pcs here at the cost of bio-matter and a science skill check; the higher the skill check, the better the clone, but in general, they are not good: they start naked with low stats and no abilties, or random alien type abilities like 'monstrous claw.'
 		
 		total_research_vessel_room_types
 	}

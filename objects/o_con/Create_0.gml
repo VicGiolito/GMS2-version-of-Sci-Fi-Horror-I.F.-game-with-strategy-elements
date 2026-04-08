@@ -277,3 +277,14 @@ filtered_targets_ar_for_item_or_abil = -1;
 global.just_view_combat_init_order = false;
 
 hidden_chars_in_room_ar = -1; //Since we only use this in init_combat game state after calling scr_check_combat_start, it's not necessary to keep track of in every room struct.
+
+local_party_ar = -1;
+
+moving_party_ar = -1;
+
+party_moving_dir_x = -1;
+party_moving_dir_y = -1;
+party_moing_dir_str = "";
+
+
+

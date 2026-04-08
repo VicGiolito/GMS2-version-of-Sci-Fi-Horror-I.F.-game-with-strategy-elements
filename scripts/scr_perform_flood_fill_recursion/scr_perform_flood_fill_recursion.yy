@@ -6,6 +6,6 @@
   "isDnD": false,
   "parent": {
     "name": "Flood Fill",
-    "path": "folders/Scripts/Path Finding and Enemy Movement/Flood Fill.yy",
+    "path": "folders/Scripts/Path Finding and Movement/Flood Fill.yy",
   },
 }

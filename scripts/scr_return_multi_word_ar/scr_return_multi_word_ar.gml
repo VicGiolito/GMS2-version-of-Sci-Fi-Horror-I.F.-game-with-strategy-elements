@@ -32,6 +32,7 @@ function scr_return_multi_word_ar(str_to_parse){
 	//In the case of many spaces separating words, we would end with array indices that are completely empty (-1).
 	//We want to remove those from the array now:
 	var parsed_array = [];
+	
 	for(var i = 0; i < array_length(str_ar); i++) {
 		if str_ar[i] != -1 {
 			parsed_array[i] = str_ar[i];
