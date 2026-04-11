@@ -10,8 +10,6 @@ function scr_print_add_movement_chars_screen(move_dir_str){
 	
 	if is_array(moving_party_ar) && array_length(moving_party_ar) > 0 {
 		
-		total_move_party_str = $"\nThe following characters are moving {move_dir_str}:";
-		
 		for(var i = 0; i < array_length(moving_party_ar); i++) {
 			total_move_party_str += $" {moving_party_ar[i].name}";
 			//Add semi colon if this is not the last index position:
@@ -19,9 +17,9 @@ function scr_print_add_movement_chars_screen(move_dir_str){
 		}
 	}
 	
-	if total_move_party_str == "" total_move_party_str = "none.";
+	if total_move_party_str == "" total_move_party_str = " none.";
 	
-	var local_party_str = "undefined";
+	var local_party_str = "";
 	
 	if is_array(local_party_ar) && array_length(local_party_ar) > 0 {
 		
@@ -33,7 +31,7 @@ function scr_print_add_movement_chars_screen(move_dir_str){
 	scr_add_str_to_dialogue_ar($"\nThe following characters are moving {move_dir_str}:{total_move_party_str}\nWho else will join this party?");
 	
 	
-	scr_add_str_to_dialogue_ar($"{local_party_str}\nEnter the corresponding number of the character to add to your party; or enter 'C' or 'CONTINUE' to move with the party you currently have; or enter 'B' or 'BACKUP' to return to the main game state.");
+	scr_add_str_to_dialogue_ar($"{local_party_str}\nEnter the corresponding number of the character to add to the group that is moving {move_dir_str}; or enter 'C' or 'CONTINUE' to move with the party you currently have; or enter 'B' or 'BACKUP' to return to the main game state.", true);
 	
 	/*
 	“The following chars are moving {movement direction string (Global.acting_cur_char_id.party_moving_dir_str)}: 

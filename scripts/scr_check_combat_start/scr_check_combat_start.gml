@@ -28,6 +28,12 @@ function scr_check_combat_start(){
 		
 		d($"scr_check_combat_start: For char_struct_id: {char_struct_id.name}, participated_in_new_turn_battle == {char_struct_id.participated_in_new_turn_battle}, the name of its cur_room is: {char_struct_id.cur_room_id.room_name_str}");
 		
+		//Those with the 'child' passive (kira) don't automatically trigger combat when moving into a new room; they would if g.full_game_turn_completed were to == true,
+		//however, in which case no one has yet moved anywhere
+		if global.full_game_turn_completed == false && scr_return_passive_enum_in_ar(char_struct_id.passive_abil_ar, passive_abil_type.child) == true {
+			continue;
+		}
+		
 		//char_hiding_in_room is reset to false in scr_post_combat_reset_vars(), and only set to true if a char successfully passes a skill check with 'HIDE' in main game state.
 		if char_struct_id.char_hiding_in_room == true continue;
 		
@@ -62,9 +68,21 @@ function scr_check_combat_start(){
 						
 						var starting_combat_rank = rank_pos.pc_far;
 						
-						//Chars that are hidden don't automatically get added to the combat_rank_ar, as they may or may not join
-						//the battle:
-						if pc_struct_id.char_hiding_in_room == false {
+						//We need to consider how Kira will get excluded from combat here if she just moevd into a new room
+						
+						var valid_add = true;
+						
+						//Chars that are hidden don't automatically get added to the combat_rank_ar, as they may or may not join the battle:
+						if pc_struct_id.char_hiding_in_room == true {
+							valid_add = false;	
+						}
+						
+						//If we have no just come here directly from scr_end_turn() AND the character has the 'child' passive, then exclude them:
+						if global.full_game_turn_completed == false && scr_return_passive_enum_in_ar(pc_struct_id.passive_abil_ar, passive_abil_type.child) == true {
+							valid_add = false;	
+						}
+						
+						if valid_add {
 							array_push(global.combat_rank_ar[starting_combat_rank],pc_struct_id);
 						}
 						

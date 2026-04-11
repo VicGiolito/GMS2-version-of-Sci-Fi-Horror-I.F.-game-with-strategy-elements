@@ -1,9 +1,9 @@
 
 
-function scr_add_doors_to_tilemap(tile_lay_id,grid_x,grid_y){
+function scr_add_doors_to_tilemap(tile_lay_id ,grid_x, grid_y, grid_to_update){
 	
 	//First, find the matching room struct id for that grid cell:
-	var room_struct_id = global.cur_grid[# grid_x,grid_y];
+	var room_struct_id = grid_to_update[# grid_x,grid_y];
 	
 	//Adjust - we * by 3 because our door tile layer is 3 times as large as our tile_main layer; then we add 1
 	//to give us our corresponding center door tile in the middle of the room tile - then we offset from there:
@@ -25,7 +25,7 @@ function scr_add_doors_to_tilemap(tile_lay_id,grid_x,grid_y){
 			else if i == DOOR_DIR_S offset_cell_y = 1;
 			
 			//Add to tilemap:
-			if tilemap_set(tile_lay_id,door_tile_enum,grid_x+offset_cell_x,grid_y+offset_cell_y) == true {
+			if tilemap_set(tile_lay_id, door_tile_enum, grid_x+offset_cell_x, grid_y+offset_cell_y) == true {
 				//d($"scr_add_doors_to_tilemap: success: set door tile with door_tile_enum: {door_tile_enum} for grid_cell_x: {grid_x}, y: {grid_y}; offset_cell_x = {offset_cell_x}, offset_cell_y = {offset_cell_y}");	
 			}
 			else {
@@ -33,12 +33,4 @@ function scr_add_doors_to_tilemap(tile_lay_id,grid_x,grid_y){
 			}
 		}
 	}
-	
-	/*
-	//Macros for door directions:
-	#macro DOOR_DIR_W 0
-	#macro DOOR_DIR_N 1
-	#macro DOOR_DIR_E 2
-	#macro DOOR_DIR_S 3
-	*/
 }

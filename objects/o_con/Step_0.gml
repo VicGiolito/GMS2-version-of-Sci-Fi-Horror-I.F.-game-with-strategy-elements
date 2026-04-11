@@ -347,9 +347,7 @@ else if global.cur_game_state == game_state.choose_chars {
 		
 		//Access help commands:
 		if player_input_str == "HELP" {
-			scr_add_str_to_dialogue_ar("\n");
 			scr_add_str_to_dialogue_ar(global.help_instructions_str_ar);
-			scr_add_str_to_dialogue_ar("\n");
 			scr_add_str_to_dialogue_ar(char_stats_ar[cursor_pos]);
 			scr_print_char_select_instructions();	
 		}
@@ -394,7 +392,8 @@ else if global.cur_game_state == game_state.choose_chars {
 					
 					scr_define_enemy_mobs(global.cur_grid);
 					
-					scr_reveal_entire_grid(global.cur_grid); //debug only
+					scr_apply_random_hazard_gen(global.cur_grid); //debug only
+					scr_reveal_entire_grid(global.cur_grid, true); //debug only
 					
 					scr_clear_dialogue_ar();
 					scr_print_char_new_room_text(global.acting_char_struct_id);
@@ -517,10 +516,34 @@ else if global.cur_game_state == game_state.init_combat {
 			d($"scr_check_combat_start returned false.");
 			global.combat_begun = false; //This should be the ONLY place this bool is getting reset to false.
 			scr_post_combat_reset_vars();
-			global.cur_game_state = game_state.main_game;
-			global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1,0,-1,global.pc_char_ar);
-			if global.acting_char_struct_id == -1 throw("o_con step event: init_combat game state: local var combat_begun == false: global.acting_char_struct_id returned -1 from scr_return_next_char_in_ar_direction(), and yet we're trying return to main game state. Something went wrong.")
-			scr_print_char_new_room_text(global.acting_char_struct_id);
+			
+			//We'll return to main game state after we spread hazards:
+			if global.full_game_turn_completed == true {
+				global.full_game_turn_completed = false;
+				global.cur_game_state = game_state.spread_hazards;
+				hazard_spread_counter = 0; //reset
+			}
+			
+			//Return to main game state now - we initially entered init_combat by triggering combat with enemies in a new room, or some other event:
+			else {
+				
+				global.cur_game_state = game_state.main_game;
+				
+				//Change g.acting_char_struct_id if the previous one died or is unconscious:
+				var use_prev_cur_char = false;
+				if scr_check_ar_for_val(global.pc_char_ar, global.acting_char_struct_id) == true {
+					if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
+					global.acting_char_struct_id.unconscious_count <= 0 {
+						use_prev_cur_char = true;	
+					}
+				}
+				
+				if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+				
+				if global.acting_char_struct_id == -1 throw("o_con step event: game_state == init_combat: local var combat_begun had == false: global.acting_char_struct_id returned -1 from scr_return_next_char_in_ar_direction(), and yet we're trying return to main game state. Something went wrong.")
+				
+				scr_print_char_new_room_text(global.acting_char_struct_id);
+			}
 		} 
 	
 		//Combat is warranted - go to pause, then assign pc command (combat prep phase)
@@ -1267,7 +1290,7 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 										}
 										//Add doors to room, if it hasn't already been done:
 										if global.cur_combat_char.cur_room_id.doors_already_added_boolean == false {
-											scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y);
+											scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y, global.cur_combat_char.cur_grid);
 										}
 				
 										//Update the room's boolean vars:
@@ -1275,8 +1298,8 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 										global.cur_combat_char.cur_room_id.doors_already_added_boolean = true;
 			
 										//Call scr_reset_visibility(), then update visibility:
-										scr_reset_visibility();
-										scr_update_visibility();
+										scr_reset_visibility(global.cur_combat_char.cur_grid);
+										scr_update_visibility(global.cur_combat_char.cur_grid);
 									
 										//Most important: reset our var that permits pcs to trigger combat again:
 										global.cur_combat_char.participated_in_new_turn_battle = false;
@@ -2548,7 +2571,7 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		}
 		//Add doors to room, if it hasn't already been done:
 		if fled_char_id.cur_room_id.doors_already_added_boolean == false {
-			scr_add_doors_to_tilemap(global.tile_doors_lay_id,fled_char_id.cur_grid_x,fled_char_id.cur_grid_y);
+			scr_add_doors_to_tilemap(global.tile_doors_lay_id,fled_char_id.cur_grid_x,fled_char_id.cur_grid_y, fled_char_id.cur_grid);
 		}
 				
 		//Update the room's boolean vars:
@@ -2556,8 +2579,8 @@ else if global.cur_game_state == game_state.combat_execute_action {
 		fled_char_id.cur_room_id.doors_already_added_boolean = true;
 			
 		//Call scr_reset_visibility(), then update visibility:
-		scr_reset_visibility();
-		scr_update_visibility();
+		scr_reset_visibility(fled_char_id.cur_grid);
+		scr_update_visibility(fled_char_id.cur_grid);
 		
 		//Finally, we reset this because this character can now trigger combat again in a new room
 		fled_char_id.participated_in_new_turn_battle = false;
@@ -3407,26 +3430,69 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			
 			scr_add_str_to_dialogue_ar($"Round {global.total_turn_counter} ends. Your characters collectively consume 1 food, regain 2 action points, and regain all of their movement points. All enemies make their move. Round {global.total_turn_counter+1} begins.",true);
 			
-			scr_end_turn();
-			
-			//Have each char path outward from their current location:
-			var grid_id, char_struct_id;
+			//Before calling scr_trigger_main_game_dot() and scr_trigger_dot_effects(), we increment infection count:
+			var char_struct_id;
 			for(var i = 0; i < array_length(global.pc_char_ar); i++) {
 				char_struct_id = global.pc_char_ar[i];
-				grid_id = char_struct_id.flood_fill_path_grid;
-				scr_perform_flood_fill_recursion(char_struct_id, grid_id);
+				if char_struct_id.has_died_bool == false && char_struct_id.infection_count > 0 {
+					char_struct_id.infection_count++;
+					scr_add_str_to_dialogue_ar($"The insidious infection within {char_struct_id.name} has grown by 1.");
+					
+					//scr_trigger_main_game_dot();
+			
+					//scr_trigger_dot_effects()
+				}
 			}
 			
+			
+			
+			scr_end_turn();
+			
+			var enemy_mob_is_hunting_or_wandering = false;
 			if is_array(global.enemy_mob_ar) && array_length(global.enemy_mob_ar) > 0 {
+				for(var i = 0; i < array_length(global.enemy_mob_ar); i++) {
+					if global.enemy_mob_ar[i].ai_movement_behavior == ai_movement_type.hunting || 
+					global.enemy_mob_ar[i].ai_movement_behavior == ai_movement_type.wandering {
+						enemy_mob_is_hunting_or_wandering = true;
+						break;
+					}
+				}
+			}
+			
+			//Have each char path outward from their current location:
+			if enemy_mob_is_hunting_or_wandering {
+				var char_struct_id;
+				for(var i = 0; i < array_length(global.pc_char_ar); i++) {
 				
-				scr_enemy_mobs_choose_closest_pc_target();
+					char_struct_id = global.pc_char_ar[i];
 				
-				//Okay, the mob structs now have their destination grid cells chosen. 
+					//Reset their flood_fill_path_grid to match their cur_grid; it will be used as the 'steps_grid' in our pathing algorithm:
+					char_struct_id.flood_fill_path_grid = -1;
+					char_struct_id.flood_fill_path_grid = ds_grid_create(ds_grid_width(char_struct_id.cur_grid), ds_grid_height(char_struct_id.cur_grid) );
+					ds_grid_clear(char_struct_id.flood_fill_path_grid, UNVISITED_STEP_VAL);
 				
-				//Now move them 1 space along their paths:
-				scr_move_enemy_mobs();
+					//Reset the g.visited_grid so that its dimensions match the char's cur grid:
+					if !ds_exists(global.visited_grid, ds_type_grid) { global.visited_grid = ds_grid_create(ds_grid_width(char_struct_id.cur_grid), ds_grid_height(char_struct_id.cur_grid) ); }
+					ds_grid_resize(global.visited_grid, ds_grid_width(char_struct_id.cur_grid), ds_grid_height(char_struct_id.cur_grid) );
+					ds_grid_clear(global.visited_grid, UNVISITED_CELL);
 				
-				scr_reset_wait();
+					//Reset frontier_queue, if applicable:
+					if !ds_exists(global.frontier_queue, ds_type_priority) { global.frontier_queue = ds_priority_create(); }
+					ds_priority_clear(global.frontier_queue);
+				
+					scr_perform_flood_fill_recursion(char_struct_id, char_struct_id.flood_fill_path_grid);
+				}
+			
+			
+				if is_array(global.enemy_mob_ar) && array_length(global.enemy_mob_ar) > 0 {
+				
+					scr_enemy_mobs_choose_closest_pc_target();
+				
+					//Okay, the mob structs now have their destination grid cells chosen. 
+				
+					//Now move them 1 space along their paths:
+					scr_move_enemy_mobs();
+				}
 			}
 			
 			global.cur_game_state = game_state.init_combat;
@@ -3594,7 +3660,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					}
 					//Add doors to room, if it hasn't already been done:
 					if global.acting_char_struct_id.cur_room_id.doors_already_added_boolean == false {
-						scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+						scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y, global.acting_char_struct_id.cur_grid);
 					}
 				
 					//Update the room's boolean vars:
@@ -3602,12 +3668,19 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					global.acting_char_struct_id.cur_room_id.doors_already_added_boolean = true;
 			
 					//Call scr_reset_visibility(), then update visibility:
-					scr_reset_visibility();
-					scr_update_visibility();
+					scr_reset_visibility(global.acting_char_struct_id.cur_grid);
+					scr_update_visibility(global.acting_char_struct_id.cur_grid);
 				
 					//Display move result:
 					scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} moves {move_str}.\n");
-					scr_print_char_new_room_text(global.acting_char_struct_id);
+					
+					//Check to see if we're triggering combat in the new room:
+					if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+						global.cur_game_state = game_state.init_combat;	
+					}
+					else {
+						scr_print_char_new_room_text(global.acting_char_struct_id);
+					}
 				}
 				else {
 					scr_add_str_to_dialogue_ar("\nYou don't have enough move points.",true);	
@@ -3627,8 +3700,8 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			
 			var multi_word_ar = scr_return_multi_word_ar(player_input_str);
 			
-			var valid_drop_item = false, valid_equip_or_unequip = false, valid_item_index = false, valid_assign_move_chars = false;
-			var valid_give_item = false, valid_use_item = false, valid_look_item = false, valid_move_all = false;
+			var valid_drop_item = false, valid_equip_or_unequip = false, valid_item_index = false, valid_assign_move_chars = false, valid_lock_door = false;
+			var valid_give_item = false, valid_use_item = false, valid_look_item = false, valid_move_all = false, valid_destroy_door = false;
 			
 			if (multi_word_ar[0] == "M" || multi_word_ar[0] == "MOVE") && (multi_word_ar[1] == "*" || multi_word_ar[1] == "ALL") 
 			{ 
@@ -3702,6 +3775,80 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				}
 			}
 			
+			//Debug function:
+			else if multi_word_ar[0] == "DESTROY" { 
+				
+				if array_length(multi_word_ar) == 2 {
+					
+					var second_str = multi_word_ar[1];
+				
+					var door_dir_x = 0, door_dir_y = 0, move_str = "undefined";
+				
+					if second_str == "W" || second_str == "WEST" {
+						door_dir_x = -1;
+						move_str = "WEST";
+					}
+					else if second_str == "N" || second_str == "NORTH" {
+						door_dir_y = -1;
+						move_str = "NORTH";
+					}	
+					else if second_str == "E" || second_str == "EAST" {
+						door_dir_x = 1;	
+						move_str = "EAST";
+					}
+					else if second_str == "S" || second_str == "SOUTH" { 
+						door_dir_y = 1;	
+						move_str = "SOUTH";
+					}
+				
+					if door_dir_x != 0 || door_dir_y != 0 {
+
+						valid_destroy_door = true; 
+					}
+				}
+				else {
+					multi_word_str_failed = true;
+					scr_add_str_to_dialogue_ar("You need to indicate WHICH DOOR DIR you want to destroy, try again.", true);		
+				}
+			}
+			
+			//Debug function:
+			else if multi_word_ar[0] == "LOCK" { 
+				
+				if array_length(multi_word_ar) == 2 {
+					
+					var second_str = multi_word_ar[1];
+				
+					var door_dir_x = 0, door_dir_y = 0, move_str = "undefined";
+				
+					if second_str == "W" || second_str == "WEST" {
+						door_dir_x = -1;
+						move_str = "WEST";
+					}
+					else if second_str == "N" || second_str == "NORTH" {
+						door_dir_y = -1;
+						move_str = "NORTH";
+					}	
+					else if second_str == "E" || second_str == "EAST" {
+						door_dir_x = 1;	
+						move_str = "EAST";
+					}
+					else if second_str == "S" || second_str == "SOUTH" { 
+						door_dir_y = 1;	
+						move_str = "SOUTH";
+					}
+				
+					if door_dir_x != 0 || door_dir_y != 0 {
+
+						valid_lock_door = true; 
+					}
+				}
+				else {
+					multi_word_str_failed = true;
+					scr_add_str_to_dialogue_ar("You need to indicate WHICH DOOR DIR you want to destroy, try again.", true);		
+				}
+			}
+			
 			else if multi_word_ar[0] == "D" || multi_word_ar[0] == "DROP" { valid_drop_item = true; }
 			
 			else if multi_word_ar[0] == "E" || multi_word_ar[0] == "EQUIP" { valid_equip_or_unequip = true; }
@@ -3759,7 +3906,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						
 						party_moving_dir_x = party_move_dir_x;
 						party_moving_dir_y = party_move_dir_y;
-						party_moing_dir_str = move_str;
+						party_moving_dir_str = move_str;
 						
 						global.cur_game_state = game_state.add_chars_to_movement_party;
 						
@@ -3806,7 +3953,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						}
 						//Add doors to room, if it hasn't already been done:
 						if char_to_move.cur_room_id.doors_already_added_boolean == false {
-							scr_add_doors_to_tilemap(global.tile_doors_lay_id,char_to_move.cur_grid_x,char_to_move.cur_grid_y);
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id,char_to_move.cur_grid_x,char_to_move.cur_grid_y,char_to_move.cur_grid);
 						}
 				
 						//Update the room's boolean vars:
@@ -3814,12 +3961,19 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						char_to_move.cur_room_id.doors_already_added_boolean = true;
 			
 						//Call scr_reset_visibility(), then update visibility:
-						scr_reset_visibility();
-						scr_update_visibility();
+						scr_reset_visibility(char_to_move.cur_grid);
+						scr_update_visibility(char_to_move.cur_grid);
 				
 						//Display move result:
-						scr_add_str_to_dialogue_ar($"{char_to_move.name} moves {move_str}.\n");
-						scr_print_char_new_room_text(char_to_move);	
+						scr_add_str_to_dialogue_ar($"\n{char_to_move.name} moves {move_str}.");
+						
+						//Check to see if we're triggering combat in the new room:
+						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+							global.cur_game_state = game_state.init_combat;	
+						}
+						else {
+							scr_print_char_new_room_text(char_to_move);	
+						}
 					}
 					
 					#endregion
@@ -3879,6 +4033,9 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 							scr_update_char_sprite_position_vars(move_party_char_id);
 						}
 						
+						//Update the g.acting_char_struct_id - it's possible they were excluded from the local_party_ar if they didn't have enough MP:
+						global.acting_char_struct_id = local_party_ar[0];
+						
 						//Update camera:
 						scr_center_map_window(global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y,global.map_cam,"\n\no_con step event: player just successfully moved a pc to another room.");
 				
@@ -3888,7 +4045,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						}
 						//Add doors to room, if it hasn't already been done:
 						if global.acting_char_struct_id.cur_room_id.doors_already_added_boolean == false {
-							scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y, global.acting_char_struct_id.cur_grid);
 						}
 				
 						//Update the room's boolean vars:
@@ -3896,12 +4053,19 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						global.acting_char_struct_id.cur_room_id.doors_already_added_boolean = true;
 			
 						//Call scr_reset_visibility(), then update visibility:
-						scr_reset_visibility();
-						scr_update_visibility();
+						scr_reset_visibility(global.acting_char_struct_id.cur_grid);
+						scr_update_visibility(global.acting_char_struct_id.cur_grid);
 				
 						//Display move result:
-						scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} leads the party {move_str}.\n");
-						scr_print_char_new_room_text(global.acting_char_struct_id);
+						scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} leads the party {move_str}.");
+						
+						//Check to see if we're triggering combat in the new room:
+						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+							global.cur_game_state = game_state.init_combat;	
+						}
+						else {
+							scr_print_char_new_room_text(global.acting_char_struct_id);
+						}
 					}
 					else {
 						multi_word_str_failed = true;
@@ -3911,6 +4075,94 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				else {
 					multi_word_str_failed = true;
 					scr_add_str_to_dialogue_ar("That is not a valid move direction, try again.", true);	
+				}
+			}
+			
+			#endregion
+			
+			#region Debug - 'DESTROY' {dir} door:
+			
+			else if valid_destroy_door {
+				
+				var door_macro = scr_return_door_dir_macro(door_dir_x, door_dir_y);
+				
+				var door_struct = scr_return_door_struct_id(global.acting_char_struct_id.cur_room_id, door_macro);
+				
+				if door_struct.door_enum == door_state.jammed || door_struct.door_enum == door_state.unlocked || door_struct.door_enum == door_state.locked {
+					
+					door_struct.door_enum = door_state.destroyed;
+					
+					//Add to tilemap - Current door:
+					scr_add_doors_to_tilemap(global.tile_doors_lay_id, global.acting_char_struct_id.cur_grid_x, global.acting_char_struct_id.cur_grid_y, global.acting_char_struct_id.cur_grid);
+					
+					//Destroy adjoining door, if applicable:
+					var checking_cell_x = global.acting_char_struct_id.cur_grid_x + door_dir_x, checking_cell_y = global.acting_char_struct_id.cur_grid_y + door_dir_y;
+					
+					var max_grid_w = ds_grid_width(global.acting_char_struct_id.cur_grid), max_grid_h = ds_grid_height(global.acting_char_struct_id.cur_grid);
+					
+					if checking_cell_x >= 0 && checking_cell_x < max_grid_w && checking_cell_y >= 0 && checking_cell_y < max_grid_h {
+						
+						var adjoining_room_struct_id = global.acting_char_struct_id.cur_grid[# checking_cell_x, checking_cell_y]; 
+						
+						var opposite_door_macro = scr_return_opposite_door_dir_macro(door_macro);
+						
+						var adjoining_door_struct_id = scr_return_door_struct_id(adjoining_room_struct_id, opposite_door_macro);
+						
+						if adjoining_door_struct_id.door_enum == door_state.jammed || adjoining_door_struct_id.door_enum == door_state.unlocked || adjoining_door_struct_id.door_enum == door_state.locked {
+							adjoining_door_struct_id.door_enum = door_state.destroyed;	
+							//Add to tilemap - Adjoining door:
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id, checking_cell_x, checking_cell_y, global.acting_char_struct_id.cur_grid);
+						}	
+					}
+					
+					scr_add_str_to_dialogue_ar($"The {move_str} door in the {global.acting_char_struct_id.cur_room_id.room_name_str} has been destroyed.", true);
+				}
+				else {
+					scr_add_str_to_dialogue_ar($"The {move_str} door is already either destroyed, a wall, or open space.", true);
+				}
+			}
+			
+			#endregion
+			
+			#region Debug - 'LOCK' {dir} door:
+			
+			else if valid_lock_door {
+				
+				var door_macro = scr_return_door_dir_macro(door_dir_x, door_dir_y);
+				
+				var door_struct = scr_return_door_struct_id(global.acting_char_struct_id.cur_room_id, door_macro);
+				
+				if door_struct.door_enum == door_state.unlocked {
+					
+					//Add to tilemap - Current door:
+					scr_add_doors_to_tilemap(global.tile_doors_lay_id, global.acting_char_struct_id.cur_grid_x, global.acting_char_struct_id.cur_grid_y, global.acting_char_struct_id.cur_grid);
+					
+					door_struct.door_enum = door_state.locked;
+					
+					//Lock adjoining door, if applicable:
+					var checking_cell_x = global.acting_char_struct_id.cur_grid_x + door_dir_x, checking_cell_y = global.acting_char_struct_id.cur_grid_y + door_dir_y;
+					
+					var max_grid_w = ds_grid_width(global.acting_char_struct_id.cur_grid), max_grid_h = ds_grid_height(global.acting_char_struct_id.cur_grid);
+					
+					if checking_cell_x >= 0 && checking_cell_x < max_grid_w && checking_cell_y >= 0 && checking_cell_y < max_grid_h {
+						
+						var adjoining_room_struct_id = global.acting_char_struct_id.cur_grid[# checking_cell_x, checking_cell_y]; 
+						
+						var opposite_door_macro = scr_return_opposite_door_dir_macro(door_macro);
+						
+						var adjoining_door_struct_id = scr_return_door_struct_id(adjoining_room_struct_id, opposite_door_macro);
+						
+						if adjoining_door_struct_id.door_enum == door_state.unlocked {
+							adjoining_door_struct_id.door_enum = door_state.locked;	
+							//Add to tilemap - Adjoining door:
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id, checking_cell_x, checking_cell_y, global.acting_char_struct_id.cur_grid);
+						}
+					}
+					
+					scr_add_str_to_dialogue_ar($"The {move_str} door in the {global.acting_char_struct_id.cur_room_id.room_name_str} has been locked.", true);
+				}
+				else {
+					scr_add_str_to_dialogue_ar($"The {move_str} door is not a valid unlocked door.", true);
 				}
 			}
 			
@@ -4449,21 +4701,35 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 				//Check to see if this char is already in the moving_party_ar or not - we know at this point that moving_party_ar is already an array with at least a len of 0:
 				if scr_check_ar_for_val(moving_party_ar, char_to_add_to_movement_party) == false {
 					
+					error_msg_already_printed = true;
+					
 					valid_index = true;
 						
-					array_delete(local_party_ar,array_get_index(local_party_ar,char_to_add_to_movement_party), 1);
+					array_delete(local_party_ar, array_get_index(local_party_ar,char_to_add_to_movement_party), 1);
 						
 					array_push(moving_party_ar, char_to_add_to_movement_party);
 						
-					scr_add_str_to_dialogue_ar($"\n{char_to_add_to_movement_party.name} joins the party that is moving {party_moing_dir_str}.");
+					scr_add_str_to_dialogue_ar($"\n{char_to_add_to_movement_party.name} joins the party that is moving {party_moving_dir_str}.");
+					
+					d($"\nThe char: {char_to_add_to_movement_party.name} has just been removed from the local_party_ar and added to the moving_party_ar, our local_party_ar now looks like:...\n");
+					for(var oo = 0; oo < array_length(local_party_ar); oo++) {
+						d($"\nAt local_party_ar[{oo}]: char: {local_party_ar[oo].name}");
+					}
+					d($"\nAnd our moving_party_ar looks like this ...\n");
+					for(var oo = 0; oo < array_length(moving_party_ar); oo++) {
+						d($"\nAt moving_party_ar[{oo}]: char: {moving_party_ar[oo].name}");
+					}
 						
 					//There is no one left to pick from here, automatically move the moving_party_ar:
 					if array_length(local_party_ar) <= 0 {
+						
+						d($"!!!!!!!!!!Party member removed from local-party_ar, added to moving_party_ar, now entering code for if local_party_ar len <= 0!!!!!!.....");
 						
 						//Iterate through our moving_party_ar, moving chars:
 						var move_char_id;
 					
 						for(var i = 0; i < array_length(moving_party_ar); i ++) {
+							
 							move_char_id = moving_party_ar[i];
 							
 							//Reduce movepoints:
@@ -4473,8 +4739,8 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 							scr_add_remove_char_room_ar(move_char_id.cur_room_id,move_char_id,false);
 					
 							//Update char x and y vars:
-							move_char_id.cur_grid_x += party_move_dir_x;
-							move_char_id.cur_grid_y += party_move_dir_y;
+							move_char_id.cur_grid_x += party_moving_dir_x;
+							move_char_id.cur_grid_y += party_moving_dir_y;
 				
 							//Update cur_room_id:
 							move_char_id.cur_room_id = global.cur_grid[# move_char_id.cur_grid_x, move_char_id.cur_grid_y];
@@ -4501,7 +4767,7 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 						}
 						//Add doors to room, if it hasn't already been done:
 						if global.acting_char_struct_id.cur_room_id.doors_already_added_boolean == false {
-							scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+							scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y, global.acting_char_struct_id.cur_grid);
 						}
 				
 						//Update the room's boolean vars:
@@ -4509,19 +4775,27 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 						global.acting_char_struct_id.cur_room_id.doors_already_added_boolean = true;
 			
 						//Call scr_reset_visibility(), then update visibility:
-						scr_reset_visibility();
-						scr_update_visibility();
+						scr_reset_visibility(global.acting_char_struct_id.cur_grid);
+						scr_update_visibility(global.acting_char_struct_id.cur_grid);
 						
-						//Return to main game state:
-						global.cur_game_state = game_state.main_game;
-				
 						//Display move result:
-						scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} leads the party {move_str}.\n");
-						scr_print_char_new_room_text(global.acting_char_struct_id);
+						scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} leads the party {party_moving_dir_str}.");
+						
+						//Check to see if we're triggering combat in the new room:
+						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+							global.cur_game_state = game_state.init_combat;	
+						}
+						else {
+							//Return to main game state:
+							global.cur_game_state = game_state.main_game;
+				
+							scr_print_char_new_room_text(global.acting_char_struct_id);
+						}
 					}
 						
 					else if array_length(local_party_ar) > 0 {
-						scr_print_add_movement_chars_screen(party_moing_dir_str);
+						d($"!!!!!!!!!!Party member removed from local-party_ar, added to moving_party_ar, now entering code for if local_party_ar len > 0!!!!!!.....");
+						scr_print_add_movement_chars_screen(party_moving_dir_str);
 					}
 				}
 				else {
@@ -4533,6 +4807,10 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 		}
 		catch(_exception) {
 			valid_index = false;	
+			show_debug_message(_exception.message);
+			show_debug_message(_exception.longMessage);
+			show_debug_message(_exception.script);
+			show_debug_message(_exception.stacktrace);
 		}
 			
 		//We couldn't convert the index_int to a real_num, therefore we may be trying to enter another command:
@@ -4540,23 +4818,25 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 				
 			//Actually move our movement_party_ar:
 			if player_input_str == "C" || player_input_str == "CONTINUE" {
+				d($"\no_con step event: game_state == adding_chars_to_movement_party: 'C' or 'CONTINUE' key press detected... .\n");
 				error_msg_already_printed = true;
 				
 				//Iterate through our moving_party_ar, moving chars:
 				var move_char_id;
 					
 				for(var i = 0; i < array_length(moving_party_ar); i ++) {
+					
 					move_char_id = moving_party_ar[i];
 							
 					//Reduce movepoints:
 					move_char_id.move_points_cur -= 1;
 					
 					//Remove from current room:
-					scr_add_remove_char_room_ar(move_char_id.cur_room_id,move_char_id,false);
+					scr_add_remove_char_room_ar(move_char_id.cur_room_id, move_char_id,false);
 					
 					//Update char x and y vars:
-					move_char_id.cur_grid_x += party_move_dir_x;
-					move_char_id.cur_grid_y += party_move_dir_y;
+					move_char_id.cur_grid_x += party_moving_dir_x;
+					move_char_id.cur_grid_y += party_moving_dir_y;
 				
 					//Update cur_room_id:
 					move_char_id.cur_room_id = global.cur_grid[# move_char_id.cur_grid_x, move_char_id.cur_grid_y];
@@ -4583,7 +4863,7 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 				}
 				//Add doors to room, if it hasn't already been done:
 				if global.acting_char_struct_id.cur_room_id.doors_already_added_boolean == false {
-					scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y);
+					scr_add_doors_to_tilemap(global.tile_doors_lay_id,global.acting_char_struct_id.cur_grid_x,global.acting_char_struct_id.cur_grid_y, global.acting_char_struct_id.cur_grid);
 				}
 				
 				//Update the room's boolean vars:
@@ -4591,15 +4871,22 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 				global.acting_char_struct_id.cur_room_id.doors_already_added_boolean = true;
 			
 				//Call scr_reset_visibility(), then update visibility:
-				scr_reset_visibility();
-				scr_update_visibility();
-				
-				//Return to main game state:
-				global.cur_game_state = game_state.main_game;
+				scr_reset_visibility(global.acting_char_struct_id.cur_grid);
+				scr_update_visibility(global.acting_char_struct_id.cur_grid);
 				
 				//Display move result:
-				scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} leads the party {move_str}.\n");
-				scr_print_char_new_room_text(global.acting_char_struct_id);
+				scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} leads the party {party_moving_dir_str}.");
+				
+				//Check to see if we're triggering combat in the new room:
+				if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+					global.cur_game_state = game_state.init_combat;	
+				}
+				else {
+					//Return to main game state:
+					global.cur_game_state = game_state.main_game;
+
+					scr_print_char_new_room_text(global.acting_char_struct_id);
+				}
 			}
 		
 			//Return to main game:
@@ -4640,4 +4927,51 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 
 #endregion
 
+#region Game_state == spread_hazards
 
+//This game state really only exists in order to spread out the computations of our spread_hazard_* scripts over several frames, thus preventing any 'overwhelmed' memory issues, like the dreaded 'exited with non-zero status' error.
+
+else if global.cur_game_state == game_state.spread_hazards {
+	
+	//Spread gas:
+	if hazard_spread_counter == 0 {
+		
+		scr_spread_hazard_gas();
+	}
+	//Spread fire (cancels gas):
+	else if hazard_spread_counter == 1 {
+		
+		scr_spread_hazard_fire();
+	}
+	//Spread vacuum (cancels fire and toxic gas), then return to main game state:
+	else if hazard_spread_counter == 2 {
+		
+		scr_spread_vacuum();
+		
+		//Return to main game state:
+		global.cur_game_state = game_state.main_game;
+				
+		//Change g.acting_char_struct_id if the previous one died or is unconscious:
+		var use_prev_cur_char = false;
+		if scr_check_ar_for_val(global.pc_char_ar, global.acting_char_struct_id) == true {
+			if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
+			global.acting_char_struct_id.unconscious_count <= 0 {
+				use_prev_cur_char = true;	
+			}
+		}
+				
+		if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+				
+		if global.acting_char_struct_id == -1 throw("o_con step event: game_state == init_combat: local var combat_begun had == false: global.acting_char_struct_id returned -1 from scr_return_next_char_in_ar_direction(), and yet we're trying return to main game state. Something went wrong.")
+		
+		//Update all of our door structs before heading back to the main game state - they could have been destroyed by fire:
+		scr_update_all_door_tiles_in_grid(global.acting_char_struct_id.cur_grid);
+		
+		scr_print_char_new_room_text(global.acting_char_struct_id);
+	}
+	
+	//Iterate
+	hazard_spread_counter++;
+}
+
+#endregion

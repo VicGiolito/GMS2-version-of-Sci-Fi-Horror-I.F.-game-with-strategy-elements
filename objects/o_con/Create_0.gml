@@ -16,6 +16,8 @@ scr_define_macros_and_enums();
 
 scr_define_structs();
 
+global.level_ar = []; //Contains all of ids for all our map grids in the game.
+
 main_menu_str_ar = ["Start New Game\n", "Continue Game\n", "Options\n", "Exit\n"];
 
 party_limit = 2;
@@ -284,7 +286,9 @@ moving_party_ar = -1;
 
 party_moving_dir_x = -1;
 party_moving_dir_y = -1;
-party_moing_dir_str = "";
+party_moving_dir_str = "";
 
+hazard_spread_counter = 0;
 
+global.full_game_turn_completed = false;
 

@@ -31,8 +31,8 @@ function scr_add_remove_char_room_ar(room_struct_id, char_struct_id, add_or_remo
 		array_push(ar_to_use,char_struct_id);	
 	}
 	else {
-		var ar_index = array_get_index(ar_to_use,char_struct_id);
-		if ar_index == -1 throw($"scr_add_remove_char_room_ar: trying to remove {char_struct_id.name} from corresponding room array, but array_get_index returned -1, we want to know why they were not in the array.");
+		var ar_index = array_get_index(ar_to_use, char_struct_id);
+		if ar_index == -1 throw($"scr_add_remove_char_room_ar: trying to remove {char_struct_id.name} from corresponding room array in room_struct_id.room_name: {room_struct_id.room_name_str}, but array_get_index returned -1, we want to know why they were not in the array.");
 		array_delete(ar_to_use, ar_index, 1);		
 	}
 }

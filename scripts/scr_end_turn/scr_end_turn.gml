@@ -10,6 +10,8 @@
 
 function scr_end_turn(){
 	
+	global.full_game_turn_completed = true; //is reset to false whenever game_state.init_combat concludes with no more combat, and we then spread_hazards.
+	
 	global.total_turn_counter++;
 	
 	//Reduce global food:
@@ -33,7 +35,5 @@ function scr_end_turn(){
 		global.pc_char_ar[i].already_fled_this_turn_boolean = false;
 		global.pc_char_ar[i].participated_in_new_turn_battle = false;
 	}
-	
-	//Resolve hazard damage effects:
 	
 }

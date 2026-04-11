@@ -24,7 +24,7 @@ function scr_define_tilemap_from_grid_structs(grid_to_use){
 					
 					tile_enum = struct_id.room_enum; //We can use this room_enum as the tile enum b.c the order in which these enums are arranged matches the order in which the tiles are arranged in our corresponding tileset.
 					
-					if tilemap_set(tile_id,tile_enum,xx,yy) == true {
+					if tilemap_set(tile_id, tile_enum, xx, yy) == true {
 						d($"scr_define_tilemap_from_grid_structs: TILEMAP SUCCESSFULLY SET AT GRID_X: {xx}, GRID_Y: {yy}, with tile_enum: {tile_enum}" );
 					}
 					else {

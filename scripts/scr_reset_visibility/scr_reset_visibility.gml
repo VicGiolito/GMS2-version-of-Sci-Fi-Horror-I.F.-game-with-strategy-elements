@@ -1,19 +1,18 @@
 /* Iterate through cur_grid, add a FOW cell to every cell with a room_struct id that has a explored boolean == true
 
-Summary: this adds a FOW cell to the tile_fow layer for every already explored tile in the g.cur_grid
-
+Summary: this adds a FOW tile to the tile_fow layer for every already explored tile in the g.cur_grid
 
 */
 
-function scr_reset_visibility(){
+function scr_reset_visibility(grid_to_update){
 	
-	var grid_w = ds_grid_width(global.cur_grid), grid_h = ds_grid_height(global.cur_grid);
+	var grid_w = ds_grid_width(grid_to_update), grid_h = ds_grid_height(grid_to_update);
 	
 	var room_struct_id;
 	for(var xx = 0; xx < grid_w; xx++) {
 		for(var yy = 0; yy < grid_h; yy++) {	
 			
-			room_struct_id = global.cur_grid[# xx,yy];
+			room_struct_id = grid_to_update[# xx,yy];
 			
 			if is_struct(room_struct_id) {
 				if room_struct_id.struct_type_enum == struct_type.Room {

@@ -1,0 +1,46 @@
+
+
+function scr_update_all_door_tiles_in_grid(grid_to_update){
+	
+	var grid_w = ds_grid_width(grid_to_update), grid_h = ds_grid_height(grid_to_update);
+	
+	for(var xx = 0; xx < grid_w; xx++) {
+		for(var yy = 0; yy < grid_h; yy++) {	
+			
+			//First, find the matching room struct id for that grid cell:
+			var room_struct_id = grid_to_update[# xx, yy];
+	
+			//Adjust - we * by 3 because our door tile layer is 3 times as large as our tile_main layer; then we add 1
+			//to give us our corresponding center door tile in the middle of the room tile - then we offset from there:
+			var middle_x = xx * 3;
+			var middle_y = yy * 3;
+			middle_x += 1;
+			middle_y += 1;
+	
+			//Then iterate through the structs in its directional_ar:
+			for(var i = 0; i < array_length(room_struct_id.directional_ar); i++) {
+				
+				var directional_struct_id = room_struct_id.directional_ar[i];
+				
+				var door_tile_enum = directional_struct_id.door_enum;
+				
+				if door_tile_enum != door_state.wall && door_tile_enum != door_state.open_space {
+					//Add corresponding tile to corresponding cell:
+					var offset_cell_x = 0, offset_cell_y = 0;
+					if i == DOOR_DIR_W offset_cell_x = -1;
+					else if i == DOOR_DIR_N offset_cell_y = -1;
+					else if i == DOOR_DIR_E offset_cell_x = 1;
+					else if i == DOOR_DIR_S offset_cell_y = 1;
+			
+					//Add to tilemap:
+					if tilemap_set(global.tile_doors_lay_id, door_tile_enum, middle_x+offset_cell_x, middle_y+offset_cell_y) == true {
+						//d($"scr_add_doors_to_tilemap: success: set door tile with door_tile_enum: {door_tile_enum} for grid_cell_x: {grid_x}, y: {grid_y}; offset_cell_x = {offset_cell_x}, offset_cell_y = {offset_cell_y}");	
+					}
+					else {
+						d($"scr_update_all_door_tiles_in_grid: FAILED to set door tile with door_tile_enum: {door_tile_enum} for grid_cell_x: {xx}, y: {yy}; offset_cell_x = {offset_cell_x}, offset_cell_y = {offset_cell_y}");	
+					}
+				}
+			}
+		}
+	}
+}

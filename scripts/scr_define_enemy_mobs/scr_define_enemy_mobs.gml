@@ -10,33 +10,57 @@ the steps that has the lowest step value that they are currently standing on, an
 scr_enemy_mobs_choose_closest_pc_target()
 --the destination grid coordinates of the pc they are pathing to (mob_dest_grid_x and y).
 
+This script really should generally only be called when loading a new level for the first time, after all of its enemies_in_room arrays have been defined.
+
+
 */
 
-function scr_define_enemy_mobs(spawn_grid) {
+function scr_define_enemy_mobs() {
 	
-	var room_struct_id;
-	for(var xx = 0; xx < global.cur_grid_w; xx++) {
-		for(var yy = 0; yy < global.cur_grid_h; yy++) {
+	for(var i = 0; i < array_length(global.level_ar); i++) {
+		
+		var grid_id = global.level_ar[i];
+		var grid_w = ds_grid_width(grid_id), grid_h = ds_grid_height(grid_id);
+		
+		var room_struct_id;
+		for(var xx = 0; xx < grid_w; xx++) {
+			for(var yy = 0; yy < grid_h; yy++) {
 			
-			room_struct_id = global.cur_grid[# xx,yy];
+				room_struct_id = grid_id[# xx,yy];
 			
-			if is_struct(room_struct_id) && room_struct_id.struct_type_enum == struct_type.Room {
-				if is_array(room_struct_id.enemies_in_room_ar) && array_length(room_struct_id.enemies_in_room_ar) > 0 {
-					
-					array_push(global.enemy_mob_ar, new enemy_mob_struct(spawn_grid, xx, yy));
-					
-					//Iterate through enemies_in_room at this grid cell, add to newly created mob_struct:
-					var ar_len = array_length(room_struct_id.enemies_in_room_ar);
-					var char_struct_id;
-					for(var i = 0; i < ar_len; i++) {
-						char_struct_id = room_struct_id.enemies_in_room_ar[i];
+				if is_struct(room_struct_id) && room_struct_id.struct_type_enum == struct_type.Room {
+				
+					if is_array(room_struct_id.enemies_in_room_ar) && array_length(room_struct_id.enemies_in_room_ar) > 0 {
 						
-						if is_struct(char_struct_id) && char_struct_id.struct_type_enum == struct_type.Character {
-							array_push(global.enemy_mob_ar[array_length(global.enemy_mob_ar) - 1].enemies_in_mob_ar, char_struct_id);
+						var location_enum = scr_return_location_enum_from_grid_id(grid_id);
+						
+						//Manually define some hunting and wandering type mobs; default will be guarding:
+						var movement_type = ai_movement_type.guarding;
+						
+						if location_enum == location.research_vessel && room_struct_id.room_enum == research_vessel_room.shuttle_bay {
+							d($"\nscr_define_enemy_mobs: WADNERING AI TYPE ASSIGNED!\n")
+							movement_type = ai_movement_type.wandering;
+						}
+						
+						array_push(global.enemy_mob_ar, new enemy_mob_struct(grid_id, xx, yy, location_enum, movement_type) );
+						
+						d($"scr_define_enemy_mobs: enemy mob spawned at: grid_x: {global.enemy_mob_ar[array_length(global.enemy_mob_ar) - 1].mob_grid_x}, grid_y: {global.enemy_mob_ar[array_length(global.enemy_mob_ar) - 1].mob_grid_y}");
+					
+						//Iterate through enemies_in_room at this grid cell, add to newly created mob_struct:
+						var ar_len = array_length(room_struct_id.enemies_in_room_ar);
+						var char_struct_id;
+						for(var i = 0; i < ar_len; i++) {
+						
+							char_struct_id = room_struct_id.enemies_in_room_ar[i];
+						
+							if is_struct(char_struct_id) && char_struct_id.struct_type_enum == struct_type.Character {
+								array_push(global.enemy_mob_ar[array_length(global.enemy_mob_ar) - 1].enemies_in_mob_ar, char_struct_id);
+							}
 						}
 					}
 				}
-			}
-		}	
+			}	
+		}
 	}
+	
 }

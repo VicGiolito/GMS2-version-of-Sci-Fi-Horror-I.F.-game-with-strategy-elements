@@ -6,7 +6,8 @@ function scr_define_macros_and_enums(){
 		Character,
 		Item,
 		Loot_drop,
-		Enemy_mob
+		Enemy_mob,
+		Door
 	}	
 	
 	enum icon_type { //used in o_con draw event with our local 'icon_ar'
@@ -15,7 +16,11 @@ function scr_define_macros_and_enums(){
 		fire,
 		electric,
 		vacuum,
-		gas
+		gas,
+		vacuum_gen,
+		fire_gen,
+		gas_gen,
+		electric_gen
 	}
 	
 	//These are mostly 'passive' type abilities and abilities that do NOT double as items:
@@ -52,6 +57,7 @@ function scr_define_macros_and_enums(){
 		add_hidden_chars_to_combat,
 		add_chars_to_movement_party,
 		resolve_room_event,
+		spread_hazards,
 		
 		combat_paused, 
 		combat_assign_pc_command,
@@ -73,6 +79,13 @@ function scr_define_macros_and_enums(){
 		combat_continues
 	}
 	
+	enum ai_movement_type {
+		guarding,
+		hunting,
+		wandering,
+		total_ai_movement_types
+	}
+	
 	enum use_case_for_print_char_ar {
 		target_char_for_abil_or_item,
 		target_neutral_for_ownership_change,
@@ -89,6 +102,24 @@ function scr_define_macros_and_enums(){
 		resolutions_options,
 		total_main_menu_options
 		
+	}
+	
+	//Represents the indices in our global.level_ar - within each index is stored the grid id of that map; so the grids must be built and added to the global.level_ar in the same order as this enum.
+	enum location {
+		research_vessel,
+		maintenance_section,
+		battleship,
+		amber_planet,
+		black_moon,
+		forest_moon,
+		derelict_ship,
+		pirate_ship,
+		viper_ship,
+		transport_ship_1,
+		transport_ship_2,
+		garbage_scow,
+		observatory,
+		escape_pod
 	}
 	
 	//It goes without saying the all of the rooms here must be 'powered' in order to 'operate' them and perform their function:
@@ -151,22 +182,6 @@ function scr_define_macros_and_enums(){
 		cloning_bay, //50 - not in use: could potentially create a new, inferior, semi-randomized pcs here at the cost of bio-matter and a science skill check; the higher the skill check, the better the clone, but in general, they are not good: they start naked with low stats and no abilties, or random alien type abilities like 'monstrous claw.'
 		
 		total_research_vessel_room_types
-	}
-
-	enum location {
-		research_vessel,
-		battleship,
-		umber_planet,
-		black_moon,
-		forest_moon,
-		derelict_ship,
-		pirate_ship,
-		viper_ship,
-		transport_ship_1,
-		transport_ship_2,
-		garbage_scow,
-		observatory,
-		escape_pod
 	}
 	
 	enum item_type {
@@ -285,14 +300,13 @@ function scr_define_macros_and_enums(){
 	
 	//Must match the order of the sprites in spr_tiles_doors_44; wall and open are irrelevant
 	enum door_state {
-		
+		open_space,
 		locked,
 		unlocked,
 		jammed,
 		destroyed,
 		wall,
-		open_space,
-
+		
 		total_door_states
 	}
 	
@@ -380,6 +394,14 @@ function scr_define_macros_and_enums(){
 		pc_middle,
 		pc_far, //5
 		total_rank_pos
+	}
+	
+	enum hazard_generator_types {
+		vacuum, //hull breach
+		fire, //something flammable is burning
+		toxic_gas, //leaking pipe
+		electric, //exposed wiring
+		total_hazard_generator_types
 	}
 	
 	enum team_type {
@@ -523,6 +545,10 @@ function scr_define_macros_and_enums(){
 	#macro PASSIVE_THICK_HIDE_ARMOR_BUFF 1
 	#macro PASSIVE_HARDENED_FRAME_ARMOR_BUFF 1
 	#macro PASSIVE_CHILD_STEALTH_BUFF 2
+	
+	#macro DOT_HAZARD_DMG_TOXIC_GAS 2
+	#macro DOT_HAZARD_DMG_FIRE 4
+	#macro DOT_HAZARD_ELECTRIC_DMG 3
 	
 	#macro MIN_HIDE_RAN_VAL 1
 	#macro MAX_HIDE_RAN_VAL 10

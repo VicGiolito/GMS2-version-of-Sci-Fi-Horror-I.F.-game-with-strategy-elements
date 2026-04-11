@@ -7,12 +7,14 @@ function scr_perform_flood_fill_recursion(char_struct_id, steps_grid_id, cardina
 	ds_priority_clear(global.frontier_queue);
 	
 	failsafe_val = 0;
-	failsafe_max = (global.cur_grid_h * global.cur_grid_w) + 1;
+	//We've made sure that our visited_grid matches whatever grid we're using for this algorithm, we so we can use its dimensions:
+	var visited_grid_w = ds_grid_width(global.visited_grid), visited_grid_h = ds_grid_height(global.visited_grid);
+	failsafe_max = (visited_grid_w * visited_grid_h) + 1;
 	
-	d($"Entering scr_perform_flood_fill_recursion: global.cur_grid_w = {global.cur_grid_w} and global.cur_grid_h = {global.cur_grid_h}, so max iterations == {failsafe_max}");
+	d($"Entering scr_perform_flood_fill_recursion: global.cur_grid_w = {visited_grid_w} and global.cur_grid_h = {visited_grid_h}, so max iterations == {failsafe_max}");
 	
 	//Add this char's current cell as first starting coordinates:
-	ds_priority_add(global.frontier_queue,char_struct_id.cur_grid_x + char_struct_id.cur_grid_y * GRID_ENCODE, 0);
+	ds_priority_add(global.frontier_queue, char_struct_id.cur_grid_x + char_struct_id.cur_grid_y * GRID_ENCODE, 0);
 	
 	steps_grid_id[# char_struct_id.cur_grid_x,char_struct_id.cur_grid_y] = 0;
 	
@@ -20,8 +22,10 @@ function scr_perform_flood_fill_recursion(char_struct_id, steps_grid_id, cardina
 	do {
 		
 		if ds_priority_empty(global.frontier_queue) {
+			
 			d($"scr_perform_flood_fill_recursion: our frontier_queue is empty, our algorithm has finished. It required: {failsafe_val} iterations.");
-			return false;
+			
+			return true;
 		}
 		
 		var encoded_val = ds_priority_delete_min(global.frontier_queue);
@@ -57,8 +61,8 @@ function scr_perform_flood_fill_recursion(char_struct_id, steps_grid_id, cardina
 			checking_cell_y = pather_y+move_dir_y;
 		
 			//Check within bounds:
-			if checking_cell_x >= 0 && checking_cell_x < global.cur_grid_w && 
-			checking_cell_y >= 0 && checking_cell_y < global.cur_grid_h {
+			if checking_cell_x >= 0 && checking_cell_x < visited_grid_w && 
+			checking_cell_y >= 0 && checking_cell_y < visited_grid_h {
 				
 				if scr_check_valid_door_dir(room_struct_id,move_dir_x,move_dir_y) {
 				

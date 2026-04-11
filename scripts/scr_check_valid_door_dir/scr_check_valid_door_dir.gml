@@ -3,7 +3,7 @@
 function scr_check_valid_door_dir(room_struct_id, moving_dir_x, moving_dir_y){
 	
 	if is_struct(room_struct_id) && room_struct_id.struct_type_enum == struct_type.Room {
-		//We can only check cardinal directions - one door at a time:
+		//We can only check cardinal directions - one door at a time - so this code is valid:
 		var directional_macro;
 		if moving_dir_x == -1 directional_macro = DOOR_DIR_W;
 		else if moving_dir_x == 1 directional_macro = DOOR_DIR_E;

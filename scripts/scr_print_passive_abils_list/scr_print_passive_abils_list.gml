@@ -31,7 +31,7 @@ function scr_print_passive_abils_list(cur_char_id, update_scroll_pos = true){
 				abil_str += $"Synthetic: Immune to most status effects and hazards. Immune to morale damage. +1 armor. All electrical damage sustained is increased by 100%.";
 			}
 			else if abil_enum == passive_abil_type.child {
-				abil_str += $"Child: Due to their small size, this character can't wield weapons and can't wear marine armor. Also has a higher than average stealth skill, and is the only character small enough to traverse through the ship's ventillation shafts.";
+				abil_str += $"Child: Due to their small size, this character can't wield weapons and can't wear marine armor. Also has a higher than average stealth skill, does not automatically trigger combat with enemies when moving into a room, and is the only character small enough to traverse through the ship's ventillation system.";
 			}
 			
 			//cybernetic //synthetic //child

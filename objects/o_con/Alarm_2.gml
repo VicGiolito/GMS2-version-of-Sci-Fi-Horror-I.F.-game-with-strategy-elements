@@ -6,7 +6,7 @@ window_set_fullscreen(true);
 #region Setup our ds_grids for our world maps, and spawn initial enemy structs:
 
 //Defines cur_grid_w and h and specific grid ids:
-scr_build_map_from_csv_file(location.research_vessel);
+array_push(global.level_ar, scr_build_map_from_csv_file(location.research_vessel) );
 
 global.cur_grid = global.research_vessel_grid;
 
@@ -23,11 +23,7 @@ global.tile_fow_lay_id = layer_tilemap_get_id(layer_get_id("tile_fow"));
 
 global.frontier_queue = ds_priority_create(); 
 
-global.visited_grid = ds_grid_create(global.cur_grid_w,global.cur_grid_h);
-ds_grid_clear(global.visited_grid, UNVISITED_CELL);
-
-global.steps_grid = ds_grid_create(global.cur_grid_w,global.cur_grid_h);
-ds_grid_clear(global.steps_grid, UNVISITED_STEP_VAL);
+scr_reset_pathing_grids_to_match_grid(global.cur_grid);
 
 scr_define_global_and_con_data();
 

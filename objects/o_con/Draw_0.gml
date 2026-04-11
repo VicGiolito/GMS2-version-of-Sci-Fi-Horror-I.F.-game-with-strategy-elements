@@ -34,7 +34,7 @@ if global.cur_game_state >= game_state.main_game {
 
 #endregion
 
-#region Draw hazard and enemy present icons:
+#region Draw hazard, hazard generators, and enemy present icons:
 
 if global.cur_game_state >= game_state.main_game && global.cur_game_state < game_state.combat_paused {
 	
@@ -84,6 +84,21 @@ if global.cur_game_state >= game_state.main_game && global.cur_game_state < game
 							}
 						}
 					}
+					
+					if is_array(room_struct_id.hazard_generator_ar) && array_length(room_struct_id.hazard_generator_ar) > 0 {
+						if scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.fire) == true {
+							array_push(icon_ar, icon_type.fire_gen);
+						}
+						if scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.vacuum) == true {
+							array_push(icon_ar, icon_type.vacuum_gen);
+						}
+						if scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.electric) == true {
+							array_push(icon_ar, icon_type.electric_gen);
+						}
+						if scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.toxic_gas) == true {
+							array_push(icon_ar, icon_type.gas_gen);
+						}
+					}
 			
 					//Now start drawing along the bottom row based upon our icon_ar:
 					if array_length(icon_ar) > 0 {
@@ -102,6 +117,10 @@ if global.cur_game_state >= game_state.main_game && global.cur_game_state < game
 							else if icon_enum == icon_type.electric spr_id = spr_hazard_electrical;
 							else if icon_enum == icon_type.powered_room spr_id = spr_powered_icon;
 							else if icon_enum == icon_type.vacuum spr_id = spr_hazard_vacuum;
+							else if icon_enum == icon_type.vacuum_gen spr_id = spr_hazard_vacuum_gen;
+							else if icon_enum == icon_type.fire_gen spr_id = spr_hazard_fire_gen;
+							else if icon_enum == icon_type.gas_gen spr_id = spr_hazard_gas_gen;
+							else if icon_enum == icon_type.electric_gen spr_id = spr_hazard_electrical_gen;
 					
 							draw_sprite(spr_id,0,spr_x,spr_y);
 						}

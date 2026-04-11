@@ -3,6 +3,9 @@ function scr_define_structs(){
 	
 	//The index position of the door struct within the room struct's directional_ar indicates what direction the door is in.
 	global.door_struct = function (door_enum_, door_hp_, door_jam_diff_val_) constructor {	
+		
+		struct_type_enum = struct_type.Door;
+		
 		door_enum = door_enum_;
 		door_hp = door_hp_;
 		door_jam_diff_val = door_jam_diff_val_;
@@ -22,9 +25,11 @@ function scr_define_structs(){
 	
 	#region Enemy mob struct:
 	
-	enemy_mob_struct = function (spawn_grid, mob_grid_x_, mob_grid_y_) constructor {
+	enemy_mob_struct = function (spawn_grid, mob_grid_x_, mob_grid_y_, location_enum_, movement_type_enum) constructor {
 		
 		struct_type_enum = struct_type.Enemy_mob;
+		
+		ai_movement_behavior = movement_type_enum;
 		
 		mob_cur_grid = spawn_grid;
 		
@@ -37,6 +42,10 @@ function scr_define_structs(){
 		
 		mob_dest_grid_x = -1;
 		mob_dest_grid_y = -1;
+		
+		location_enum = location_enum_;
+		
+		no_target_found = false;
 	}
 	
 	#endregion
@@ -70,7 +79,7 @@ function scr_define_structs(){
 		
 		global.unique_struct_id_num++;
 		
-		flood_fill_path_grid = -1; //Is used as a ds_grid for flood fill pathing steps after character creation.
+		flood_fill_path_grid = -1; //Is used as a ds_grid for flood fill pathing steps after character creation in scr_setup_char_pathing_grids().
 		
 		char_sprite_inst_id = -1;
 		
@@ -166,6 +175,8 @@ function scr_define_structs(){
 		}
 
         char_type_enum = char_enum;
+		
+		cur_grid = -1;
 		
 		if add_to_room_list_bool {
 	        cur_grid = spawn_grid;
@@ -541,8 +552,10 @@ function scr_define_structs(){
             spd = AVERAGE_CHAR_SPEED-1;
 			
 			broken_morale_ar = [];
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"Oh HELL no!\" {name} cries, bolting from his position. \"I didn't sign up for this shit!\""});
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Just two more weeks, they said... Just two more weeks...\" {name} stands dumbfounded, frozen with fear. \"... Now I'll never see my little girl again...\"" });
+				//Debug berserk:
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"Cooper goes berserk."});
+			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"Oh HELL no!\" {name} cries, bolting from his position. \"I didn't sign up for this shit!\""});
+			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Just two more weeks, they said... Just two more weeks...\" {name} stands dumbfounded, frozen with fear. \"... Now I'll never see my little girl again...\"" });
 			
 			permanent_broken_morale_ar = [];
 			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
@@ -1059,8 +1072,8 @@ function scr_define_structs(){
             spd = 0;
 			
 			//scr_add_ability(self,item_type.acid_cloud);
-			scr_add_ability(self,item_type.acid_spit);
-			//scr_add_ability(self,item_type.regurgitated_vomit);
+			//scr_add_ability(self,item_type.acid_spit);
+			scr_add_ability(self,item_type.regurgitated_vomit);
 		}
 
         else if char_type_enum == character.enemy_chittering_lurker {
@@ -1149,7 +1162,7 @@ function scr_define_structs(){
 		scrap_cost = 0;
         ability_point_cost = 0;
         ability_cost_str = "";
-        non_attack_ability_boolean = false; //Torvald's shield, cooper's buffs, Avia's summons, etc., all == true
+        non_attack_ability_boolean = false; //Torvald's shield, cooper's buffs, Avia's summons, etc., all == true; these type of abilities should also never be used by ai.
 		
 		//Most status effect type vars:
         burn_chance = 0;
@@ -1165,7 +1178,6 @@ function scr_define_structs(){
         item_desc = "Not defined";
         item_dmg_str = "Not defined";
 
-        slot_designation_str = "";
         item_verb = "fires";
         aoe_count = 1; //indicates max targets item will hit; -1 indicates it hits the entire mob, flamers only
 		
@@ -2088,11 +2100,16 @@ function scr_define_structs(){
 	
 	#region Room struct:
 	
-	global.Room = function(location_type_enum,room_type_enum,spawn_grid_x,spawn_grid_y,location_grid_id) constructor
+	global.Room = function(location_type_enum, room_type_enum, spawn_grid_x, spawn_grid_y, location_grid_id) constructor
 	{
 		struct_type_enum = struct_type.Room;
 		
 		scavenge_ar = -1; //Is used as an array; filled with loot_drop structs
+		
+		hazard_generator_ar = -1;
+		
+		this_room_already_spread_fire = false;
+		this_room_already_spread_gas = false;
 		
 		room_hide_difficulty_val = AVG_HIDE_DIFFICULTY_VAL;
 		
@@ -2259,8 +2276,12 @@ function scr_define_structs(){
 			else if room_enum == research_vessel_room.stasis_chamber {
 				
 				//Hazard ar:
-				hazard_ar = [];
-				array_push(hazard_ar,hazard_type.toxic_gas);
+					//hazard_ar = [];
+					//array_push(hazard_ar,hazard_type.toxic_gas);
+				
+				//debug:
+				//hazard_generator_ar = [];
+				//array_push(hazard_generator_ar, hazard_generator_types.vacuum);
 				
 				scavenge_ar = [];
 				//(loot_drop_type_enum_, item_enum_, resource_quantity_)
@@ -2303,11 +2324,15 @@ function scr_define_structs(){
 				
 				//Debug:
 					//Hazard ar:
-				hazard_ar = [];
-				array_push(hazard_ar,hazard_type.toxic_gas);
-				array_push(hazard_ar,hazard_type.electric_current);
-				array_push(hazard_ar,hazard_type.vacuum);
-				array_push(hazard_ar,hazard_type.fire);
+				//hazard_ar = [];
+				//array_push(hazard_ar,hazard_type.toxic_gas);
+				//array_push(hazard_ar,hazard_type.electric_current);
+				//array_push(hazard_ar,hazard_type.vacuum);
+				//array_push(hazard_ar,hazard_type.fire);
+				
+				//debug:
+				//hazard_generator_ar = [];
+				//array_push(hazard_generator_ar, hazard_generator_types.vacuum);
 				
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
@@ -2350,6 +2375,10 @@ function scr_define_structs(){
 			else if room_enum == research_vessel_room.sc_corridor_east {
 				
 				room_name_str = "EAST-WEST CORRIDOR";
+				
+				//debug:
+				//hazard_generator_ar = [];
+				//array_push(hazard_generator_ar, hazard_generator_types.vacuum);
 				
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
@@ -3057,7 +3086,7 @@ function scr_define_structs(){
 			}
 			
 			else if room_enum == research_vessel_room.engine_room {
-
+				
 				pre_event_unpowered_room_desc = "Engine Room."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
@@ -3218,6 +3247,13 @@ function scr_define_structs(){
 			}
 			
 			else if room_enum == research_vessel_room.vacuum {
+				
+				//All of these rooms are automatically vacuum and vacuum generators:
+				hazard_ar = [];
+				array_push(hazard_ar, hazard_type.vacuum);
+				hazard_generator_ar = [];
+				array_push(hazard_generator_ar, hazard_generator_types.vacuum);
+				
 				room_name_str = "SPACE - VACUUM";
 				
 				pre_event_unpowered_room_desc = "You are but a speck of detritus floating through this ocean of stars.";
