@@ -51,7 +51,14 @@ function scr_setup_char_init_gear_and_abils(){
 		}
 		
 		else if pc_char_enum == character.child {
-			
+			var item_id = new global.Item(item_type.suit_marine);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
+			var item_id = new global.Item(item_type.suit_security_vest);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
+			var item_id = new global.Item(item_type.shield_riot);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
+			var item_id = new global.Item(item_type.sniper_rifle);
+			scr_add_item_to_inv(pc_char_struct,item_id,true);
 		}
 		
 		else if pc_char_enum == character.service_droid {

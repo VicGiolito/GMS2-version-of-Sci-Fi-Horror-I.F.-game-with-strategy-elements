@@ -2,7 +2,9 @@
 
 function scr_delete_char_from_global_and_room_ar(char_id_to_delete){
 	
-	var room_ar, global_ar;
+	d($"Entering scr_delete_char_from_global_and_room_ar for char_id_to_delete: {char_id_to_delete.name}");
+	
+	var room_ar = undefined, global_ar = undefined;
 	
 	if char_id_to_delete.char_team_enum == team_type.enemy {
 		room_ar = char_id_to_delete.cur_room_id.enemies_in_room_ar;

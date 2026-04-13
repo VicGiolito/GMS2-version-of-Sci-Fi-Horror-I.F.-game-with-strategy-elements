@@ -1158,6 +1158,11 @@ function scr_define_structs(){
         is_shield_boolean = false; //Currently only used in scr_check_valid_item_equip()
         can_overwatch_boolean = false;
 		
+		basic_tech_cost = 0;
+		advanced_tech_cost = 0;
+		food_cost = 0;
+		
+		move_point_cost = 0;
 		sanity_cost = 0;
 		scrap_cost = 0;
         ability_point_cost = 0;
@@ -1385,6 +1390,15 @@ function scr_define_structs(){
 			use_requires_target = true;
 		}
 		
+		 else if item_enum == item_type.medkit {
+            single_use_boolean = true;
+            usable_boolean = true;
+            item_name = "MEDICAL KIT";
+            equippable_boolean = false;
+			use_context = abil_use_context.both;
+			use_requires_target = true;
+		}
+		
 		else if item_enum == item_type.improvised_medicine {  // Doctor ability
             dmg_min = 0;
             dmg_max = 0;
@@ -1399,7 +1413,147 @@ function scr_define_structs(){
 			use_requires_target = true;
 		}
 		
-        // This skill uses utils execute_non_attack_ability()
+		//Item that repairs hazards and hazard generators:
+		else if item_enum == item_type.welding_torch {
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "WELDING TORCH";
+            item_equip_enum = item_equip_type.none;
+            item_verb = "blazes the";
+            item_dmg_str = "burns";
+            max_range = 0;
+            burn_chance = 75;
+			usable_boolean = true;
+			use_context = abil_use_context.main_game_only;
+			move_point_cost = 1;
+			scrap_cost = 2;
+			item_desc = $"Spend {move_point_cost} MP, {scrap_cost} scrap, and pass an engineering skill test: Repair a hull breach or leaking pipe at your current location. If both hazards are present, the hull breach will be repaired first.";
+		}
+		
+		//Item that repairs hazards and hazard generators:
+		else if item_enum == item_type.torque_wrench {
+            dmg_min = 1;
+            dmg_max = 2;
+            requires_ammo_boolean = false;
+            item_name = "TORQUE WRENCH";
+            item_equip_enum = item_equip_type.none;
+            item_verb = "swings the";
+            item_dmg_str = "blundgeons";
+            max_range = 0;
+            burn_chance = 75;
+			usable_boolean = true;
+			use_context = abil_use_context.main_game_only;
+			move_point_cost = 1;
+			scrap_cost = 2;
+			item_desc = $"Spend {move_point_cost} MP, {scrap_cost} scrap, and pass an engineering skill test: Repair a leaking pipe at your current location.";
+		}
+		
+		//Item that repairs hazards and hazard generators:
+		else if item_enum == item_type.soldering_tools {
+            dmg_min = 1;
+            dmg_max = 2;
+            requires_ammo_boolean = false;
+            item_name = "SOLDIERING TOOLS";
+            item_equip_enum = item_equip_type.none;
+            item_verb = "swings the";
+            item_dmg_str = "blundgeons";
+            max_range = 0;
+            burn_chance = 75;
+			usable_boolean = true;
+			use_context = abil_use_context.main_game_only;
+			move_point_cost = 1;
+			scrap_cost = 2;
+			item_desc = $"Spend {move_point_cost} MP, {scrap_cost} scrap, and pass an engineering skill test: Repair a damaged electrical hazard at your current location.";
+		}
+		
+		//Item that repairs hazards and hazard generators:
+		else if item_enum == item_type.fire_extinguisher {
+            dmg_min = 1;
+            dmg_max = 2;
+            requires_ammo_boolean = false;
+            item_name = "FIRE EXTINGUISHER";
+            item_equip_enum = item_equip_type.none;
+            item_verb = "swings the";
+            item_dmg_str = "blundgeons";
+            max_range = 0;
+            burn_chance = 75;
+			usable_boolean = true;
+			use_context = abil_use_context.main_game_only;
+			move_point_cost = 1;
+			scrap_cost = 1;
+			item_desc = $"Spend {move_point_cost} MP, {scrap_cost} scrap: Extinguish a fire and/or burning fuel hazard at your current location.";
+		}
+		
+		//Ability that repairs hazards and hazard generators:
+		else if item_enum == item_type.plasma_torch {
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "PLASMA TORCH";
+            item_equip_enum = item_equip_type.none;
+            item_verb = "blazes the";
+            item_dmg_str = "burns";
+            max_range = 0;
+            burn_chance = 75;
+			max_range = 0;
+            ability_point_cost = 3;
+			move_point_cost = 1;
+			scrap_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP, {move_point_cost} MP, {scrap_cost} scrap, and pass an engineering skill test: repair a hull breach or leaking pipe at your current location. If both are present, hull breach will be repaired first.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+			use_context = abil_use_context.main_game_only;
+			use_requires_target = false;
+		}
+		
+		//Ability that repairs hazards and hazard generators:
+		else if item_enum == item_type.soldering_laser {
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "SOLDERING LASER";
+            item_equip_enum = item_equip_type.none;
+            item_verb = "blazes the";
+            item_dmg_str = "burns";
+            max_range = 0;
+            burn_chance = 75;
+			max_range = 0;
+            ability_point_cost = 3;
+			move_point_cost = 1;
+			scrap_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP, {move_point_cost} MP, {scrap_cost} scrap, and pass an engineering skill test: repair a electrical hazard at your current location.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+			use_context = abil_use_context.main_game_only;
+			use_requires_target = false;
+		}
+		
+		//Ability that repairs hazards and hazard generators:
+		else if item_enum == item_type.fire_foam_spray {
+            dmg_min = 1;
+            dmg_max = 4;
+            requires_ammo_boolean = false;
+            item_name = "FIRE FOAM SPRAY";
+            item_equip_enum = item_equip_type.none;
+            item_verb = "squirts the";
+            item_dmg_str = "burns";
+            max_range = 0;
+            burn_chance = 75;
+			max_range = 0;
+            ability_point_cost = 3;
+			move_point_cost = 1;
+			scrap_cost = 2;
+            ability_cost_str = $"Spend {ability_point_cost} AP, {move_point_cost} MP, and {scrap_cost} scrap: extinguish a fire and/or burning fuel hazard at your current location.";
+            non_attack_ability_boolean = true;
+            abil_passes_turn_boolean = true;
+            requires_ammo_boolean = false;
+			use_context = abil_use_context.main_game_only;
+			use_requires_target = false;
+		}
+		
         else if item_enum == item_type.spawn_light_sentry_gun {  // Engineer ability
             dmg_min = 0;
             dmg_max = 0;
@@ -1415,7 +1569,6 @@ function scr_define_structs(){
 			ability_cost_str = $"Spend {ability_point_cost} AP, {scrap_cost} scrap, and pass your turn if in combat: spawn a LIGHT SENTRY GUN at your position. Sentry guns do not move, fire at enemies within their range, and set overwatch when enemies are beyond their range.";
 		}
 
-        // This skill uses utils execute_non_attack_ability()
         else if item_enum == item_type.spawn_light_sentinel_droid {  
             dmg_min = 0;
             dmg_max = 0;
@@ -1874,14 +2027,7 @@ function scr_define_structs(){
             burn_chance = 25;
 			use_context = abil_use_context.combat_only;
 		}
-        else if item_enum == item_type.medkit {
-            single_use_boolean = true;
-            usable_boolean = true;
-            item_name = "MEDICAL KIT";
-            equippable_boolean = false;
-			use_context = abil_use_context.both;
-			use_requires_target = true;
-		}
+       
 		else if item_enum == item_type.anti_anxiety_meds {  // Doctor ability
             dmg_min = 0;
             dmg_max = 0;
@@ -2069,19 +2215,6 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 		}
 
-        else if item_enum == item_type.plasma_torch {
-            dmg_min = 1;
-            dmg_max = 4;
-            requires_ammo_boolean = false;
-            item_name = "PLASMA TORCH";
-            item_equip_enum = item_equip_type.one_hand;
-            item_verb = "blazes the";
-            item_dmg_str = "burns";
-            max_range = 0;
-            burn_chance = 75;
-			use_context = abil_use_context.both;
-		}
-
         // endregion
 
         //Build this item's 'status_effect_list'; is this even in use?
@@ -2169,7 +2302,7 @@ function scr_define_structs(){
 				//(loot_drop_type_enum_, item_enum_, resource_quantity_)
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, irandom_range(0,3)) );
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_powered_room_desc = pre_event_powered_room_desc;
@@ -2196,7 +2329,7 @@ function scr_define_structs(){
 				//(loot_drop_type_enum_, item_enum_, resource_quantity_)
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, irandom_range(0,3)) );
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2641,7 +2774,7 @@ function scr_define_structs(){
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2667,7 +2800,7 @@ function scr_define_structs(){
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2693,7 +2826,7 @@ function scr_define_structs(){
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2719,7 +2852,7 @@ function scr_define_structs(){
 				scavenge_ar = [];
 				array_push(scavenge_ar, new global.loot_drop_struct(loot_drop_type.resource_scrap, -1, 4) );
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2742,7 +2875,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_s_e {
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2765,7 +2898,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_w_s {
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2788,7 +2921,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_w_e_s_n {
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
@@ -2811,7 +2944,7 @@ function scr_define_structs(){
 			
 			else if room_enum == research_vessel_room.intersection_n_e {
 				
-				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's decline."
+				pre_event_unpowered_room_desc = "This basic corridor only serves as a connection between two areas on the ship. The floor is metal grating and the walls are dirty panels of burnished steel. A few piles of refuse lay scattered about, evidence of the station's disarray."
 				pre_event_powered_room_desc = pre_event_unpowered_room_desc;
 				
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;

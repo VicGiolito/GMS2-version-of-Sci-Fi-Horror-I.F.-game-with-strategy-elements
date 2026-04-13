@@ -58,6 +58,7 @@ function scr_define_macros_and_enums(){
 		add_chars_to_movement_party,
 		resolve_room_event,
 		spread_hazards,
+		prompt_skill_test_proceed,
 		
 		combat_paused, 
 		combat_assign_pc_command,
@@ -260,10 +261,14 @@ function scr_define_macros_and_enums(){
 		feral_bite,
 		adrenal_pen,
 		plasma_torch,
+		welding_torch,
 		terrifying_wail,
 		regurgitated_vomit,
 		improvised_medicine,
 		anti_anxiety_meds,
+		soldering_tools,
+		soldering_laser,
+		fire_foam_spray,
 		total_items
 	}
 	
@@ -474,6 +479,13 @@ function scr_define_macros_and_enums(){
 		both
 	}
 	
+	enum skill_tests {
+		engineering,
+		science,
+		security,
+		total_skill_tests
+	}
+	
 	//Some stat type macros/misc. macros:
 	#macro AVG_ACC_VAL 7
 	#macro MIN_COMBAT_RAN_NUM 1
@@ -552,6 +564,10 @@ function scr_define_macros_and_enums(){
 	
 	#macro MIN_HIDE_RAN_VAL 1
 	#macro MAX_HIDE_RAN_VAL 10
+	
+	#macro AVG_ENGINEERING_SKILL_TEST_BASE -2
+	#macro MIN_SKILL_TEST_RAN_VAL 1
+	#macro MAX_SKILL_TEST_RAN_VAL 1
 	
 	#macro HARD_DOOR_JAM_VAL 0
 	#macro AVG_DOOR_JAM_VAL 3

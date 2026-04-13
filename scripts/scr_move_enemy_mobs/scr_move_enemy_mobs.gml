@@ -146,6 +146,16 @@ function scr_move_enemy_mobs(){
 								array_push(new_dest_room_struct_id.enemies_in_room_ar, enemy_mob_struct_id.enemies_in_mob_ar[enemy_in_mob_i]);
 							}
 							d("\nMOB FUCKING HUNTING MOVED!\n");
+							
+							//We've moved, and while the various room arrays have changed, we still need to update the cur_room_id var for every enemy id 
+							//in our enemies_in_mob_ar
+							var enemy_in_mob_id;
+							for(var ll = 0; ll < array_length(enemy_mob_struct_id.enemies_in_mob_ar); ll++) {
+								
+								enemy_in_mob_id = enemy_mob_struct_id.enemies_in_mob_ar[ll];
+								
+								enemy_in_mob_id.cur_room_id = enemy_mob_struct_id.mob_cur_grid[# enemy_mob_struct_id.mob_grid_x, enemy_mob_struct_id.mob_grid_y];
+							}
 						}
 					
 						else if door_state_enum == door_state.jammed || door_state_enum == door_state.locked {
@@ -242,6 +252,16 @@ function scr_move_enemy_mobs(){
 						array_push(new_dest_room_struct_id.enemies_in_room_ar, enemy_mob_struct_id.enemies_in_mob_ar[enemy_in_mob_i]);
 					}
 					d("\nMOB FUCKING HUNTING MOVED!\n");
+					
+					//We've moved, and while the various room arrays have changed, we still need to update the cur_room_id var for every enemy id 
+					//in our enemies_in_mob_ar
+					var enemy_in_mob_id;
+					for(var ll = 0; ll < array_length(enemy_mob_struct_id.enemies_in_mob_ar); ll++) {
+								
+						enemy_in_mob_id = enemy_mob_struct_id.enemies_in_mob_ar[ll];
+								
+						enemy_in_mob_id.cur_room_id = new_dest_room_struct_id;
+					}
 				}
 			}
 			else {

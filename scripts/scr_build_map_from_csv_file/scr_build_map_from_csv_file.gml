@@ -41,8 +41,8 @@ function scr_build_map_from_csv_file(location_enum){
 				if room_enum == research_vessel_room.sc_corridor_west {
 					
 					//Debug:
-					//new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true); 
-					new global.Character(character.enemy_sodden_shambler,xx,yy,global.research_vessel_grid,team_type.enemy,true);
+					new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true); 
+					//new global.Character(character.enemy_sodden_shambler,xx,yy,global.research_vessel_grid,team_type.enemy,true);
 					
 				}
 				
@@ -103,8 +103,8 @@ function scr_build_map_from_csv_file(location_enum){
 					
 					//Debug:
 						//Enemies:
-					//new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true); 
-					new global.Character(character.enemy_sodden_shambler,xx,yy,global.research_vessel_grid,team_type.enemy,true);
+					new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true); 
+					//new global.Character(character.enemy_sodden_shambler,xx,yy,global.research_vessel_grid,team_type.enemy,true);
 						//Debug pcs:
 					//new global.Character(character.ceo,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					//new global.Character(character.doctor,xx,yy,global.research_vessel_grid,team_type.pc,true);

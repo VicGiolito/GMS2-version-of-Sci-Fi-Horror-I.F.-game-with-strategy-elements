@@ -47,13 +47,16 @@ function scr_spread_hazard_fire() {
 							
 								//We don't check if this room has vacuum hazard or a vacuum generator:
 								var invalid_cell = false;
-									
+								
+								//Edit: we actually want fire to spread to vacuum rooms, just to destroy the doors; we won't actually apply fire there.
+								/*
 								if is_array(room_struct_id.hazard_ar) && scr_check_ar_for_val(room_struct_id.hazard_ar, hazard_type.vacuum) == true {
 									invalid_cell = true;	
 								}
 								if is_array(room_struct_id.hazard_generator_ar) && scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.vacuum) == true {
 									invalid_cell = true;	
 								}
+								*/
 									
 								if invalid_cell == false {
 									//We've made it this far, check each direction to make sure it's still valid within our grid:
@@ -83,13 +86,13 @@ function scr_spread_hazard_fire() {
 											var checking_room_struct = grid_id[# checking_grid_x, checking_grid_y];
 											
 											//We do in fact check to spread to rooms that already have fire - we do this to ensure that all doors will become broken in a room,
-											//regardless of the direction the fire is spreading in.
-												/*
-												if (is_array(checking_room_struct.hazard_ar) && scr_check_ar_for_val(checking_room_struct.hazard_ar, hazard_type.fire) == true) ||
-												(is_array(checking_room_struct.hazard_generator_ar) && scr_check_ar_for_val(checking_room_struct.hazard_generator_ar, hazard_generator_types.fire) == true) {
-													continue;	
-												}
-												*/
+											//regardless of the direction the fire is spreading in; we simply won't double apply the fire there
+											/*
+											if (is_array(checking_room_struct.hazard_ar) && scr_check_ar_for_val(checking_room_struct.hazard_ar, hazard_type.fire) == true) ||
+											(is_array(checking_room_struct.hazard_generator_ar) && scr_check_ar_for_val(checking_room_struct.hazard_generator_ar, hazard_generator_types.fire) == true) {
+												continue;	
+											}
+											*/
 											
 											//Walls are the only thing our fire doesn't move through; check for them now:
 											var valid_dir = true;
@@ -108,13 +111,17 @@ function scr_spread_hazard_fire() {
 			
 												//Make sure the cell we are checking is not a vacuum cell or a vacuum generator cell:
 												var invalid_cell = false;
-									
+												
+												//Edit: we actually don't care if the adjoining room has a vacuum hazard or generator, we still want to destroy the doors leading to there;
+												//we simply won't double apply the fire hazard.
+												/*
 												if is_array(checking_room_struct.hazard_ar) && scr_check_ar_for_val(checking_room_struct.hazard_ar, hazard_type.vacuum) == true {
 													invalid_cell = true;	
 												}
 												if is_array(checking_room_struct.hazard_generator_ar) && scr_check_ar_for_val(checking_room_struct.hazard_generator_ar, hazard_generator_types.vacuum) == true {
 													invalid_cell = true;	
 												}
+												*/
 											
 												//Add to our coords_to_ignite_ar, add door struct ids so they can be destroyed later:
 												if !invalid_cell {
@@ -151,6 +158,14 @@ function scr_spread_hazard_fire() {
 					coords_to_ignite_ar[z].original_door.door_enum = door_state.destroyed;
 					coords_to_ignite_ar[z].adjoining_door.door_enum = door_state.destroyed;
 					
+					//We don't apply fire to rooms with vacuum or vacuum generators:
+					if is_array(room_struct_to_ignite_id.hazard_ar) && scr_check_ar_for_val(room_struct_to_ignite_id.hazard_ar, hazard_type.vacuum) == true {
+						continue;	
+					}
+					if is_array(room_struct_to_ignite_id.hazard_generator_ar) && scr_check_ar_for_val(room_struct_to_ignite_id.hazard_generator_ar, hazard_generator_types.vacuum) == true {
+						continue;	
+					}
+					
 					//... But we never 'reapply' the hazard:
 					if is_array(room_struct_to_ignite_id.hazard_ar) && scr_check_ar_for_val(room_struct_to_ignite_id.hazard_ar, hazard_type.fire) == true {
 						continue;	
@@ -160,9 +175,8 @@ function scr_spread_hazard_fire() {
 					if !is_array(room_struct_to_ignite_id.hazard_ar) {
 						room_struct_to_ignite_id.hazard_ar = [];	
 					}
+					
 					array_push(room_struct_to_ignite_id.hazard_ar, hazard_type.fire);
-					
-					
 				}
 			}
 			

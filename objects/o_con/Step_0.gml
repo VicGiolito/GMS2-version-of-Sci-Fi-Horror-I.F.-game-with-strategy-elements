@@ -516,6 +516,7 @@ else if global.cur_game_state == game_state.init_combat {
 			d($"scr_check_combat_start returned false.");
 			global.combat_begun = false; //This should be the ONLY place this bool is getting reset to false.
 			scr_post_combat_reset_vars();
+			scr_delete_enemy_mobs();
 			
 			//We'll return to main game state after we spread hazards:
 			if global.full_game_turn_completed == true {
@@ -548,6 +549,25 @@ else if global.cur_game_state == game_state.init_combat {
 	
 		//Combat is warranted - go to pause, then assign pc command (combat prep phase)
 		else if combat_begun {
+			
+			//Switch mob struct id movement ai var to hunting, if applicable:
+			
+			//We use the first character in the g.combat_initiative_ar - it could be any team, so long as their cur_grid and cur_grid_* vars are accurate, that's all we care about.
+			var enemy_mobs_at_cell_ar = scr_return_enemy_mob_id(global.combat_initiative_ar[0].cur_grid, global.combat_initiative_ar[0].cur_grid_x, global.combat_initiative_ar[0].cur_grid_y);
+			
+			if array_length(enemy_mobs_at_cell_ar) > 0 {
+				d("\no_con step event: game_state == init_combat: combat_begun == true, switch ai omvement type of enemy mobs: our enemy_mobs_at_cell_ar ar_len was > 0.\n")
+				var mob_struct_id;
+				for(var i = 0; i < array_length(enemy_mobs_at_cell_ar); i++) {
+					
+					mob_struct_id = enemy_mobs_at_cell_ar[i];
+					
+					if mob_struct_id.ai_movement_behavior != ai_movement_type.guarding {
+						mob_struct_id.ai_movement_behavior = ai_movement_type.hunting;	
+						d("\no_con step event: game_state == init_combat: combat_begun == true, switch ai omvement type of enemy mobs:switched enemy ai movement type to hunting.\n");
+					}
+				}
+			}
 			
 			var ar_len = array_length(global.combat_initiative_ar);
 			hidden_chars_in_room_ar = -1;
@@ -1350,19 +1370,26 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 			if valid_use_item && valid_item_index {
 				//Make sure this is a useable item:
 				if item_struct_id.usable_boolean == true {
-					prev_game_state = global.cur_game_state;
-					global.cur_combat_char.using_item_struct_id = item_struct_id;
-					global.cur_combat_char.using_item_index = index_int;
-					global.cur_game_state = game_state.use_target_item;
 					
-					filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[global.cur_combat_char.cur_combat_rank], team_type.pc);
+					if item_struct_id.use_context == abil_use_context.combat_only || item_struct_id.use_context == abil_use_context.both {
 					
-					scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
+						prev_game_state = global.cur_game_state;
+						global.cur_combat_char.using_item_struct_id = item_struct_id;
+						global.cur_combat_char.using_item_index = index_int;
+						global.cur_game_state = game_state.use_target_item;
+					
+						filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[global.cur_combat_char.cur_combat_rank], team_type.pc);
+					
+						scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
+					}
+					else {
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd while in combat.", true);		
+					}	
 				}
 				else if item_struct_id.usable_boolean == false {
 					multi_word_str_failed = true;
-					scr_add_str_to_dialogue_ar("\n");
-					scr_add_str_to_dialogue_ar("This item cannot be 'use'd in this way.", true);	
+					scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd in this way.", true);	
 				}
 			}
 			
@@ -3703,7 +3730,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			var valid_drop_item = false, valid_equip_or_unequip = false, valid_item_index = false, valid_assign_move_chars = false, valid_lock_door = false;
 			var valid_give_item = false, valid_use_item = false, valid_look_item = false, valid_move_all = false, valid_destroy_door = false;
 			
-			if (multi_word_ar[0] == "M" || multi_word_ar[0] == "MOVE") && (multi_word_ar[1] == "*" || multi_word_ar[1] == "ALL") 
+			if (multi_word_ar[0] == "M" || multi_word_ar[0] == "MOVE") && (multi_word_ar[1] == "*" || multi_word_ar[1] == "ALL" || multi_word_ar[1] == "A") 
 			{ 
 				if array_length(multi_word_ar) == 3 {
 					
@@ -4134,10 +4161,10 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				
 				if door_struct.door_enum == door_state.unlocked {
 					
+					door_struct.door_enum = door_state.locked;
+					
 					//Add to tilemap - Current door:
 					scr_add_doors_to_tilemap(global.tile_doors_lay_id, global.acting_char_struct_id.cur_grid_x, global.acting_char_struct_id.cur_grid_y, global.acting_char_struct_id.cur_grid);
-					
-					door_struct.door_enum = door_state.locked;
 					
 					//Lock adjoining door, if applicable:
 					var checking_cell_x = global.acting_char_struct_id.cur_grid_x + door_dir_x, checking_cell_y = global.acting_char_struct_id.cur_grid_y + door_dir_y;
@@ -4173,20 +4200,32 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 			else if valid_use_item && valid_item_index {
 				//Make sure this is a useable item:
 				if item_struct_id.usable_boolean == true {
-					prev_game_state = global.cur_game_state;
-					global.acting_char_struct_id.using_item_struct_id = item_struct_id;
-					global.acting_char_struct_id.using_item_index = index_int;
 					
-					if item_struct_id.use_requires_target == true {
+					if item_struct_id.use_context == abil_use_context.main_game_only || item_struct_id.use_context == abil_use_context.both {
+					
+						prev_game_state = global.cur_game_state;
+						global.acting_char_struct_id.using_item_struct_id = item_struct_id;
+						global.acting_char_struct_id.using_item_index = index_int;
+					
+						if item_struct_id.use_requires_target == true {
 						
-						global.cur_game_state = game_state.use_target_item;
+							global.cur_game_state = game_state.use_target_item;
 						
-						scr_print_char_ar(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar,use_case_for_print_char_ar.target_char_for_abil_or_item);
+							scr_print_char_ar(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar,use_case_for_print_char_ar.target_char_for_abil_or_item);
+						}
+						//Just use the item right away (it will be used on self):
+						else {
+							if scr_use_item_or_ability(item_struct_id,global.acting_char_struct_id,global.acting_char_struct_id) == true {
+								scr_print_char_reminder(global.acting_char_struct_id);
+							}
+							else {
+								//Within scr_use_item_or_ability(), we'll already have been directed to the proper game state and have had the proper print command:
+							}
+						}
 					}
-					//Just use the item right away (it will be used on self):
 					else {
-						scr_use_item_or_ability(item_struct_id,global.acting_char_struct_id,global.acting_char_struct_id);
-						scr_print_char_reminder(global.acting_char_struct_id);
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar("\nThis item can only be 'use'd while in combat.", true);	
 					}
 				}
 				else if item_struct_id.usable_boolean == false {
@@ -4946,6 +4985,8 @@ else if global.cur_game_state == game_state.spread_hazards {
 	//Spread vacuum (cancels fire and toxic gas), then return to main game state:
 	else if hazard_spread_counter == 2 {
 		
+		scr_extinguish_vacuum();
+		
 		scr_spread_vacuum();
 		
 		//Return to main game state:
@@ -4972,6 +5013,74 @@ else if global.cur_game_state == game_state.spread_hazards {
 	
 	//Iterate
 	hazard_spread_counter++;
+}
+
+#endregion
+
+#region game_state == prompt_skill_test_proceed:
+
+//Simply provides us with a message describing our chance to pass/fail the skill test, and a Yes or No response
+
+else if global.cur_game_state == game_state.prompt_skill_test_proceed && global.wait {
+	
+	if keyboard_check_released(vk_enter) && global.wait {
+		
+		d($"o_con step event: game_state == prompt_skill_test_proceed, enter key press detected...");
+		
+		//So there is a log of what the player is typing, add it to the last index of our g.dialogue_ar:
+		global.dialogue_ar[array_length(global.dialogue_ar)-1] += string(player_input_str);
+		
+		//Format our string:
+		player_input_str = string(player_input_str);
+		player_input_str = string_upper(player_input_str);
+		player_input_str = string_trim(player_input_str); //Remove all LEADING white spaces
+		
+		scr_reset_wait();
+		
+		var valid_command = false;
+		
+		//Logic for our string:
+		if player_input_str == "N" || player_input_str == "NO" {
+			valid_command = true;
+			global.cur_game_state = game_state.main_game;
+			//Print cur char reminder:
+			scr_print_char_reminder(global.acting_char_struct_id);
+		}
+		
+		else if player_input_str == "Y" || player_input_str == "YES" {
+			
+			valid_command = true;
+			
+			var passed_skill_test = scr_check_skill_test(skill_tests.engineering);
+			
+			//I'm working here
+		}
+		
+		if !valid_command {
+			scr_add_str_to_dialogue_ar($"That was an invalid command, enter 'Y' or 'YES' to attempt to hide, or 'N' or 'NO' to return to the main screen.", true);	
+		}
+		
+		//Reset our player_input_str:
+		player_input_str = "";
+	}
+	
+	#region Accept input for player_input_str:
+
+	// Detect new character input
+	if (keyboard_lastchar != "") {
+	    if keyboard_lastkey != vk_up && keyboard_lastkey != vk_down && keyboard_lastkey != vk_right && keyboard_lastkey != vk_left &&
+		keyboard_lastkey != vk_backspace {
+			player_input_str += keyboard_lastchar;
+			keyboard_lastchar = "";
+		}
+	}
+
+	// Handle backspace
+	if (keyboard_check_pressed(vk_backspace) && string_length(player_input_str) > 0) {
+	    player_input_str = string_copy(player_input_str, 1, string_length(player_input_str) - 1);
+	}
+
+	#endregion
 }
 
 #endregion

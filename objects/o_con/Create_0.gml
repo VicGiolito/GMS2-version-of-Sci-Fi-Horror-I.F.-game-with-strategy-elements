@@ -292,3 +292,9 @@ hazard_spread_counter = 0;
 
 global.full_game_turn_completed = false;
 
+mp_cost_for_item_or_abil = 0;
+scrap_cost_for_item_or_abil = 0;
+ap_cost_for_item_or_abil = 0;
+sanity_cost_for_item_or_abil = 0;
+
+
