@@ -107,10 +107,10 @@ function scr_define_global_and_con_data(){
 		"\n'EX' or 'EXAMINE' followed by a space, followed by a {inventory number}: Examine an item in your inventory to learn more about it.\n",
 		"\n-------------------------------------\n",
 		"\nENVIRONMENTAL HAZARDS:\n",
-		"\nThe ship is breaking down all around you, and presents a variety of environmental threats which, if not addressed, can escalate until your defeat becomes inevitable.\n\tYou can repair or mitigate these hazards by passing CRISIS EVENTS, 'o'perating the station in the ENVIRONMENTAL CONTROL ROOM, or 'u'sing items like the FIRE EXTINGUISHER, PLASMA TORCH, or TORQUE WRENCH.\n\tNotably, certain suits like the HAZMAT SUIT and VACUUM SUIT also offer protection against environmental hazards, and certain characters are more resistant to damage than others.\n",
+		"\nThe ship is breaking down all around you, and presents a variety of environmental threats which, if not addressed, can escalate until your defeat becomes inevitable.\n\tYou can repair or mitigate these hazards by passing CRISIS EVENTS, 'o'perating the station in the ENVIRONMENTAL CONTROL ROOM, or 'u'sing items like the FIRE EXTINGUISHER, WELDING TORCH, or TORQUE WRENCH.\n\tNotably, certain suits like the HAZMAT SUIT and VACUUM SUIT also offer protection against environmental hazards, and certain characters are more resistant to hazard damage than others. Some are even immune to it.\n",
 		$"\nTOXIC GAS: Deals {DOT_HAZARD_DMG_TOXIC_GAS} hit point damage to all characters in the same room at the end of each turn. Also spreads to adjacent rooms at the start of each turn if the adjoining door is destroyed.\n",
-		$"\nFIRE: Deals {DOT_HAZARD_DMG_FIRE} hit point damage at to all characters in the same room at the end of each turn. Has a 50% chance of spreading to adjacent rooms at the start of each turn, regardless of door state. Destroys doors as it spreads.\n",
-		$"\nVACUUM: Immediately deals hit point damage equal to 50% of a character's maximum health, both when triggered and at the end of each turn. Instantly spreads to all interconnected rooms if the adjoining door is destroyed. Note: FIRE and TOXIC GAS hazards are immediately cleared by VACUUM.\n",
+		$"\nVACUUM: Immediately deals hit point damage equal to 50% of a character's maximum health, both when triggered and at the end of each turn. Instantly spreads to all interconnected rooms if the adjoining doors are destroyed. Note: FIRE and TOXIC GAS hazards are immediately cleared by VACUUM.\n",
+		$"\nFIRE: Easily the most dangerous environmental hazard within any structure positioned in the harsh environment of space, deals {DOT_HAZARD_DMG_FIRE} hit point damage at to all characters in the same room at the end of each turn. Has a {FIRE_SPREAD_THRESHOLD_VAL}% chance of spreading to adjacent rooms at the start of each turn, regardless of door state, destroying doors as it spreads. If it breaches the exterior of the structure, you may have another problem to contend with: vacuum exposure!\n",
 		$"\nELECTRICAL CURRENT: Immediately deals {DOT_HAZARD_ELECTRIC_DMG} hit point damage, both when triggered and at the end of each turn. Deals triple damage to synthetic and cybernetic characters. Organic characters have a 50% of becoming stunned for 1 turn; synthetic and cybernetic characters have 100% chance of becoming stunned for 1 turn. Does not spread to adjacent rooms.\n",
 		"\n-------------------------------------\n",
 		"\nCRISIS EVENTS:\n",
@@ -118,7 +118,7 @@ function scr_define_global_and_con_data(){
 		"\n-------------------------------------\n",
 		"\nGLOBAL RESOURCES:\n",
 		$"\nFOOD: One unit of food is collectively consumed by all party members at the start of each new turn. Starving characters lose {STARVING_HP_LOSS} hit point at the start of each new turn.\n",
-		"\nSCRAP: This resource represents metal rubble and debris that can be converted into more useful things like droids, items, weapons, and armor.\n",
+		"\nSCRAP: This resource represents metal rubble and debris that can be converted into more useful things like ammunition, droids, items, weapons, armor, etc. It is also used when 'r'epairing droids.\n",
 		"\nAMMUNITION: Most ranged weapons, except for pulse weapons, require this valuable resource. Without it you will find yourself almost defenseless, and will be forced to rely upon your fists, or whatever melee weapons you can scavenge. Your friendly droids require ammunition as well, and most will not function without it.\n",
 		"\nENGINE FUEL: You will need this resource in order to power rooms by 'o'perating in the ENGINE ROOM. Powered rooms allow you to use their stations, and the various benefits they provide, while un-powered rooms are functionally useless.\n",
 		"\nBASIC TECHNOLOGY: Many powered rooms require that you expend this resource in order to 'o'perate their station.\n",
@@ -208,7 +208,7 @@ function scr_define_global_and_con_data(){
 		
 		else if i == character.service_droid {
 			primary_role_str = "ENGINEER";
-            char_class_snippet = "This standard service droid has been deactivated for reasons unknown. It is roughly the same size and shape as a man, with a burnished steel frame, articulated joints, and an expressionless face that sports two large mustaches engraved over a mouth slit. It sleeps in the corner of the stasis chamber with the camera lenses of its eyes wide open, seeing nothing. There is some blackened scoring around the junction box on its metal chest; the old scars of laser blasts, no doubt. Is it still operational?"
+            char_class_snippet = "This standard service droid has been deactivated for reasons unknown. Though rather small, it is roughly the same size and shape as a man, with a burnished steel frame, articulated joints, and an expressionless face that sports two large mustaches engraved over a mouth slit. It sleeps in the corner of the stasis chamber with the camera lenses of its eyes wide open, seeing nothing. There is some blackened scoring around the junction box on its metal chest; the old scars of laser blasts, no doubt. Is it still operational?"
 		
 			array_push(char_bio_ar,"This character's bio hasn't been written yet.");
 		}

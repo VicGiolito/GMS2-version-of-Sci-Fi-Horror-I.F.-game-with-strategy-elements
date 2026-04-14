@@ -1,6 +1,6 @@
 
 
-function scr_spread_hazard_gas(){
+function scr_defunct_spread_hazard_gas(){
 	
 	/*Note: Each index in the coords_to_apply_gas_ar array contains a struct which contains grid coordinates of the cells that we will turn to gas 
 	AFTER we've iterated through our grid; this will ensure that we're only spreading our gas cells one cell at a time, and we're not causing a cascade effect

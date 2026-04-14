@@ -125,13 +125,20 @@ function scr_spread_hazard_fire() {
 											
 												//Add to our coords_to_ignite_ar, add door struct ids so they can be destroyed later:
 												if !invalid_cell {
-													//Add to arr:
-													array_push(coords_to_ignite_ar, { 
-														grid_x: checking_grid_x, 
-														grid_y: checking_grid_y,
-														original_door: cur_door_struct_id,
-														adjoining_door: adjoining_door_struct_id
-													});
+													
+													//Finally, a ran_val test; we don't won't fires spreading ALL of the time, they can get out of control very quickly that way:
+													var ran_val = irandom_range(1,100);
+													
+													if ran_val <= FIRE_SPREAD_THRESHOLD_VAL {
+													
+														//Add to arr:
+														array_push(coords_to_ignite_ar, { 
+															grid_x: checking_grid_x, 
+															grid_y: checking_grid_y,
+															original_door: cur_door_struct_id,
+															adjoining_door: adjoining_door_struct_id
+														});
+													}
 												}
 											}
 										}

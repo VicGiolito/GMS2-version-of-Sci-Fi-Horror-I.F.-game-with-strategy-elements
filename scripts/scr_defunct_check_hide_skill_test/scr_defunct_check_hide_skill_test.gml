@@ -5,9 +5,11 @@ enemies_in_room_count = array_length(cur_room_id.enemies_in_room_ar)
 
 room_hide_difficulty_val = cur_room_id.room_hide_difficulty_val
 
+//Combining this into just scr_check_skill_test
+
 */
 
-function scr_check_hide_skill_test(char_struct_id){
+function scr_defunct_check_hide_skill_test(char_struct_id){
 	
 	var enemies_in_room_count = 0;
 	

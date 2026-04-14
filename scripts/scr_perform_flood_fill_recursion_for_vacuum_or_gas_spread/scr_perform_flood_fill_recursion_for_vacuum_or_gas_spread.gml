@@ -1,6 +1,7 @@
 
+//if spread_vac_boolean == false, we spread gas instead
 
-function scr_perform_flood_fill_recursion_for_vacuum_spread(origin_grid_x, origin_grid_y, steps_grid_id, grid_to_check, cardinal_directions_only = true){
+function scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread(origin_grid_x, origin_grid_y, steps_grid_id, grid_to_check, cardinal_directions_only, spread_vac_boolean){
 	
 	ds_grid_clear(steps_grid_id,UNVISITED_STEP_VAL);
 	ds_grid_clear(global.visited_grid,UNVISITED_CELL);
@@ -103,20 +104,30 @@ function scr_perform_flood_fill_recursion_for_vacuum_spread(origin_grid_x, origi
 					
 									ds_priority_add(global.frontier_queue, checking_cell_x + checking_cell_y * GRID_ENCODE, new_step_val);
 							
-									//Change the room struct hazard_ar at this location to include 'vacuum': 
 									if is_array(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar) == false {
 										grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar = [];	
 									}
-									//Add vacuum, if applicable:
-									if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.vacuum) == false {
-										array_push(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.vacuum);
+									
+									//Change the room struct hazard_ar at this location to include 'vacuum': 
+									if spread_vac_boolean {
+										//Add vacuum, if applicable:
+										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.vacuum) == false {
+											array_push(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.vacuum);
+										}
+										//If applicable, clear them of fire and toxic gas:
+										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.fire) == true {
+											array_delete(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, array_get_index(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.fire),1);
+										}
+										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas) == true {
+											array_delete(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, array_get_index(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas),1);
+										}
 									}
-									//If applicable, clear them of fire and toxic gas:
-									if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.fire) == true {
-										array_delete(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, array_get_index(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.fire),1);
-									}
-									if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas) == true {
-										array_delete(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, array_get_index(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas),1);
+									
+									else if !spread_vac_boolean {
+										//Add gas, if applicable:
+										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas) == false {
+											array_push(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas);
+										}
 									}
 								}
 							}

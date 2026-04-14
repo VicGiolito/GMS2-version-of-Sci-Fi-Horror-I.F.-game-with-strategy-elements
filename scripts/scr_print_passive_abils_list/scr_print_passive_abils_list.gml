@@ -22,13 +22,13 @@ function scr_print_passive_abils_list(cur_char_id, update_scroll_pos = true){
 				abil_str += $"Giant Mutant: -{CRAGOS_ACC_DEBUFF} accuracy with ranged weapons, -{CRAGOS_EVASION_DEBUFF} evasion, +{GIANT_MELEE_DMG_BUFF} damage in melee. Increased resistence to most status effects. Can't hide from enemies.";
 			}
 			else if abil_enum == passive_abil_type.healing_factor {
-				abil_str += $"Healing Factor: Automatically heals {HEALING_FACTOR_HEAL_VAL} hit points or {HEALING_FACTOR_HEAL_VAL} infection points at the start of each turn, both in combat and outside of it. Infection points are removed first. Also has a 20% chance of removing permanent injuries at the start of every turn.";
+				abil_str += $"Healing Factor: Automatically heals {HEALING_FACTOR_HEAL_VAL} hit points or {HEALING_FACTOR_HEAL_VAL} infection points each turn, both in combat and outside of it. Does not heal infection during combat. Also has a 20% chance of removing permanent injuries at the start of every turn.";
 			}
 			else if abil_enum == passive_abil_type.cybernetic {
-				abil_str += $"Cybernetic: Increased resistence to most status effects and hazards. All electrical damage sustained is increased by 50%.";
+				abil_str += $"Cybernetic: Increased resistence to most status effects and hazards. Susceptible to electrical damage and electrical hazards. All electrical damage sustained is increased by 50%.";
 			}
 			else if abil_enum == passive_abil_type.synthetic {
-				abil_str += $"Synthetic: Immune to most status effects and hazards. Immune to morale damage. +1 armor. All electrical damage sustained is increased by 100%.";
+				abil_str += $"Synthetic: Immune to most status effects and hazards. Immune to morale damage. +1 armor. Susceptible to electrical damage and electrical hazards. All electrical damage sustained is increased by 100%.";
 			}
 			else if abil_enum == passive_abil_type.child {
 				abil_str += $"Child: Due to their small size, this character can't wield weapons and can't wear marine armor. This character does not automatically trigger combat with enemies while moving between rooms, but will still trigger combat with enemies at the start of each turn, if they are not hidden. Also is the only character small enough to traverse through ventillation shafts.";

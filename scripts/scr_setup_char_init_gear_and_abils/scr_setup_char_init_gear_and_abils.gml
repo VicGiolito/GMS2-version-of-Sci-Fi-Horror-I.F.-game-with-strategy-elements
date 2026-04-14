@@ -17,6 +17,12 @@ function scr_setup_char_init_gear_and_abils(){
 		scr_equip_item(pc_char_struct,item_id,true);
 		var item_id = new global.Item(item_type.regen_nanites);
 		scr_add_item_to_inv(pc_char_struct,item_id,true);
+		var item_id = new global.Item(item_type.torque_wrench);
+		scr_add_item_to_inv(pc_char_struct,item_id,true);
+		var item_id = new global.Item(item_type.welding_torch);
+		scr_add_item_to_inv(pc_char_struct,item_id,true);
+		var item_id = new global.Item(item_type.soldering_tools);
+		scr_add_item_to_inv(pc_char_struct,item_id,true);
 		
 		//var item_id = new global.Item(item_type.concussion_grenade_launcher);
 		//scr_add_item_to_inv(pc_char_struct,item_id,true);

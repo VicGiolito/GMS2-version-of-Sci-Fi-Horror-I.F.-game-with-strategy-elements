@@ -1,6 +1,6 @@
 
 
-function scr_print_hide_attempt(char_struct_id){
+function scr_defunct_print_hide_attempt(char_struct_id){
 	
 	var room_difficulty_val = char_struct_id.cur_room_id.room_hide_difficulty_val;
 	var char_stealth = char_struct_id.stealth

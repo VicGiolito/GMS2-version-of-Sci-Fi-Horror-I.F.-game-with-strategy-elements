@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_spread_vacuum",
+  "name": "scr_spread_vacuum_or_gas",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

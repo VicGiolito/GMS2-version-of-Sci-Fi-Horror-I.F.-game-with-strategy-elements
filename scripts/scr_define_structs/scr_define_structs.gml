@@ -635,8 +635,8 @@ function scr_define_structs(){
 			
 			courage = AVG_COURAGE_VAL+20; 
 
-            engineering = 6;
-            security = 6;
+            engineering = 7;
+            security = 4;
             science = 6;
             scavenging = 0;
             stealth = AVG_STEALTH_VAL+1;
@@ -647,9 +647,12 @@ function scr_define_structs(){
             dexterity = 2;
             spd = AVERAGE_CHAR_SPEED+1;
 			
+			//'Synthetic' resistences and morale_immunity granted from passive in scr_add_passive
 			scr_add_passive_ability(self,passive_abil_type.synthetic,"constructor event");
 			
-			//'Synthetic' resistences and morale_immunity granted from passive in scr_add_passive
+			scr_add_ability(self, item_type.plasma_torch);
+			scr_add_ability(self, item_type.fire_foam_spray);
+			scr_add_ability(self, item_type.soldering_laser);
 		}
 
         else if char_type_enum == character.ceo {

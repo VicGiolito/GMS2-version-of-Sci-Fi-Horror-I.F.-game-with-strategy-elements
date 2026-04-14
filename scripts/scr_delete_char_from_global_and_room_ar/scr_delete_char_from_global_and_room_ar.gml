@@ -30,5 +30,4 @@ function scr_delete_char_from_global_and_room_ar(char_id_to_delete){
 	if defender_index != -1 { //because we're calling scr_delete_char_from_global_and_room_ar() in multiple places in scr_delete_combat_chars, it's possible this char was deleted already, so their index may not exist.
 		array_delete(global_ar,defender_index,1);
 	}
-	
 }

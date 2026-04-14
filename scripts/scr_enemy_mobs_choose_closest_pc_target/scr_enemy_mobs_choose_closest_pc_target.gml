@@ -47,9 +47,13 @@ function scr_enemy_mobs_choose_closest_pc_target(){
 				for(var pc_char_i = 0; pc_char_i < pc_ar_len; pc_char_i++) {
 				
 					pc_struct_id = global.pc_char_ar[pc_char_i];
+					
+					//We don't path toward hiding characters...
+					if pc_struct_id.char_hiding_in_room == true continue;
 				
 					var pc_location_enum = scr_return_location_enum_from_grid_id(pc_struct_id.cur_grid);
-				
+					
+					//We don't even consider pcs that are on a different ds_grid:
 					if pc_location_enum != enemy_mob_struct_id.location_enum continue;
 				
 					var step_val = pc_struct_id.flood_fill_path_grid[# enemy_mob_struct_id.mob_grid_x, enemy_mob_struct_id.mob_grid_y ];
@@ -66,7 +70,7 @@ function scr_enemy_mobs_choose_closest_pc_target(){
 					continue;
 				}
 			
-				enemy_mob_struct_id.no_target_found = false;
+				enemy_mob_struct_id.no_target_found = false; //Reset
 			
 				//Just use first index:
 				if array_length(step_val_ar) == 1 {

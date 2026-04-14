@@ -48,7 +48,7 @@ function scr_auto_reassign_neutrals_owner(cur_char_struct_id){
 				//Delete this neutral:
 				if !new_owner_found {
 					neutral_id.has_died_bool = true;
-					scr_add_str_to_dialogue_ar($"\n**There were no playable characters left in this room to assume control of the {neutral_id.name}. Without the guidance of an operator, this droid's A.I. has deactivated and cannot be revived. It is now essentially dead.**");
+					scr_add_str_to_dialogue_ar($"\n**There were no playable characters left in the {neutral_id.cur_room_id.room_name_str} to assume control of the {neutral_id.name}. Without the guidance of an operator, this droid's A.I. has deactivated and cannot be revived. It is now essentially dead.**");
 					scr_delete_char_from_global_and_room_ar(neutral_id);
 				}
 			}

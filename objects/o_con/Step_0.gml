@@ -1372,24 +1372,49 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 				if item_struct_id.usable_boolean == true {
 					
 					if item_struct_id.use_context == abil_use_context.combat_only || item_struct_id.use_context == abil_use_context.both {
+						
+						if item_struct_id.move_point_cost > 0 && global.cur_combat_char.move_points_cur < item_struct_id.move_point_cost {
+							
+							if item_struct_id.ability_point_cost > 0 && global.cur_combat_char.ability_points_cur < item_struct_id.ability_point_cost {
+								
+								if item_struct_id.scrap_cost > 0 && global.resources_scrap < item_struct_id.scrap_cost {
+								
+									prev_game_state = global.cur_game_state;
+									global.cur_combat_char.using_item_struct_id = item_struct_id;
+									global.cur_combat_char.using_item_index = index_int;
+									global.cur_game_state = game_state.use_target_item;
 					
-						prev_game_state = global.cur_game_state;
-						global.cur_combat_char.using_item_struct_id = item_struct_id;
-						global.cur_combat_char.using_item_index = index_int;
-						global.cur_game_state = game_state.use_target_item;
+									filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[global.cur_combat_char.cur_combat_rank], team_type.pc);
 					
-						filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[global.cur_combat_char.cur_combat_rank], team_type.pc);
-					
-						scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
+									scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
+								}
+								else {
+									multi_word_str_failed = true;
+									scr_add_str_to_dialogue_ar($"\nYou need at least {item_struct_id.scrap_cost} scrap to use this item, try again.", true);		
+								}	
+							}
+							else {
+								multi_word_str_failed = true;
+								var plural_str = "";
+								if item_struct_id.ability_point_cost > 1 plural_str = "s";
+								scr_add_str_to_dialogue_ar($"\nYou need at least {item_struct_id.ability_point_cost} ability point{plural_str} to use this item, try again.", true);		
+							}
+						}
+						else {
+							multi_word_str_failed = true;
+							var plural_str = "";
+							if item_struct_id.move_point_cost > 1 plural_str = "s";
+							scr_add_str_to_dialogue_ar($"\nYou need at least {item_struct_id.move_point_cost} move point{plural_str} to use this item, try again.", true);	
+						}
 					}
 					else {
 						multi_word_str_failed = true;
-						scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd while in combat.", true);		
+						scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd while in combat, try again", true);		
 					}	
 				}
 				else if item_struct_id.usable_boolean == false {
 					multi_word_str_failed = true;
-					scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd in this way.", true);	
+					scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd in this way, try again.", true);	
 				}
 			}
 			
@@ -2755,145 +2780,165 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 						if cur_char.sanity_cur + abil_item_struct_id.sanity_cost <= cur_char.sanity_max {
 							
 							if global.resources_scrap >= abil_item_struct_id.scrap_cost {
+								
+								if cur_char.move_points_cur >= abil_item_struct_id.move_point_cost {
 							
-								//filtered_abil_ar created by scr_return_filtered_abil_ar() is only filled with actual item_struct_ids that are applicable for the 
-								//corresponding game state (either main, combat, or both), so we know that what is here is a valid option.
+									//filtered_abil_ar created by scr_return_filtered_abil_ar() is only filled with actual item_struct_ids that are applicable for the 
+									//corresponding game state (either main, combat, or both), so we know that what is here is a valid option.
 						
-								//This is an ability that functions just like a weapon: hand flamer, wrist rockets, etc.;
-								//we don't reduce AP here because it's reduced (if applicable) in combat_execute_action, which is where this char is going if
-								//they're using an ability like this:
-								if abil_item_struct_id.non_attack_ability_boolean == false {
+									//This is an ability that functions just like a weapon: hand flamer, wrist rockets, etc.;
+									//we don't reduce AP here because it's reduced (if applicable) in combat_execute_action, which is where this char is going if
+									//they're using an ability like this:
+									if abil_item_struct_id.non_attack_ability_boolean == false {
 							
-									if global.combat_prep_phase == false {
+										if global.combat_prep_phase == false {
 							
-										//These all have range requirements:
+											//These all have range requirements:
 							
-										//Check to see if there's an enemy in range:
-										var closest_enemy_rank = scr_return_nearest_target_rank_pos(cur_char.cur_combat_rank, cur_char);
+											//Check to see if there's an enemy in range:
+											var closest_enemy_rank = scr_return_nearest_target_rank_pos(cur_char.cur_combat_rank, cur_char);
 			
-										var dist_to_target = abs(cur_char.cur_combat_rank - closest_enemy_rank);
+											var dist_to_target = abs(cur_char.cur_combat_rank - closest_enemy_rank);
 			
-										var wep_range = abil_item_struct_id.max_range;
+											var wep_range = abil_item_struct_id.max_range;
 			
-										//If there's an enemy in range and our max_range is greater than 0, then move to choose_pc_rank_target:
-										if dist_to_target <= wep_range {
+											//If there's an enemy in range and our max_range is greater than 0, then move to choose_pc_rank_target:
+											if dist_to_target <= wep_range {
 								
-											//Assign chosen weapon:
-											cur_char.chosen_weapon = abil_item_struct_id;
+												//Assign chosen weapon:
+												cur_char.chosen_weapon = abil_item_struct_id;
 								
-											prev_game_state = global.cur_game_state;
+												prev_game_state = global.cur_game_state;
 				
-											/*To streamline the process even further, check to see if the enemy only occupies one rank in the entire combat_rank_ar;
-											if they do (we already know the enemy is within range), just automatically define our range 
-											based upon what rank it is in, then automatically move to execute action:
-											*/
-											if scr_return_opposite_team_occupied_ranks(cur_char.char_team_enum) <= 1 {
-												cur_char.targeted_rank = closest_enemy_rank;
-												global.cur_game_state = game_state.combat_execute_action;	
-											}
-				
-											else {
-												if wep_range > 0 {
-													global.cur_game_state = game_state.combat_pc_target_rank;
-													scr_print_ranks_to_target(cur_char);
-												}
-												//otherwise, define our chosen rank and move straight to execute_action:
-												else if wep_range <= 0 {
+												/*To streamline the process even further, check to see if the enemy only occupies one rank in the entire combat_rank_ar;
+												if they do (we already know the enemy is within range), just automatically define our range 
+												based upon what rank it is in, then automatically move to execute action:
+												*/
+												if scr_return_opposite_team_occupied_ranks(cur_char.char_team_enum) <= 1 {
 													cur_char.targeted_rank = closest_enemy_rank;
-													global.cur_game_state = game_state.combat_execute_action;
+													global.cur_game_state = game_state.combat_execute_action;	
 												}
+				
+												else {
+													if wep_range > 0 {
+														global.cur_game_state = game_state.combat_pc_target_rank;
+														scr_print_ranks_to_target(cur_char);
+													}
+													//otherwise, define our chosen rank and move straight to execute_action:
+													else if wep_range <= 0 {
+														cur_char.targeted_rank = closest_enemy_rank;
+														global.cur_game_state = game_state.combat_execute_action;
+													}
+												}
+											}
+											else {
+												scr_add_str_to_dialogue_ar($"\nThere are no targets within your ability's range. Your {abil_item_struct_id.item_name} has a maximum range of {wep_range}. Either use a different ability, or move closer to the enemy.", true);
 											}
 										}
 										else {
-											scr_add_str_to_dialogue_ar($"\nThere are no targets within your ability's range. Your {abil_item_struct_id.item_name} has a maximum range of {wep_range}. Either use a different ability, or move closer to the enemy.", true);
+											scr_add_str_to_dialogue_ar("You can't use this ability during the combat preparation phase, try again.\n",true);	
 										}
 									}
-									else {
-										scr_add_str_to_dialogue_ar("You can't use this ability during the combat preparation phase, try again.\n",true);	
-									}
-								}
-								//This is an ability that does something else: spawns a unit, buffs a stat, applies a debuff, etc.
-								//some of these may require a target and will therefore send us to game_state.use_target_item
-								//some examples include: torvalds shield generator, energizing stim prick, cooper's smoke grenade, field_medicine, avia's spawn droid, etc.
-								else if abil_item_struct_id.non_attack_ability_boolean == true {
+									//This is an ability that does something else: spawns a unit, buffs a stat, applies a debuff, etc.
+									//some of these may require a target and will therefore send us to game_state.use_target_item
+									//some examples include: torvalds shield generator, energizing stim prick, cooper's smoke grenade, field_medicine, avia's spawn droid, etc.
+									else if abil_item_struct_id.non_attack_ability_boolean == true {
 							
-									//We can execute the abil right away - it will be something like shield generator, smoke grenade, spawn droid, etc.:
-									//We only target ourself in such a case.
-									if abil_item_struct_id.use_requires_target == false {
-								
-										scr_use_item_or_ability(abil_item_struct_id,cur_char,cur_char);
-								
-										//if this ability instantly finishes this char's turn (like smoke grenade), we need to advance the cur char now;
-										//but ONLY if we're not in the combat preparation phase
-										if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == true 
-										&& global.combat_prep_phase == false {
-											scr_evaluate_combat_conclusion("o_con step event: game_state == combat_assign_pc_combat: player just used an ability that does NOT require a target but DOES immediately end the cur char's turn.")	
-										}
-										//Just print our ranks again in such a case - the item doesn't actually really end our turn, 
-										//as we're still in the combat prep phase:
-										else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == true 
-										&& global.combat_prep_phase == true {
-											//Important: we need to actually return to combat_assign_pc_command game state:
-											global.cur_game_state = game_state.combat_assign_pc_command;
-											scr_print_combat_ranks(cur_char);
-										}
-										else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == false {
-											//Important: we need to actually return to combat_assign_pc_command game state:
-											global.cur_game_state = game_state.combat_assign_pc_command;
-											scr_print_combat_ranks(cur_char);
-										}
-										//This abil was accessed from main game state, so return us there.
-										else if global.combat_begun == false {
-											global.cur_game_state = game_state.main_game;
-											scr_print_char_reminder(cur_char);
-										}
-									}
-								
-									//Using this abil requires that we move to game_state.use_target_item
-									else if abil_item_struct_id.use_requires_target == true {
-										
-										//Make sure there's actually a valid char in this char's current rank:
-										var valid_target_available = false;
-										
-										if global.combat_begun {
+										//We can execute the abil right away - it will be something like shield generator, smoke grenade, spawn droid, etc.:
+										//We only target ourself in such a case;
+										//And we don't need to check for synthetics restrictions here b.c synethetics won't have abilities that they can't 
+										//use on themselves.
+										if abil_item_struct_id.use_requires_target == false {
 											
-											filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[cur_char.cur_combat_rank], team_type.pc);
+											//Move to the appropriate game state:
+											if scr_use_item_or_ability(abil_item_struct_id, cur_char, cur_char) == true {
+								
+												//if this ability instantly finishes this char's turn (like smoke grenade), we need to advance the cur char now;
+												//but ONLY if we're not in the combat preparation phase
+												if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == true 
+												&& global.combat_prep_phase == false {
+													scr_evaluate_combat_conclusion("o_con step event: game_state == combat_assign_pc_combat: player just used an ability that does NOT require a target but DOES immediately end the cur char's turn.")	
+												}
+												//Just print our ranks again in such a case - the item doesn't actually really end our turn, 
+												//as we're still in the combat prep phase:
+												else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == true 
+												&& global.combat_prep_phase == true {
+													//Important: we need to actually return to combat_assign_pc_command game state:
+													global.cur_game_state = game_state.combat_assign_pc_command;
+													scr_print_combat_ranks(cur_char);
+												}
+												else if global.combat_begun && abil_item_struct_id.abil_passes_turn_boolean == false {
+													//Important: we need to actually return to combat_assign_pc_command game state:
+													global.cur_game_state = game_state.combat_assign_pc_command;
+													scr_print_combat_ranks(cur_char);
+												}
+												//This abil was accessed from main game state, so return us there.
+												else if global.combat_begun == false {
+													global.cur_game_state = game_state.main_game;
+													scr_print_char_reminder(cur_char);
+												}
+											}
+											else {
+												//scr_use_item_or_ability returned false - this means a 'repair' hazard type ability was used,
+												//in which case, our appropriate game state and print message was set for us.
+											}
+										}
+								
+										//Using this abil requires that we move to game_state.use_target_item
+										else if abil_item_struct_id.use_requires_target == true {
 											
-											if array_length(filtered_targets_ar_for_item_or_abil) > 0 {
+											//Make sure there's actually a valid char in this char's current rank:
+											var valid_target_available = false;
+										
+											if global.combat_begun {
+											
+												filtered_targets_ar_for_item_or_abil = scr_return_valid_team_chars_in_rank(global.combat_rank_ar[cur_char.cur_combat_rank], team_type.pc);
+											
+												if array_length(filtered_targets_ar_for_item_or_abil) > 0 {
+													valid_target_available = true;
+												}
+											}
+											else {
 												valid_target_available = true;
 											}
-										}
-										else {
-											valid_target_available = true;
-										}
 										
-										if valid_target_available {
-											cur_char.using_item_struct_id = abil_item_struct_id;
-											cur_char.using_item_index = index_int;
+											if valid_target_available {
+												cur_char.using_item_struct_id = abil_item_struct_id;
+												cur_char.using_item_index = index_int;
 							
-											global.cur_game_state = game_state.use_target_item;
+												global.cur_game_state = game_state.use_target_item;
 							
-											if global.combat_begun == false { scr_print_pc_party(false, true); }
-											else {
-												scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
+												if global.combat_begun == false { scr_print_pc_party(false, true); }
+												else {
+													scr_print_char_ar(filtered_targets_ar_for_item_or_abil, use_case_for_print_char_ar.target_char_for_abil_or_item);
+												}
+											}
+											else if !valid_target_available {
+												scr_add_str_to_dialogue_ar("\nThere are no targets in your current rank that you can use that ability on, try again.", true);
 											}
 										}
-										else {
-											scr_add_str_to_dialogue_ar("\nThere are no targets in your current rank that you can use that ability on, try again.", true);
-										}
 									}
+								}
+								else {
+									var plural_str = "";
+									if abil_item_struct_id.move_point_cost > 1 plural_str = "s";
+									scr_add_str_to_dialogue_ar($"\nYou require at least {abil_item_struct_id.move_point_cost} move point{plural_str} to use that ability, try again.",true);	
 								}
 							}
 							else {
-								scr_add_str_to_dialogue_ar("\nYou don't have enough of the scrap resource to use that ability, try again.",true);	
+								scr_add_str_to_dialogue_ar($"\nYou require at least {abil_item_struct_id.scrap_cost} scrap to use that ability, try again.",true);	
 							}
 						}
 						else {
-							scr_add_str_to_dialogue_ar("\nYou don't have enough sanity points to use that ability, try again.",true);	
+							var plural_str = "";
+							if abil_item_struct_id.sanity_cost > 1 plural_str = "s";
+							scr_add_str_to_dialogue_ar($"\nYou require at least {abil_item_struct_id.sanity_cost} sanity point{plural_str} to use that ability, try again.",true);	
 						}
 					}
 					else {
-						scr_add_str_to_dialogue_ar("\nYou don't have enough ability points to use that ability, try again.",true);	
+						var plural_str = "";
+						if abil_item_struct_id.ability_point_cost > 1 plural_str = "s";
+						scr_add_str_to_dialogue_ar($"\nYou require at least {abil_item_struct_id.ability_point_cost} ability point{plural_str} to use that ability, try again.",true);	
 					}
 				}	
 			}
@@ -3145,6 +3190,8 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 			
 			if valid_char_index {
 				
+				#region PASSING an item:
+				
 				if global.cur_game_state == game_state.passing_item {
 					
 					//Make sure we're not trying to give it to ourself:
@@ -3218,23 +3265,37 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 					}
 				}
 				
+				#endregion
+				
+				#region Targeting a char for item or abil use:
+				
 				//We only end up in this game state if using the item or ability requires a target.
 				else if global.cur_game_state == game_state.use_target_item {
 					
-					scr_use_item_or_ability(cur_char.using_item_struct_id, item_target_char_struct_id, cur_char);
+					var invalid_char = false;
 					
-					//Only actual items will ever have the single_use_boolean == true, so we know that this is an actual item_id in the cur_char's inventory:
-					if cur_char.using_item_struct_id.single_use_boolean == true {
-						var item_index = array_get_index(cur_char.inv_ar, cur_char.using_item_struct_id);
-						if item_index != -1 {
-							array_delete(cur_char.inv_ar,item_index,1);
+					if scr_check_item_or_abil_only_affects_bio(cur_char.using_item_struct_id.item_enum) == true && is_array(item_target_char_struct_id.passive_abil_ar) &&
+					scr_check_ar_for_val(item_target_char_struct_id.passive_abil_ar, passive_abil_type.synthetic) {
+						invalid_char = true;
+						scr_add_str_to_dialogue_ar($"\nThe {cur_char.using_item_struct_id.item_name} can't be used on synthetics, try again.");
+					}
+					
+					if !invalid_char {
+					
+						scr_use_item_or_ability(cur_char.using_item_struct_id, item_target_char_struct_id, cur_char);
+					
+						//Only actual items will ever have the single_use_boolean == true, so we know that this is an actual item_id in the cur_char's inventory:
+						if cur_char.using_item_struct_id.single_use_boolean == true {
+							var item_index = array_get_index(cur_char.inv_ar, cur_char.using_item_struct_id);
+							if item_index != -1 {
+								array_delete(cur_char.inv_ar,item_index,1);
+							}
 						}
 					}
 					
 					//Return to main:
 					if global.combat_begun == false {
-						//"You are {}. What will you do?"
-						scr_add_str_to_dialogue_ar(scr_return_cur_char_str(cur_char),true);
+						scr_print_char_reminder(cur_char);
 						
 						//Explicitly reset both and send us back to main:
 						global.cur_game_state = game_state.main_game;
@@ -3257,6 +3318,8 @@ else if (global.cur_game_state == game_state.use_target_item || global.cur_game_
 						}
 					}
 				}	
+				
+				#endregion
 			}
 			else if !valid_char_index { 
 				//Send us back to our prev game state, it's less confusing this way:
@@ -3430,7 +3493,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						}
 						if !not_giant {
 							global.cur_game_state = game_state.attempting_hide;
-							scr_print_hide_attempt(global.acting_char_struct_id)
+							scr_print_skill_test(global.acting_char_struct_id, skill_tests.hide);
 						}
 						else {
 							scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} is of giant size and is unable to hide, try again.", true);
@@ -4202,35 +4265,61 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				if item_struct_id.usable_boolean == true {
 					
 					if item_struct_id.use_context == abil_use_context.main_game_only || item_struct_id.use_context == abil_use_context.both {
-					
-						prev_game_state = global.cur_game_state;
-						global.acting_char_struct_id.using_item_struct_id = item_struct_id;
-						global.acting_char_struct_id.using_item_index = index_int;
-					
-						if item_struct_id.use_requires_target == true {
 						
-							global.cur_game_state = game_state.use_target_item;
+						if item_struct_id.move_point_cost > 0 && global.acting_char_struct_id.move_points_cur < item_struct_id.move_point_cost {
+							
+							if item_struct_id.ability_point_cost > 0 && global.acting_char_struct_id.ability_points_cur < item_struct_id.ability_point_cost {
+								
+								if item_struct_id.scrap_cost > 0 && global.resources_scrap < item_struct_id.scrap_cost {
+								
+									prev_game_state = global.cur_game_state;
+									global.acting_char_struct_id.using_item_struct_id = item_struct_id;
+									global.acting_char_struct_id.using_item_index = index_int;
+					
+									if item_struct_id.use_requires_target == true {
 						
-							scr_print_char_ar(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar,use_case_for_print_char_ar.target_char_for_abil_or_item);
-						}
-						//Just use the item right away (it will be used on self):
-						else {
-							if scr_use_item_or_ability(item_struct_id,global.acting_char_struct_id,global.acting_char_struct_id) == true {
-								scr_print_char_reminder(global.acting_char_struct_id);
+										global.cur_game_state = game_state.use_target_item;
+						
+										scr_print_char_ar(global.acting_char_struct_id.cur_room_id.pcs_in_room_ar,use_case_for_print_char_ar.target_char_for_abil_or_item);
+									}
+									//Just use the item right away (it will be used on self or have another effect):
+									else {
+										//We don't need to check for synthetics restrictions here because synthetics shouldn't be have abils that they 
+										//can't target on themselves.
+										if scr_use_item_or_ability(item_struct_id,global.acting_char_struct_id,global.acting_char_struct_id) == true {
+											scr_print_char_reminder(global.acting_char_struct_id);
+										}
+										else {
+											//Within scr_use_item_or_ability(), we already have been directed to the proper game state and have called the proper print command.
+										}
+									}
+								}
+								else {
+									scr_add_str_to_dialogue_ar($"\nThis item requires at least {item_struct_id.scrap_cost} scrap in order to 'u'se it, try again.", true);		
+								}
 							}
 							else {
-								//Within scr_use_item_or_ability(), we'll already have been directed to the proper game state and have had the proper print command:
+								multi_word_str_failed = true;
+								var plural_str = "";
+								if item_struct_id.ability_point_cost > 1 plural_str = "s";
+								scr_add_str_to_dialogue_ar($"\nThis item requires at least {item_struct_id.ability_point_cost} ability point{plural_str} in order to 'u'se it, try again.", true);	
 							}
+						}
+						else {
+							multi_word_str_failed = true;
+							var plural_str = "";
+							if item_struct_id.move_point_cost > 1 plural_str = "s";
+							scr_add_str_to_dialogue_ar($"\nThis item requires at least {item_struct_id.move_point_cost} move point{plural_str}  in order to 'u'se it, try again.", true);	
 						}
 					}
 					else {
 						multi_word_str_failed = true;
-						scr_add_str_to_dialogue_ar("\nThis item can only be 'use'd while in combat.", true);	
+						scr_add_str_to_dialogue_ar("\nThis item can only be 'use'd while in combat, try again.", true);	
 					}
 				}
 				else if item_struct_id.usable_boolean == false {
 					multi_word_str_failed = true;
-					scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd in this way.", true);	
+					scr_add_str_to_dialogue_ar("\nThis item cannot be 'use'd in this way, try again.", true);	
 				}
 			}
 			
@@ -4565,7 +4654,7 @@ else if global.cur_game_state == game_state.attempting_hide && global.wait {
 			
 			global.acting_char_struct_id.move_points_cur -= 1;
 			
-			var successful_hide = scr_check_hide_skill_test(global.acting_char_struct_id);
+			var successful_hide = scr_check_skill_test(global.acting_char_struct_id, skill_tests.hide);
 			
 			if successful_hide {
 				global.acting_char_struct_id.char_hiding_in_room = true;
@@ -4975,9 +5064,11 @@ else if global.cur_game_state == game_state.spread_hazards {
 	//Spread gas:
 	if hazard_spread_counter == 0 {
 		
-		scr_spread_hazard_gas();
+		scr_extinguish_vacuum_or_gas(false);
+		
+		scr_spread_vacuum_or_gas(false);
 	}
-	//Spread fire (cancels gas):
+	//Spread fire:
 	else if hazard_spread_counter == 1 {
 		
 		scr_spread_hazard_fire();
@@ -4985,9 +5076,9 @@ else if global.cur_game_state == game_state.spread_hazards {
 	//Spread vacuum (cancels fire and toxic gas), then return to main game state:
 	else if hazard_spread_counter == 2 {
 		
-		scr_extinguish_vacuum();
+		scr_extinguish_vacuum_or_gas(true);
 		
-		scr_spread_vacuum();
+		scr_spread_vacuum_or_gas(true);
 		
 		//Return to main game state:
 		global.cur_game_state = game_state.main_game;
@@ -5049,11 +5140,77 @@ else if global.cur_game_state == game_state.prompt_skill_test_proceed && global.
 		
 		else if player_input_str == "Y" || player_input_str == "YES" {
 			
+			//Consume resource costs:
+			global.acting_char_struct_id.move_points_cur -= mp_cost_for_item_or_abil;
+			global.acting_char_struct_id.ability_points_cur -= ap_cost_for_item_or_abil;
+			global.acting_char_struct_id.sanity_cur += sanity_cost_for_item_or_abil;
+			global.resources_scrap -= scrap_cost_for_item_or_abil;
+			
 			valid_command = true;
 			
-			var passed_skill_test = scr_check_skill_test(skill_tests.engineering);
+			var passed_skill_test = scr_check_skill_test(global.acting_char_struct_id, skill_test_type_enum);
 			
-			//I'm working here
+			if passed_skill_test {
+				//Repair the corresponding hazard gen:
+				if skill_test_event_enum == skill_test_event.repair_gas_or_vacuum_gen {
+					
+					//If there's vacuum here, repair that first; otherwise, repair gas:
+					var repair_str = "undefined";
+					if is_array(global.acting_char_struct_id.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.vacuum) {
+						array_delete(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, array_get_index(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.vacuum), 1);
+						repair_str = "hull breach";
+					}
+					else if is_array(global.acting_char_struct_id.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.toxic_gas) {
+						array_delete(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, array_get_index(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.toxic_gas), 1);
+						repair_str = "leaking pipe";
+					}
+					
+					scr_add_str_to_dialogue_ar($"\nSuccess! {global.acting_char_struct_id.name} has repaired the {repair_str} in the {global.acting_char_struct_id.cur_room_id.room_name_str}.");
+				}
+				
+				else if skill_test_event_enum == skill_test_event.repair_electric_gen {
+					
+					var repair_str = "undefined";
+					if is_array(global.acting_char_struct_id.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.electric) {
+						array_delete(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, array_get_index(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.electric), 1);
+						repair_str = "electrical hazard";
+					}
+					if is_array(global.acting_char_struct_id.cur_room_id.hazard_ar) && scr_check_ar_for_val(global.acting_char_struct_id.cur_room_id.hazard_ar, hazard_generator_types.electric) {
+						array_delete(global.acting_char_struct_id.cur_room_id.hazard_ar, array_get_index(global.acting_char_struct_id.cur_room_id.hazard_ar, hazard_generator_types.electric), 1);
+						repair_str = "electrical hazard";
+					}
+					
+					scr_add_str_to_dialogue_ar($"\nSuccess! {global.acting_char_struct_id.name} has repaired the {repair_str} in the {global.acting_char_struct_id.cur_room_id.room_name_str}.");
+				}
+				
+				else if skill_test_event_enum == skill_test_event.repair_gas_gen {
+					
+					var repair_str = "undefined";
+					if is_array(global.acting_char_struct_id.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.toxic_gas) {
+						array_delete(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, array_get_index(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.toxic_gas), 1);
+						repair_str = "leaking pipe";
+					}
+					
+					scr_add_str_to_dialogue_ar($"\nSuccess! {global.acting_char_struct_id.name} has repaired the {repair_str} in the {global.acting_char_struct_id.cur_room_id.room_name_str}.");
+				}
+				
+				else if skill_test_event_enum == skill_test_event.repair_vacuum_gen {
+					
+					var repair_str = "undefined";
+					if is_array(global.acting_char_struct_id.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.vacuum) {
+						array_delete(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, array_get_index(global.acting_char_struct_id.cur_room_id.hazard_generator_ar, hazard_generator_types.vacuum), 1);
+						repair_str = "hull breach";
+					}
+					
+					scr_add_str_to_dialogue_ar($"\nSuccess! {global.acting_char_struct_id.name} has repaired the {repair_str} in the {global.acting_char_struct_id.cur_room_id.room_name_str}.");
+				}
+			}
+			else {
+				//Print failure message, return to main game:
+				global.cur_game_state = game_state.main_game;
+				//Print cur char reminder:
+				scr_print_char_reminder(global.acting_char_struct_id);	
+			}
 		}
 		
 		if !valid_command {

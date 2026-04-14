@@ -10,16 +10,7 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 	
 	var item_type_enum = item_struct_id.item_enum;
 	
-	//We've successfully used the item, we can modify our AP and/or sanity now, if applicable:
-	if item_struct_id.ability_point_cost > 0 {
-		char_struct_using_item.ability_points_cur -= item_struct_id.ability_point_cost;
-	}
-	if item_struct_id.sanity_cost > 0 {
-		char_struct_using_item.sanity_cur += item_struct_id.sanity_cost;
-	}
-	if item_struct_id.scrap_cost > 0 {
-		global.resources_scrap -= item_struct_id.scrap_cost;
-	}
+	var valid_cast = true;
 	
 	if item_type_enum == item_type.medkit {
 		
@@ -156,6 +147,8 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_using_item.name} injects {target_char_struct_of_item.name} with the {item_struct_id.item_name}. (+{ADRENAL_PEN_SPD_BUFF} speed, +{ADRENAL_PEN_ACC_BUFF} accuracy for {ADRENAL_PEN_DURATION} turns.)**"); 
 	}
 	
+	#region Spawn neutral:
+	
 	else if item_type_enum == item_type.spawn_light_buzzsaw_droid || item_type_enum == item_type.spawn_light_flamer_droid || item_type_enum == item_type.spawn_light_sentinel_droid ||
 	item_type_enum == item_type.spawn_light_sentry_gun || item_type_enum == item_type.spawn_light_shotgun_droid {
 		
@@ -200,49 +193,106 @@ function scr_use_item_or_ability(item_struct_id, target_char_struct_of_item, cha
 		}
 	}
 	
-	//This is a hazard-repair type item or ability:
+	#endregion
+	
+	#region This is a hazard-repair type item or ability:
+	
 	else if item_type_enum == item_type.torque_wrench || item_type_enum == item_type.soldering_tools || item_type_enum == item_type.soldering_laser ||
 	item_type_enum == item_type.fire_foam_spray || item_type_enum == item_type.welding_torch || item_type_enum == item_type.plasma_torch ||
 	item_type_enum == item_type.fire_extinguisher {
 		
-		var cure_electric = false, cure_fire = false, cure_gas = false, cure_vacuum_and_gas = false;
+		//Make sure the corresponding hazard is actually in the room:
+		var valid_hazard_in_room = false, hazard_str = "undefined";
 		
-		if item_type_enum == item_type.torque_wrench cure_gas = true;
-		
-		if item_type_enum == item_type.soldering_laser || item_type_enum == item_type.soldering_tools cure_electric = true;
-		
-		if item_type_enum == item_type.fire_foam_spray || item_type_enum == item_type.fire_extinguisher cure_fire = true;
-		
-		if item_type_enum == item_type.welding_torch || item_type_enum == item_type.plasma_torch cure_vacuum_and_gas = true;
-		
-		//Refund the resource costs - the item hasn't actually been used yet; assign local var instead:
-		if item_struct_id.ability_point_cost > 0 {
-			char_struct_using_item.ability_points_cur += item_struct_id.ability_point_cost;
+		if item_type_enum == item_type.torque_wrench {
 			
+			hazard_str = "toxic gas";
+			if (is_array(char_struct_using_item.cur_room_id.hazard_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_ar, hazard_type.toxic_gas)) || 
+			(is_array(char_struct_using_item.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_generator_ar, hazard_generator_types.toxic_gas) ) {
+				valid_hazard_in_room = true;
+				skill_test_event_enum = skill_test_event.repair_gas_gen;
+			}
+		}
+		
+		if item_type_enum == item_type.soldering_laser || item_type_enum == item_type.soldering_tools {
+			
+			hazard_str = "electric";
+			
+			if (is_array(char_struct_using_item.cur_room_id.hazard_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_ar, hazard_type.electric_current)) || 
+			(is_array(char_struct_using_item.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_generator_ar, hazard_generator_types.electric) ) {
+				valid_hazard_in_room = true;
+				skill_test_event_enum = skill_test_event.repair_electric_gen;	
+			}
+		}
+		
+		if item_type_enum == item_type.fire_foam_spray || item_type_enum == item_type.fire_extinguisher {
+			
+			hazard_str = "fire";
+			
+			if (is_array(char_struct_using_item.cur_room_id.hazard_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_ar, hazard_type.fire)) || 
+			(is_array(char_struct_using_item.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_generator_ar, hazard_generator_types.fire) ) {
+				valid_hazard_in_room = true;
+				skill_test_event_enum = skill_test_event.repair_fire_gen;
+			}
+		}
+		
+		if item_type_enum == item_type.welding_torch || item_type_enum == item_type.plasma_torch {
+			
+			var valid_hazard = false;
+			
+			hazard_str = "vacuum or toxic gas";
+			
+			if (is_array(char_struct_using_item.cur_room_id.hazard_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_ar, hazard_type.toxic_gas)) || 
+			(is_array(char_struct_using_item.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_generator_ar, hazard_generator_types.toxic_gas) ) {
+				valid_hazard = true;	
+			}
+			if (is_array(char_struct_using_item.cur_room_id.hazard_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_ar, hazard_type.vacuum)) || 
+			(is_array(char_struct_using_item.cur_room_id.hazard_generator_ar) && scr_check_ar_for_val(char_struct_using_item.cur_room_id.hazard_generator_ar, hazard_generator_types.vacuum) ) {
+				valid_hazard = true;	
+			}
+			
+			if valid_hazard {
+				valid_hazard_in_room = true;
+				skill_test_event_enum = skill_test_event.repair_gas_or_vacuum_gen;	
+			}
+		}
+		
+		if valid_hazard_in_room {
+			//Assign local vars:
+			ap_cost_for_item_or_abil = item_struct_id.ability_point_cost;
+			sanity_cost_for_item_or_abil = item_struct_id.sanity_cost;
+			scrap_cost_for_item_or_abil = item_struct_id.scrap_cost;
+			mp_cost_for_item_or_abil = item_struct_id.move_point_cost;
+			skill_test_type_enum = skill_tests.engineering;
+		
+			//Show us our engineering skill test:
+			scr_print_skill_test(char_struct_using_item, skill_tests.engineering);
+		
+			scr_reset_wait();
+		
+			global.cur_game_state = game_state.prompt_skill_test_proceed;
+		
+			return false;
+		}
+		
+		else {
+			scr_add_str_to_dialogue_ar($"\nThere is no valid {hazard_str} hazard in this room, try again.")	
+		}
+	}
+	
+	#endregion
+	
+	//We've successfully used the item, we can modify our AP and/or sanity now, if applicable:
+	if valid_cast {
+		if item_struct_id.ability_point_cost > 0 {
+			char_struct_using_item.ability_points_cur -= item_struct_id.ability_point_cost;
 		}
 		if item_struct_id.sanity_cost > 0 {
-			char_struct_using_item.sanity_cur -= item_struct_id.sanity_cost;
-			
+			char_struct_using_item.sanity_cur += item_struct_id.sanity_cost;
 		}
 		if item_struct_id.scrap_cost > 0 {
-			global.resources_scrap += item_struct_id.scrap_cost;
-			
+			global.resources_scrap -= item_struct_id.scrap_cost;
 		}
-		
-		//Assign local vars:
-		ap_cost_for_item_or_abil = item_struct_id.ability_point_cost;
-		sanity_cost_for_item_or_abil = item_struct_id.sanity_cost;
-		scrap_cost_for_item_or_abil = item_struct_id.scrap_cost;
-		mp_cost_for_item_or_abil = item_struct_id.move_point_cost;
-		
-		//Show us our engineering skill test:
-		scr_print_skill_test(char_struct_using_item, skill_tests.engineering);
-		
-		scr_reset_wait();
-		
-		global.cur_game_state = game_state.prompt_skill_test_proceed;
-		
-		return false;
 	}
 	
 	return true;

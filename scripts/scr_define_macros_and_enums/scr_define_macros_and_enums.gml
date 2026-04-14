@@ -483,8 +483,19 @@ function scr_define_macros_and_enums(){
 		engineering,
 		science,
 		security,
+		stealth,
+		hide,
 		total_skill_tests
 	}
+	
+	enum skill_test_event {
+		repair_fire_gen,
+		repair_gas_gen,
+		repair_electric_gen,
+		repair_vacuum_gen,
+		repair_gas_or_vacuum_gen,
+		total_skill_test_events
+	}	
 	
 	//Some stat type macros/misc. macros:
 	#macro AVG_ACC_VAL 7
@@ -562,16 +573,18 @@ function scr_define_macros_and_enums(){
 	#macro DOT_HAZARD_DMG_FIRE 4
 	#macro DOT_HAZARD_ELECTRIC_DMG 3
 	
-	#macro MIN_HIDE_RAN_VAL 1
-	#macro MAX_HIDE_RAN_VAL 10
+	//#macro MIN_HIDE_RAN_VAL 1
+	//#macro MAX_HIDE_RAN_VAL 10
 	
 	#macro AVG_ENGINEERING_SKILL_TEST_BASE -2
 	#macro MIN_SKILL_TEST_RAN_VAL 1
-	#macro MAX_SKILL_TEST_RAN_VAL 1
+	#macro MAX_SKILL_TEST_RAN_VAL 10
 	
 	#macro HARD_DOOR_JAM_VAL 0
 	#macro AVG_DOOR_JAM_VAL 3
 	#macro EASY_DOOR_JAM_VAL 6
+	
+	#macro FIRE_SPREAD_THRESHOLD_VAL 70
 	
 	#macro UNVISITED_CELL 0
 	#macro VISITED_CELL 1

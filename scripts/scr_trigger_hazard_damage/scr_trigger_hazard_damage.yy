@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_trigger_main_game_dot",
+  "name": "scr_trigger_hazard_damage",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

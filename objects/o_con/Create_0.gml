@@ -296,5 +296,7 @@ mp_cost_for_item_or_abil = 0;
 scrap_cost_for_item_or_abil = 0;
 ap_cost_for_item_or_abil = 0;
 sanity_cost_for_item_or_abil = 0;
+skill_test_event_enum = -1;
+skill_test_type_enum = -1;
 
 

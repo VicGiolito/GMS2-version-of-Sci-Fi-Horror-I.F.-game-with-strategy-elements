@@ -184,13 +184,16 @@ function scr_trigger_dot_effects(char_struct_id){
 			
 			char_struct_id.healing_factor_cd = 0; //Reset
 			
-			//Infection is healed first:
-			if char_struct_id.infection_count > 0 { 
+			//Infection is healed first - but only outside of combat:
+			var infection_healed = false;
+			
+			if global.combat_begun == false && char_struct_id.infection_count > 0 { 
+				infection_healed = true;
 				char_struct_id.infection_count -= HEALING_FACTOR_HEAL_VAL; 
 				dot_result_str += $"**{char_name_str}({char_struct_id.unique_id}) has healed {HEALING_FACTOR_HEAL_VAL} infection point{hp_plural_str}, thanks to their healing factor.**\n";
 			}
 			
-			else if char_struct_id.hp_cur < char_struct_id.hp_max {
+			if infection_healed == false && char_struct_id.hp_cur < char_struct_id.hp_max {
 				
 				char_struct_id.hp_cur += HEALING_FACTOR_HEAL_VAL;
 				
@@ -503,7 +506,7 @@ function scr_trigger_dot_effects(char_struct_id){
 			}
 			//Add doors to room, if it hasn't already been done:
 			if char_struct_id.cur_room_id.doors_already_added_boolean == false {
-				scr_add_doors_to_tilemap(global.tile_doors_lay_id,char_struct_id.cur_grid_x,char_struct_id.cur_grid_y);
+				scr_add_doors_to_tilemap(global.tile_doors_lay_id,char_struct_id.cur_grid_x,char_struct_id.cur_grid_y,char_struct_id.cur_grid);
 			}
 				
 			//Update the room's boolean vars:
@@ -511,8 +514,8 @@ function scr_trigger_dot_effects(char_struct_id){
 			char_struct_id.cur_room_id.doors_already_added_boolean = true;
 			
 			//Call scr_reset_visibility(), then update visibility:
-			scr_reset_visibility();
-			scr_update_visibility();
+			scr_reset_visibility(char_struct_id.cur_grid);
+			scr_update_visibility(char_struct_id.cur_grid);
 									
 			//Most important: reset our var that permits pcs to trigger combat again:
 			char_struct_id.participated_in_new_turn_battle = false;

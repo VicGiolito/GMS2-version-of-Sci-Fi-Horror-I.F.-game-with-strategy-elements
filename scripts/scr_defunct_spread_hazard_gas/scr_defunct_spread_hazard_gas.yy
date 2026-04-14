@@ -1,11 +1,11 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_check_hide_skill_test",
+  "name": "scr_defunct_spread_hazard_gas",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Skill Tests",
-    "path": "folders/Scripts/Skill Tests.yy",
+    "name": "Defunct",
+    "path": "folders/Scripts/Defunct.yy",
   },
 }

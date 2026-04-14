@@ -1,11 +1,11 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_extinguish_vacuum",
+  "name": "scr_defunct_check_hide_skill_test",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Environmental Hazards",
-    "path": "folders/Scripts/Environmental Hazards.yy",
+    "name": "Defunct",
+    "path": "folders/Scripts/Defunct.yy",
   },
 }
