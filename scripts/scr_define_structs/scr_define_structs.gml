@@ -806,11 +806,7 @@ function scr_define_structs(){
             combat_ai_preference = enemy_combat_ai.melee;
 
             armor = 0;
-            evasion = 3;
-            res_fire = 0;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = 0;
+            
 			accuracy = AVG_ACC_VAL+1;
 			
 			nick_name = "Larva";
@@ -818,7 +814,9 @@ function scr_define_structs(){
 			scr_add_ability(self,item_type.infection_needle);
 			scr_add_ability(self,item_type.writhing_tendril);
 			
-			morale_immune = true;
+			//Adds all of our 'alien' base resistences - they are resistant to most hazards except for fire, for which they are only partially resistant;
+			//also makes them morale and infection immune.
+			scr_add_passive_ability(self, passive_abil_type.alien, "character struct constructor event.");
 		}
 
         else if char_type_enum == character.neutral_jittering_buzzsaw {
@@ -937,10 +935,6 @@ function scr_define_structs(){
 
             armor = 1;
             evasion = -1;
-            res_fire = 0;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = 0;
 			
 			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
@@ -955,7 +949,9 @@ function scr_define_structs(){
 
 			scr_add_ability(self, item_type.monstrous_claw);
 			
-			morale_immune = true;
+			//Adds all of our 'alien' base resistences - they are resistant to most hazards except for fire, for which they are only partially resistant;
+			//also makes them morale and infection immune.
+			scr_add_passive_ability(self, passive_abil_type.alien, "character struct constructor event.");
 		}
 
         else if char_type_enum == character.enemy_spined_spitter {
@@ -968,10 +964,6 @@ function scr_define_structs(){
 
             armor = 1;
             evasion = 0;
-            res_fire = 0;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = 0;
 			
 			accuracy = AVG_ACC_VAL+1; //Most enemies have better accuracy than most pcs
 
@@ -981,7 +973,9 @@ function scr_define_structs(){
 
 			scr_add_ability(self, item_type.spine_projectile);	
 			
-			morale_immune = true;
+			//Adds all of our 'alien' base resistences - they are resistant to most hazards except for fire, for which they are only partially resistant;
+			//also makes them morale and infection immune.
+			scr_add_passive_ability(self, passive_abil_type.alien, "character struct constructor event.");
 		}
 
         else if char_type_enum == character.enemy_transmogrified_soldier {
@@ -996,23 +990,19 @@ function scr_define_structs(){
 
             armor = 0;
             evasion = -1;
-            res_fire = 0;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = 0;
-			
-			morale_immune = true;
 
             combat_ai_preference = enemy_combat_ai.overwatch_coward;
 
             spd = AVERAGE_CHAR_SPEED+1;
 			
+			//Deal extra melee damage:
 			scr_add_passive_ability(self,passive_abil_type.giant,"constructor event for transmogrified soldier char");
 			
-			//scr_add_ability(self,item_type.pulse_rifle);
+			//Adds all of our 'alien' base resistences - they are resistant to most hazards except for fire, for which they are only partially resistant;
+			//also makes them morale and infection immune.
+			scr_add_passive_ability(self, passive_abil_type.alien, "character struct constructor event.");
 			
-			//Exclude for now while testing overwatch:
-			
+			//This enemy has more versatility than most - difficult to predict exactly how they will behave or what they will attack with:
 			var ran_equip_int = irandom_range(1,6);
 			
 			if ran_equip_int == 1 {
@@ -1063,20 +1053,18 @@ function scr_define_structs(){
 
             armor = 0;
             evasion = 0;
-            res_fire = 0;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = 0;
-			
-			morale_immune = true;
-
+          
             combat_ai_preference = enemy_combat_ai.ranged_coward;
 
             spd = 0;
 			
-			//scr_add_ability(self,item_type.acid_cloud);
-			//scr_add_ability(self,item_type.acid_spit);
+			scr_add_ability(self,item_type.acid_cloud);
+			scr_add_ability(self,item_type.acid_spit);
 			scr_add_ability(self,item_type.regurgitated_vomit);
+			
+			//Adds all of our 'alien' base resistences - they are resistant to most hazards except for fire, for which they are only partially resistant;
+			//also makes them morale and infection immune.
+			scr_add_passive_ability(self, passive_abil_type.alien, "character struct constructor event.");
 		}
 
         else if char_type_enum == character.enemy_chittering_lurker {
@@ -1091,21 +1079,19 @@ function scr_define_structs(){
 
             armor = 0;
             evasion = 2;
-            res_fire = 0;
-            res_vacuum = 100;
-            res_gas = 100;
-            res_electric = 0;
 
-            ai_is_suppressor_boolean = true
-            combat_ai_preference = enemy_combat_ai.ranged_coward
+            ai_is_suppressor_boolean = true; //No idea where else this is being used - if at all
+            combat_ai_preference = enemy_combat_ai.ranged_coward;
 
             spd = 7;
-			
-			morale_immune = true;
-			
-			//scr_add_ability(self,item_type.filament_spray);
-			//scr_add_ability(self,item_type.sticky_slime);
+
+			scr_add_ability(self,item_type.filament_spray);
+			scr_add_ability(self,item_type.sticky_slime);
 			scr_add_ability(self,item_type.terrifying_wail);
+			
+			//Adds all of our 'alien' base resistences - they are resistant to most hazards except for fire, for which they are only partially resistant;
+			//also makes them morale and infection immune.
+			scr_add_passive_ability(self, passive_abil_type.alien, "character struct constructor event.");
 		}
 		
 		#endregion End region for defining char stats
@@ -1825,7 +1811,7 @@ function scr_define_structs(){
             dmg_max = 6;
             item_name = "MACHINE GUN";
             item_equip_enum = item_equip_type.two_hands;
-            max_range = 2; //4;
+            max_range = 4; //4;
             item_verb = "fires the";
             item_dmg_str = "shot";
             can_overwatch_boolean = true;
@@ -1864,8 +1850,8 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 		}
 		else if item_enum == item_type.regurgitated_vomit {
-            dmg_min = 20; //2;
-            dmg_max = 40; //4;
+            dmg_min = 2; //2;
+            dmg_max = 4; //4;
             item_name = "UNDIGESTED VOMIT";
             item_equip_enum = item_equip_type.one_hand;
             max_range = 2;
@@ -1923,8 +1909,8 @@ function scr_define_structs(){
 			use_context = abil_use_context.combat_only;
 		}
 		else if item_enum == item_type.terrifying_wail {
-            dmg_min = 100;//1;
-            dmg_max = 100; //2;
+            dmg_min = 1;//1;
+            dmg_max = 3; //3;
             item_name = "TERRIFYING WAIL";
             item_equip_enum = item_equip_type.one_hand;
             max_range = 4; //3
@@ -1969,8 +1955,8 @@ function scr_define_structs(){
             item_verb = "fires the";
             item_dmg_str = "concussed";
             aoe_count = -1;
-            stun_chance = 100; //75;
-            suppress_chance = 100; //75;
+            stun_chance = 75; //75;
+            suppress_chance = 75; //75;
             always_checks_status_effect_boolean = true;
 			use_context = abil_use_context.combat_only;
 		}
@@ -1994,7 +1980,7 @@ function scr_define_structs(){
             dmg_max = 4;
             item_name = "MACHINE PISTOL";
             item_equip_enum = item_equip_type.one_hand;
-            max_range = 3; //2;
+            max_range = 2; //2;
             item_verb = "fires the";
             item_dmg_str = "shot";
             can_overwatch_boolean = true;
@@ -2005,7 +1991,7 @@ function scr_define_structs(){
 		}
         else if item_enum == item_type.sniper_rifle {
             dmg_min = 8;
-            dmg_max = 12;
+            dmg_max = 10;
             melee_debuff_boolean = true;
             item_name = "SNIPER RIFLE";
             item_equip_enum = item_equip_type.two_hands;

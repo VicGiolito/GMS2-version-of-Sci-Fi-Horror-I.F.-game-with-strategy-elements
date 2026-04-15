@@ -33,6 +33,7 @@ function scr_define_macros_and_enums(){
 		giant, //Can't hide, increased melee dmg and melee accuracy
 		cybernetic, //50% res to most hazard and damage types, 50% weakness to electric
 		synthetic, //100% res to most hazard and damage types, 100% weakness to electric, morale immune
+		alien, //Similar to synthetic, without the fire resistence, but with electric immunity. Most enemies have this.
 		
 		total_ability_types
 	}
@@ -571,7 +572,7 @@ function scr_define_macros_and_enums(){
 	
 	#macro DOT_HAZARD_DMG_TOXIC_GAS 2
 	#macro DOT_HAZARD_DMG_FIRE 4
-	#macro DOT_HAZARD_ELECTRIC_DMG 3
+	#macro DOT_HAZARD_ELECTRIC_DMG 2
 	
 	//#macro MIN_HIDE_RAN_VAL 1
 	//#macro MAX_HIDE_RAN_VAL 10

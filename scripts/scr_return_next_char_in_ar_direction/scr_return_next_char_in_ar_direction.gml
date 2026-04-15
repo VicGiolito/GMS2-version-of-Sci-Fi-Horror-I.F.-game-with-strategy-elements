@@ -17,8 +17,8 @@ function scr_return_next_char_in_ar_direction(increment_dir, ar_index, original_
 		char_struct_id = ar_to_use[ar_index];
 		
 		if is_struct(char_struct_id) && char_struct_id.struct_type_enum == struct_type.Character {
-			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false && char_struct_id.unconscious_count <= 0
-			&& char_struct_id.unconscious_bool == false {
+			if char_struct_id.has_died_bool == false && char_struct_id.has_fled_combat_bool == false
+			&& char_struct_id.unconscious_bool == false && char_struct_id.stun_count <= 0 {
 				if char_struct_id.char_team_enum == team_type.pc && char_struct_id != original_char_struct_id {
 					pc_char_found = true;
 					return char_struct_id;

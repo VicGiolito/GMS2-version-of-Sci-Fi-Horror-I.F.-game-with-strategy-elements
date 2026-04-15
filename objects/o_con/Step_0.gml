@@ -519,7 +519,7 @@ else if global.cur_game_state == game_state.init_combat {
 			scr_delete_enemy_mobs();
 			
 			//We'll return to main game state after we spread hazards:
-			if global.full_game_turn_completed == true {
+			if global.full_game_turn_completed == true { //Is set to true in scr_end_turn()
 				global.full_game_turn_completed = false;
 				global.cur_game_state = game_state.spread_hazards;
 				hazard_spread_counter = 0; //reset
@@ -541,9 +541,18 @@ else if global.cur_game_state == game_state.init_combat {
 				
 				if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
 				
-				if global.acting_char_struct_id == -1 throw("o_con step event: game_state == init_combat: local var combat_begun had == false: global.acting_char_struct_id returned -1 from scr_return_next_char_in_ar_direction(), and yet we're trying return to main game state. Something went wrong.")
-				
-				scr_print_char_new_room_text(global.acting_char_struct_id);
+				/* The only way this scenario can occur is if a char walks into a new room, is stunned or rendered unconscious by a trap, 
+				and they were the last avail character in the global.pc_char_ar. In such a case, just end the turn. We will then be brought 
+				back here, and then our 'spread_hazards' condition will execute. Then we'll the turn will end again, and we'll be brought back
+				here again. This will then loop until the char expires, either through scr_dot_effects() or while in combat, from scr_dot_effects().
+				*/
+				if global.acting_char_struct_id == -1 {
+					scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
+					scr_end_turn(); //We will loop back here, then to spread_hazards.
+				}
+				else {
+					scr_print_char_new_room_text(global.acting_char_struct_id); //We're headed back to the main game state.
+				}
 			}
 		} 
 	
@@ -621,22 +630,7 @@ else if global.cur_game_state == game_state.init_combat {
 	
 	else if !pc_found {
 		
-		scr_add_str_to_dialogue_ar("\nAll playable characters have been killed! You have lost this time, but hopefully you have gained some invaluable knowledge for your next playthrough...");
-		
-		//Wipe/reset all relevant data:
-		global.research_vessel_grid = -1;
-		global.cur_grid = -1;
-		global.pc_char_ar = -1;
-		global.pc_char_ar = [];
-		global.enemy_char_ar = -1;
-		global.enemy_char_ar = [];
-		global.neutral_char_ar = -1;
-		global.neutral_char_ar = [];
-		cursor_pos = 0;
-		
-		alarm[2] = 1;
-		
-		global.cur_game_state = game_state.main_menu;
+		scr_end_game();
 	}
 }
 
@@ -3518,74 +3512,8 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 		
 		else if player_input_str == "END" {
 			
-			scr_add_str_to_dialogue_ar($"Round {global.total_turn_counter} ends. Your characters collectively consume 1 food, regain 2 action points, and regain all of their movement points. All enemies make their move. Round {global.total_turn_counter+1} begins.",true);
-			
-			//Before calling scr_trigger_main_game_dot() and scr_trigger_dot_effects(), we increment infection count:
-			var char_struct_id;
-			for(var i = 0; i < array_length(global.pc_char_ar); i++) {
-				char_struct_id = global.pc_char_ar[i];
-				if char_struct_id.has_died_bool == false && char_struct_id.infection_count > 0 {
-					char_struct_id.infection_count++;
-					scr_add_str_to_dialogue_ar($"The insidious infection within {char_struct_id.name} has grown by 1.");
-					
-					//scr_trigger_main_game_dot();
-			
-					//scr_trigger_dot_effects()
-				}
-			}
-			
-			
-			
+			//This brings us to init_combat
 			scr_end_turn();
-			
-			var enemy_mob_is_hunting_or_wandering = false;
-			if is_array(global.enemy_mob_ar) && array_length(global.enemy_mob_ar) > 0 {
-				for(var i = 0; i < array_length(global.enemy_mob_ar); i++) {
-					if global.enemy_mob_ar[i].ai_movement_behavior == ai_movement_type.hunting || 
-					global.enemy_mob_ar[i].ai_movement_behavior == ai_movement_type.wandering {
-						enemy_mob_is_hunting_or_wandering = true;
-						break;
-					}
-				}
-			}
-			
-			//Have each char path outward from their current location:
-			if enemy_mob_is_hunting_or_wandering {
-				var char_struct_id;
-				for(var i = 0; i < array_length(global.pc_char_ar); i++) {
-				
-					char_struct_id = global.pc_char_ar[i];
-				
-					//Reset their flood_fill_path_grid to match their cur_grid; it will be used as the 'steps_grid' in our pathing algorithm:
-					char_struct_id.flood_fill_path_grid = -1;
-					char_struct_id.flood_fill_path_grid = ds_grid_create(ds_grid_width(char_struct_id.cur_grid), ds_grid_height(char_struct_id.cur_grid) );
-					ds_grid_clear(char_struct_id.flood_fill_path_grid, UNVISITED_STEP_VAL);
-				
-					//Reset the g.visited_grid so that its dimensions match the char's cur grid:
-					if !ds_exists(global.visited_grid, ds_type_grid) { global.visited_grid = ds_grid_create(ds_grid_width(char_struct_id.cur_grid), ds_grid_height(char_struct_id.cur_grid) ); }
-					ds_grid_resize(global.visited_grid, ds_grid_width(char_struct_id.cur_grid), ds_grid_height(char_struct_id.cur_grid) );
-					ds_grid_clear(global.visited_grid, UNVISITED_CELL);
-				
-					//Reset frontier_queue, if applicable:
-					if !ds_exists(global.frontier_queue, ds_type_priority) { global.frontier_queue = ds_priority_create(); }
-					ds_priority_clear(global.frontier_queue);
-				
-					scr_perform_flood_fill_recursion(char_struct_id, char_struct_id.flood_fill_path_grid);
-				}
-			
-			
-				if is_array(global.enemy_mob_ar) && array_length(global.enemy_mob_ar) > 0 {
-				
-					scr_enemy_mobs_choose_closest_pc_target();
-				
-					//Okay, the mob structs now have their destination grid cells chosen. 
-				
-					//Now move them 1 space along their paths:
-					scr_move_enemy_mobs();
-				}
-			}
-			
-			global.cur_game_state = game_state.init_combat;
 		}
 		
 		#endregion
@@ -3763,6 +3691,9 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				
 					//Display move result:
 					scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} moves {move_str}.\n");
+					
+					//Check for trigger hazard damage:
+					Im working here
 					
 					//Check to see if we're triggering combat in the new room:
 					if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
@@ -5080,26 +5011,47 @@ else if global.cur_game_state == game_state.spread_hazards {
 		
 		scr_spread_vacuum_or_gas(true);
 		
-		//Return to main game state:
-		global.cur_game_state = game_state.main_game;
+		scr_trigger_hazard_damage();
+		
+		scr_trigger_starvation_damage();
 				
 		//Change g.acting_char_struct_id if the previous one died or is unconscious:
 		var use_prev_cur_char = false;
 		if scr_check_ar_for_val(global.pc_char_ar, global.acting_char_struct_id) == true {
 			if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
-			global.acting_char_struct_id.unconscious_count <= 0 {
-				use_prev_cur_char = true;	
+			global.acting_char_struct_id.unconscious_count <= 0 && global.acting_char_struct_id.stun_count <= 0 {
+				use_prev_cur_char = true; //We don't need to change our g.acting_char_struct_id from the last main game state - they're still available.
 			}
 		}
-				
+		
+		//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
 		if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
-				
-		if global.acting_char_struct_id == -1 throw("o_con step event: game_state == init_combat: local var combat_begun had == false: global.acting_char_struct_id returned -1 from scr_return_next_char_in_ar_direction(), and yet we're trying return to main game state. Something went wrong.")
 		
-		//Update all of our door structs before heading back to the main game state - they could have been destroyed by fire:
-		scr_update_all_door_tiles_in_grid(global.acting_char_struct_id.cur_grid);
+		/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
+		there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
+		player has no one to control, so we'll call our end_turn effects and, as scr_trigger_dot_effects() is repeatedly called, unconscious chars will either
+		revive or die; they may even be dragged into combat, where they will then either revive or die. Either way, the player will just be observing until the
+		char either revives, or the game ends, which is a state we check at the end of init_combat.
+		*/
+		if global.acting_char_struct_id == -1 {
+			
+			//We should still update all of our doors - they could have been destroyed by fire:
+			scr_update_all_door_tiles_in_grid(global.acting_char_struct_id.cur_grid);
+			
+			scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
+			
+			//This brings us to init_combat
+			scr_end_turn();
+		}
+		else {
+			//Update all of our door structs before heading back to the main game state - they could have been destroyed by fire:
+			scr_update_all_door_tiles_in_grid(global.acting_char_struct_id.cur_grid);
 		
-		scr_print_char_new_room_text(global.acting_char_struct_id);
+			//Return to main game state:
+			global.cur_game_state = game_state.main_game;
+		
+			scr_print_char_new_room_text(global.acting_char_struct_id);
+		}
 	}
 	
 	//Iterate

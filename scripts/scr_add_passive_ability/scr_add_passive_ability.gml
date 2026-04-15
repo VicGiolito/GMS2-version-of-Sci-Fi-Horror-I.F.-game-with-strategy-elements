@@ -23,7 +23,7 @@ function scr_add_passive_ability(char_struct_id, passive_abil_enum, called_from_
 		char_struct_id.res_fire += 50;
         char_struct_id.res_vacuum += 50;
         char_struct_id.res_gas += 50;
-        char_struct_id.res_electric += -50;
+        char_struct_id.res_electric += -100;
         char_struct_id.char_max_infection = BASE_MAX_INFECTION + 4;
         char_struct_id.res_infect += 50;
         char_struct_id.res_poison += 50;
@@ -35,11 +35,24 @@ function scr_add_passive_ability(char_struct_id, passive_abil_enum, called_from_
         char_struct_id.res_fire += 100;
         char_struct_id.res_vacuum += 100;
         char_struct_id.res_gas += 100;
-        char_struct_id.res_electric += -100;
+        char_struct_id.res_electric += -200;
         char_struct_id.char_max_infection = BASE_MAX_INFECTION + 4;
         char_struct_id.res_infect += 500;
         char_struct_id.res_poison += 500;
         char_struct_id.res_stun += 50;
+			
+		char_struct_id.morale_immune = true;
+		char_struct_id.infection_immune = true;
+	}
+	else if passive_abil_enum == passive_abil_type.alien {	
+		
+		//Base 'alien' resistences
+        char_struct_id.res_fire += 75; 
+        char_struct_id.res_vacuum += 100;
+        char_struct_id.res_gas += 100;
+        char_struct_id.res_electric += 100;
+        char_struct_id.res_infect += 500;
+        char_struct_id.res_poison += 500;
 			
 		char_struct_id.morale_immune = true;
 		char_struct_id.infection_immune = true;

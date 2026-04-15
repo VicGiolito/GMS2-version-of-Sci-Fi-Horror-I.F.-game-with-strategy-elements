@@ -7,7 +7,11 @@ function scr_trigger_dot_effects(char_struct_id){
 		
         infection_count = 0;
         
-		Hazards:
+		Hazards - if the char is in combat (g.combat_begun == true) and there is a hazard in this room, then they will have a CHANCE of being dealt damage
+		every turn or every other or something; vacuum damage will still be every turn. Basically it is catastrophic for pcs to fight inside of an active 
+		hazard room; but because hazards spread AFTER combat, the player should generally have enough sense to avoid sticking around in such rooms with
+		chars that are vulnerable to hazards; so it generally shouldn't be much of a issue. In fact, is it even worth implementing? Edit: No. No it's not.
+		
         inside_toxic_gas_boolean = false;
         inside_vacuum_boolean = false;
 		electric damage
@@ -280,7 +284,8 @@ function scr_trigger_dot_effects(char_struct_id){
 		}
 	}
 	
-	//Unconscious logic:
+	//Unconscious logic - this, along with scr_delete_combat_chars(), is actually the only place in the entire PROJECT where pc chars are deleted,
+	//with scr_delete_char_from_global_and_room_ar(), in both cases.
 	if char_struct_id.char_team_enum == team_type.pc && char_struct_id.unconscious_bool == true && char_struct_id.has_died_bool == false {
 		
 		char_struct_id.unconscious_count++;
@@ -298,6 +303,12 @@ function scr_trigger_dot_effects(char_struct_id){
 			//Reassign their neutrals, if necessary; even though this code is in scr_delete_combat_chars(), scr_trigger_dot_effects() also triggers from
 			//the main game state, so we need to include it here as well:
 			scr_auto_reassign_neutrals_owner(char_struct_id);
+			
+			//Also remove from global and room arrays if we're not in combat right now; if we are, then this will be done in combat_paused game state,
+			//with scr_delete_combat_chars(), when combat concludes.
+			if global.combat_begun == false {
+				scr_delete_char_from_global_and_room_ar(char_struct_id);
+			}
 		}
 		
 		//Show message:
@@ -314,7 +325,7 @@ function scr_trigger_dot_effects(char_struct_id){
 	
 	#region Fleeing code:
 				
-	if char_struct_id.char_fleeing_from_broken_morale == true {
+	if global.combat_begun && char_struct_id.char_fleeing_from_broken_morale == true {
 					
 		//Show their 'fleeing' string:
 		scr_add_str_to_dialogue_ar($"\n**{char_struct_id.fleeing_str}**")

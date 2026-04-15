@@ -2,7 +2,7 @@
 
 function scr_delete_char_from_global_and_room_ar(char_id_to_delete){
 	
-	d($"Entering scr_delete_char_from_global_and_room_ar for char_id_to_delete: {char_id_to_delete.name}");
+	d($"\nEntering scr_delete_char_from_global_and_room_ar for char_id_to_delete: {char_id_to_delete.name}. They will be deleted from their respective global and room team arrays.\n");
 	
 	var room_ar = undefined, global_ar = undefined;
 	
