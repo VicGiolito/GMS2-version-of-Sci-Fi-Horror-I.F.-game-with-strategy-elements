@@ -48,6 +48,7 @@
     {"name":"Timelines","order":8,"path":"folders/Timelines.yy",},
   ],
   "ResourceOrderSettings": [
+    {"name":"scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread","order":2,"path":"scripts/scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread/scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread.yy",},
     {"name":"array_count","order":5,"path":"scripts/array_count/array_count.yy",},
     {"name":"scr_check_rank_all_combat_immune","order":38,"path":"scripts/scr_check_rank_all_combat_immune/scr_check_rank_all_combat_immune.yy",},
     {"name":"fnt_default_8","order":2,"path":"fonts/fnt_default_8/fnt_default_8.yy",},
@@ -182,6 +183,7 @@
     {"name":"scr_apply_broken_morale","order":34,"path":"scripts/scr_apply_broken_morale/scr_apply_broken_morale.yy",},
     {"name":"scr_return_manhattan_dist","order":2,"path":"scripts/scr_return_manhattan_dist/scr_return_manhattan_dist.yy",},
     {"name":"scr_return_plural_s","order":10,"path":"scripts/scr_return_plural_s/scr_return_plural_s.yy",},
+    {"name":"scr_check_for_hazards","order":6,"path":"scripts/scr_check_for_hazards/scr_check_for_hazards.yy",},
     {"name":"scr_spread_vacuum_or_gas","order":1,"path":"scripts/scr_spread_vacuum_or_gas/scr_spread_vacuum_or_gas.yy",},
     {"name":"scr_print_add_movement_chars_screen","order":6,"path":"scripts/scr_print_add_movement_chars_screen/scr_print_add_movement_chars_screen.yy",},
     {"name":"scr_add_passive_ability","order":13,"path":"scripts/scr_add_passive_ability/scr_add_passive_ability.yy",},
@@ -245,6 +247,7 @@
     {"name":"scr_reset_font","order":2,"path":"scripts/scr_reset_font/scr_reset_font.yy",},
     {"name":"spr_hazard_gas","order":5,"path":"sprites/spr_hazard_gas/spr_hazard_gas.yy",},
     {"name":"spr_hazard_fire_gen","order":11,"path":"sprites/spr_hazard_fire_gen/spr_hazard_fire_gen.yy",},
+    {"name":"scr_defunct_trigger_hazard_damage_array","order":16,"path":"scripts/scr_defunct_trigger_hazard_damage_array/scr_defunct_trigger_hazard_damage_array.yy",},
     {"name":"scr_return_mob_ar_at_coord","order":14,"path":"scripts/scr_return_mob_ar_at_coord/scr_return_mob_ar_at_coord.yy",},
     {"name":"scr_return_str_line_count","order":9,"path":"scripts/scr_return_str_line_count/scr_return_str_line_count.yy",},
   ],

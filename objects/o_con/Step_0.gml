@@ -1,5 +1,8 @@
 /// @description o_con step event
 
+//debug: make sure there's only one instance of our o_con:
+show_debug_message($"o_con id: {id}")
+
 // Proposed solution to stop program from accepting input while the game is minimized or has lost focus (does appear to work):
 if (!window_has_focus()) {
     keyboard_lastkey = 0;
@@ -3693,14 +3696,48 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					scr_add_str_to_dialogue_ar($"{global.acting_char_struct_id.name} moves {move_str}.\n");
 					
 					//Check for trigger hazard damage:
-					Im working here
-					
-					//Check to see if we're triggering combat in the new room:
-					if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
-						global.cur_game_state = game_state.init_combat;	
+					if scr_check_for_hazards(global.acting_char_struct_id) == true {
+						var temp_ar = array_create(1, global.acting_char_struct_id);
+						temp_ar = scr_trigger_hazard_damage(false, temp_ar);
+						//We check below to see if the g.acting_char_struct has been stunned or fallen unconscious:
 					}
-					else {
-						scr_print_char_new_room_text(global.acting_char_struct_id);
+					
+					//Make sure our g.acting_char_struct_id is still alive, not unconscious, and not stunned:
+					//Change g.acting_char_struct_id if the previous one died or is unconscious:
+					var use_prev_cur_char = false;
+					
+					if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
+					global.acting_char_struct_id.stun_count <= 0 {
+						use_prev_cur_char = true; //We don't need to change our g.acting_char_struct_id from the last main game state - they're still available.
+					}
+					
+					//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
+					if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+		
+					/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
+					there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
+					player has no one to control, so we'll call our end_turn effects and, as scr_trigger_dot_effects() is repeatedly called, unconscious chars will either
+					revive or die; they may even be dragged into combat, where they will then either revive or die. Either way, the player will just be observing until the
+					char either revives, or the game ends, which is a state we check at the end of init_combat.
+					*/
+					if global.acting_char_struct_id == -1 {
+			
+						scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
+			
+						//This brings us to init_combat
+						scr_end_turn();
+					}
+					
+					//We didn't change cur chars, so check this room; if we had, we don't potentially want combat being triggered in another room by another char
+					//at this time - there would be no cause for it.
+					else if use_prev_cur_char {
+						//Check to see if we're triggering combat in the new room:
+						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+							global.cur_game_state = game_state.init_combat;	
+						}
+						else {
+							scr_print_char_new_room_text(global.acting_char_struct_id);
+						}
 					}
 				}
 				else {
@@ -4079,6 +4116,38 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				
 						//Display move result:
 						scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} leads the party {move_str}.");
+						
+						//Check hazard damage:
+						if scr_check_for_hazards(global.acting_char_struct_id) == true {
+							
+							local_party_ar = scr_trigger_hazard_damage(false, local_party_ar);
+							
+							//Make sure our g.acting_char_struct_id is still alive, not unconscious, and not stunned:
+							//Change g.acting_char_struct_id if the previous one died or is unconscious:
+							var use_prev_cur_char = false;
+							
+							if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
+							global.acting_char_struct_id.stun_count <= 0 {
+								use_prev_cur_char = true; //We don't need to change our g.acting_char_struct_id from the last main game state - they're still available.
+							}
+							
+							//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
+							if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+							
+							/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
+							there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
+							player has no one to control, so we'll call our end_turn effects and, as scr_trigger_dot_effects() is repeatedly called, unconscious chars will either
+							revive or die; they may even be dragged into combat, where they will then either revive or die. Either way, the player will just be observing until the
+							char either revives, or the game ends, which is a state we check at the end of init_combat.
+							*/
+							if global.acting_char_struct_id == -1 {
+			
+								scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
+			
+								//This brings us to init_combat
+								scr_end_turn();
+							}
+						}
 						
 						//Check to see if we're triggering combat in the new room:
 						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
@@ -4840,6 +4909,38 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 						//Display move result:
 						scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} leads the party {party_moving_dir_str}.");
 						
+						//Check hazard damage:
+						if scr_check_for_hazards(global.acting_char_struct_id) == true {
+							
+							moving_party_ar = scr_trigger_hazard_damage(false, moving_party_ar);
+							
+							//Make sure our g.acting_char_struct_id is still alive, not unconscious, and not stunned:
+							//Change g.acting_char_struct_id if the previous one died or is unconscious:
+							var use_prev_cur_char = false;
+							
+							if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
+							global.acting_char_struct_id.stun_count <= 0 {
+								use_prev_cur_char = true; //We don't need to change our g.acting_char_struct_id from the last main game state - they're still available.
+							}
+							
+							//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
+							if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+							
+							/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
+							there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
+							player has no one to control, so we'll call our end_turn effects and, as scr_trigger_dot_effects() is repeatedly called, unconscious chars will either
+							revive or die; they may even be dragged into combat, where they will then either revive or die. Either way, the player will just be observing until the
+							char either revives, or the game ends, which is a state we check at the end of init_combat.
+							*/
+							if global.acting_char_struct_id == -1 {
+			
+								scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
+			
+								//This brings us to init_combat
+								scr_end_turn();
+							}
+						}
+						
 						//Check to see if we're triggering combat in the new room:
 						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
 							global.cur_game_state = game_state.init_combat;	
@@ -5011,7 +5112,7 @@ else if global.cur_game_state == game_state.spread_hazards {
 		
 		scr_spread_vacuum_or_gas(true);
 		
-		scr_trigger_hazard_damage();
+		scr_trigger_hazard_damage(true);
 		
 		scr_trigger_starvation_damage();
 				
@@ -5019,7 +5120,7 @@ else if global.cur_game_state == game_state.spread_hazards {
 		var use_prev_cur_char = false;
 		if scr_check_ar_for_val(global.pc_char_ar, global.acting_char_struct_id) == true {
 			if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
-			global.acting_char_struct_id.unconscious_count <= 0 && global.acting_char_struct_id.stun_count <= 0 {
+			global.acting_char_struct_id.stun_count <= 0 {
 				use_prev_cur_char = true; //We don't need to change our g.acting_char_struct_id from the last main game state - they're still available.
 			}
 		}

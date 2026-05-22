@@ -67,6 +67,7 @@
     "IDEVersion": "2023.8.2.108",
   },
   "resources": [
+    {"id":{"name":"scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread","path":"scripts/scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread/scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread.yy",},},
     {"id":{"name":"array_count","path":"scripts/array_count/array_count.yy",},},
     {"id":{"name":"scr_check_rank_all_combat_immune","path":"scripts/scr_check_rank_all_combat_immune/scr_check_rank_all_combat_immune.yy",},},
     {"id":{"name":"fnt_default_8","path":"fonts/fnt_default_8/fnt_default_8.yy",},},
@@ -222,6 +223,7 @@
     {"id":{"name":"scr_return_manhattan_dist","path":"scripts/scr_return_manhattan_dist/scr_return_manhattan_dist.yy",},},
     {"id":{"name":"scr_return_plural_s","path":"scripts/scr_return_plural_s/scr_return_plural_s.yy",},},
     {"id":{"name":"scr_a_star_plot_path_to_dest","path":"scripts/scr_a_star_plot_path_to_dest/scr_a_star_plot_path_to_dest.yy",},},
+    {"id":{"name":"scr_check_for_hazards","path":"scripts/scr_check_for_hazards/scr_check_for_hazards.yy",},},
     {"id":{"name":"scr_spread_vacuum_or_gas","path":"scripts/scr_spread_vacuum_or_gas/scr_spread_vacuum_or_gas.yy",},},
     {"id":{"name":"scr_print_add_movement_chars_screen","path":"scripts/scr_print_add_movement_chars_screen/scr_print_add_movement_chars_screen.yy",},},
     {"id":{"name":"scr_add_passive_ability","path":"scripts/scr_add_passive_ability/scr_add_passive_ability.yy",},},
@@ -293,6 +295,7 @@
     {"id":{"name":"scr_reset_font","path":"scripts/scr_reset_font/scr_reset_font.yy",},},
     {"id":{"name":"spr_hazard_gas","path":"sprites/spr_hazard_gas/spr_hazard_gas.yy",},},
     {"id":{"name":"spr_hazard_fire_gen","path":"sprites/spr_hazard_fire_gen/spr_hazard_fire_gen.yy",},},
+    {"id":{"name":"scr_defunct_trigger_hazard_damage_array","path":"scripts/scr_defunct_trigger_hazard_damage_array/scr_defunct_trigger_hazard_damage_array.yy",},},
     {"id":{"name":"scr_return_mob_ar_at_coord","path":"scripts/scr_return_mob_ar_at_coord/scr_return_mob_ar_at_coord.yy",},},
     {"id":{"name":"scr_return_str_line_count","path":"scripts/scr_return_str_line_count/scr_return_str_line_count.yy",},},
     {"id":{"name":"rm_main","path":"rooms/rm_main/rm_main.yy",},},

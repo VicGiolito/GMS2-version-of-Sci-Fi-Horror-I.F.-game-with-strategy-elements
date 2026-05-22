@@ -1,10 +1,11 @@
 /*
- Functions like scr_trigger_dot(), except we don't check for death, that's done in that script instead.
 
+	if iterate_through_global_ars_boolean == true, we iterate through all of the global arrays, checking every single char_inst_id in the game.
 
+	if iterate_through_global_ars_boolean == false, we need to define user_defined_ar, and we'll iterate through that instead.
 */
 
-function scr_trigger_hazard_damage(){
+function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defined_ar = undefined){
 	
 	/* A note on resistences:
 	multiplier = 1 - (resistance / 100)
@@ -22,11 +23,24 @@ function scr_trigger_hazard_damage(){
 	
 	*/
 	
-	//Iterate through pc_char_ar and neutral_char_ar:
-	var char_struct_id, repeat_loop = 0, ar_to_use = global.pc_char_ar;
-	repeat(2) {
-		if repeat_loop == 1 ar_to_use = global.neutral_char_ar;
-		else if repeat_loop == 2 ar_to_use = global.enemy_char_ar;
+	//Define the 'array' we will be iterating through - this could even just be an array of one char_inst_id:
+	var char_struct_id, ar_to_use, repeat_count = 1, repeat_loop = 0;
+	
+	if iterate_through_global_ars_boolean {
+		ar_to_use = global.pc_char_ar;
+		repeat_count = 3;	
+	}
+	else {
+		if is_undefined(user_defined_ar) throw("scr_trigger_hazard_damage: user_defined_ar == undefined, but iterate_through_global_ars_boolean == false; user_defined_ar should have been defined.");
+		ar_to_use = user_defined_ar;
+		repeat_count = 1;
+	}
+	
+	repeat(repeat_count) {
+		if iterate_through_global_ars_boolean {
+			if repeat_loop == 1 ar_to_use = global.neutral_char_ar;
+			else if repeat_loop == 2 ar_to_use = global.enemy_char_ar;
+		}
 		
 		if is_array(ar_to_use) && array_length(ar_to_use) > 0 {
 			
@@ -297,14 +311,22 @@ function scr_trigger_hazard_damage(){
 				}
 			}
 			
-			//We don't care if we end up with an empty array:
-			if repeat_loop == 0 global.pc_char_ar = new_ar;
-			else if repeat_loop == 1 global.neutral_char_ar = new_ar;
-			else if repeat_loop == 2 global.enemy_char_ar = new_ar;
+			//We don't care if we end up with an empty array, but we need to reassign our global arrays to the new array so they match:
+			if iterate_through_global_ars_boolean {
+				if repeat_loop == 0 global.pc_char_ar = new_ar;
+				else if repeat_loop == 1 global.neutral_char_ar = new_ar;
+				else if repeat_loop == 2 global.enemy_char_ar = new_ar;
+			}
+			//adjust our user_defined_array:
+			else {
+				ar_to_use = new_ar;	
+			}
 		}
 		
 		//Iterate:
 		repeat_loop++;
 	}
+	
+	if !iterate_through_global_ars_boolean return ar_to_use;
 	
 }
