@@ -1,8 +1,5 @@
 /// @description o_con step event
 
-//debug: make sure there's only one instance of our o_con:
-show_debug_message($"o_con id: {id}")
-
 // Proposed solution to stop program from accepting input while the game is minimized or has lost focus (does appear to work):
 if (!window_has_focus()) {
     keyboard_lastkey = 0;

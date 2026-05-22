@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread",
+  "name": "scr_flood_fill_vacuum_or_gas",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

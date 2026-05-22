@@ -1,13 +1,9 @@
-// Script assets have changed for v2.3.0 see
-// https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
 
-/*
 
-function scr_placeholder(){
+function scr_flood_fill_vacuum_or_gas(origin_grid_x, origin_grid_y, steps_grid_id, grid_to_check, cardinal_directions_only, spread_vac_boolean, called_from_str){
+		
 	
-	function scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread(origin_grid_x, origin_grid_y, steps_grid_id, grid_to_check, cardinal_directions_only, spread_vac_boolean, called_from_str){
-	
-		//throw($"For scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread: YOU CUNT! Where is this being called from? {called_from_str}")
+	d($"For scr_flood_fill_vacuum_or_gas: YOU CUNT! Where is this being called from? {called_from_str}")
 	
 	ds_grid_clear(steps_grid_id,UNVISITED_STEP_VAL);
 	ds_grid_clear(global.visited_grid,UNVISITED_CELL);
@@ -30,7 +26,7 @@ function scr_placeholder(){
 		
 		if ds_priority_empty(global.frontier_queue) {
 			
-			d($"scr_perform_flood_fill_recursion: our frontier_queue is empty, our algorithm has finished. It required: {failsafe_val} iterations.");
+			d($"scr_flood_fill_vacuum_or_gas: our frontier_queue is empty, our algorithm has finished. It required: {failsafe_val} iterations.");
 			
 			return true;
 		}
@@ -147,8 +143,6 @@ function scr_placeholder(){
 	}
 	until failsafe_val >= failsafe_max;
 	
-	d($"scr_perform_flood_fill_recursion: we moved past our recursion algorithm and priority queue never emptied, something went wrong, returning false.");
+	d($"scr_flood_fill_vacuum_or_gas: we moved past our recursion algorithm and priority queue never emptied, something went wrong, returning false.");
 	return false;
-
-	}
 }
