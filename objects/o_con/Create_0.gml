@@ -20,7 +20,7 @@ global.level_ar = []; //Contains all of ids for all our map grids in the game.
 
 main_menu_str_ar = ["Start New Game\n", "Continue Game\n", "Options\n", "Exit\n"];
 
-party_limit = 2;
+party_limit = 5;
 
 global.pc_char_ar = [];
 global.enemy_char_ar = [];
@@ -290,7 +290,7 @@ party_moving_dir_str = "";
 
 hazard_spread_counter = 0;
 
-global.full_game_turn_completed = false;
+global.full_game_turn_completed = false; //where is this set to true and then false? Answer: set to true in scr_end_turn(); and set to false whenever game_state.init_combat concludes with no more combat, and we then spread_hazards.
 
 mp_cost_for_item_or_abil = 0;
 scrap_cost_for_item_or_abil = 0;
@@ -298,5 +298,19 @@ ap_cost_for_item_or_abil = 0;
 sanity_cost_for_item_or_abil = 0;
 skill_test_event_enum = -1;
 skill_test_type_enum = -1;
+
+//The following vars are all defined in alarm[2], after we call scr_build_map_from_csv_file:
+global.cur_grid = -1; 
+global.cur_grid_w = -1;
+global.cur_grid_h = -1;
+global.origin_grid_x = -1;
+global.origin_grid_y = -1;
+global.tile_main_lay_id = -1;
+global.tile_doors_lay_id = -1;
+global.tile_fow_lay_id = -1;
+global.frontier_queue = -1; 
+
+cur_char_spr_counter = 0;
+
 
 

@@ -67,7 +67,7 @@ function scr_return_chars_str_in_room(room_struct_id){
 			var char_struct_str = ""
 			
 			for(var i = 0; i < pc_ar_len; i++) {
-				char_struct_str = room_struct_id.pcs_in_room_ar[i].name+"\n";
+				char_struct_str = room_struct_id.pcs_in_room_ar[i].name+string(scr_return_status_effects_str(room_struct_id.pcs_in_room_ar[i],false))+"\n";
 				chars_in_room_str += char_struct_str;
 			}
 		}

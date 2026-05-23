@@ -51,13 +51,21 @@ function scr_end_turn(){
 	//Before calling scr_trigger_main_game_dot() and scr_trigger_dot_effects(), we increment infection count:
 	var char_struct_id;
 	for(var i = 0; i < array_length(global.pc_char_ar); i++) {
+		
 		char_struct_id = global.pc_char_ar[i];
+		
 		if char_struct_id.has_died_bool == false && char_struct_id.infection_count > 0 {
 			char_struct_id.infection_count++;
 			scr_add_str_to_dialogue_ar($"The insidious infection within {char_struct_id.name} has grown by 1.");
 					
 			//This would be where we have the char change sides - in which case we will clear their status effects and they won't take any further damage:
 					
+			
+		}
+		
+		//As most status effects are cleared at the end of combat, this is primarily where we check if 
+		//unconscious characters will actually die while in the main game state:
+		if char_struct_id.has_died_bool == false {
 			scr_trigger_dot_effects(char_struct_id);
 		}
 	}

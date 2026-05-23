@@ -553,9 +553,9 @@ function scr_define_structs(){
 			
 			broken_morale_ar = [];
 				//Debug berserk:
-			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"Cooper goes berserk."});
-			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"Oh HELL no!\" {name} cries, bolting from his position. \"I didn't sign up for this shit!\""});
-			//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Just two more weeks, they said... Just two more weeks...\" {name} stands dumbfounded, frozen with fear. \"... Now I'll never see my little girl again...\"" });
+				//array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.berserk, broken_morale_str: $"Cooper goes berserk."});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.fleeing, broken_morale_str: $"\"Oh HELL no!\" {name} cries, bolting from his position. \"I didn't sign up for this shit!\""});
+			array_push(broken_morale_ar, { broken_morale_status_effect_enum: broken_morale_status_effects.cowering, broken_morale_str: $"\"Just two more weeks, they said... Just two more weeks...\" {name} stands dumbfounded, frozen with fear. \"... Now I'll never see my little girl again...\"" });
 			
 			permanent_broken_morale_ar = [];
 			array_copy(permanent_broken_morale_ar,0,broken_morale_ar,0,array_length(broken_morale_ar));
@@ -625,8 +625,8 @@ function scr_define_structs(){
 
         else if char_type_enum == character.service_droid {
             name = "RG-88, 'Service Droid'";
-            hp_max = 14;
-            hp_cur = 14;
+            hp_max = 6; //13;
+            hp_cur = hp_max;
             ability_points_cur = 15;
             ability_points_max = 15;
             sanity_max = 20;
@@ -2477,9 +2477,9 @@ function scr_define_structs(){
 				ds_map_add(keyword_interaction_map,"CORPSE",keyword_event.research_vessel_hall_east_of_sr);
 			
                 pre_event_unpowered_room_desc = [
-                    "The air smells foul and stuffy in this narrow corridor, and is suffused with the same ominous dim red light. The floor is metal grating and the walls are made up of panels of burnished steel.\n",
-                    "\nA shadowed and inert form is slumped against the western bulkhead door, as if in peaceful repose. Upon closer inspection, you can see that the man is one of the security forces on board, if his military fatigues and body armor are any indication. You can also see that he is very dead: his eyes stare lifelessly at the jagged hole in his abdomen beneath his flak vest, admiring the great heap of coiled intestines that lay piled between his legs.\n",
-                    "\nIf your eyes aren't mistaken in the gloomy light, there's a strangely colored, green goo clinging to the edges of the gaping wound, and more of it dribbling from his mouth. The CORPSE is also clutching a pistol in a death grip. Judging by the bloody hole in the side of his head, it looks as though his last act was to use the weapon on himself.\n",
+                    "The air smells foul and stuffy in this narrow corridor, and is suffused with the dim glow of the sanguine emergency lighting. The floor is metal grating and the walls burnished steel.\n",
+                    "\nA shadowed and inert form is slumped against the western bulkhead door, as if in peaceful repose. Upon closer inspection, you can see that the man is one of the security forces on board, if his military fatigues and body armor are any indication. You can also see that he is very dead: his eyes stare lifelessly at the jagged hole just beneath his flak vest, admiring the heap of coiled intestines that lay piled between his legs.\n",
+                    "\nIf your eyes aren't mistaken in the gloomy light, there's an eerily luminescent, green slime clinging to the edges of the gaping wound, and more of it dribbling from the dead man's mouth. The CORPSE is also clutching a pistol in a death grip. Judging by the bloody hole in the side of his head, it looks as though his last act was to use the weapon on himself.\n",
                     "\nThe self-inflicted head wound, combined with the abyss where the man's stomach used to be, has certainly given you pause. Nonetheless, the CORPSE is carrying some useful looking gear, and there could be more in the pockets of his tactical vest. Is it wise to take a closer look?\n"
                 ]
 				

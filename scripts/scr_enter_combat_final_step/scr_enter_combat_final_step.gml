@@ -22,7 +22,7 @@ function scr_enter_combat_final_step(){
 	}
 	
 	
-	
+	//We will go to the combat prep phase:
 	if valid_char_found {
 		//Define our first g.cur_combat_char as just the first pc, just for the purposes of the prep combat phase:
 		global.cur_combat_char = test_pc_char_id;
@@ -39,7 +39,10 @@ function scr_enter_combat_final_step(){
 		scr_add_str_to_dialogue_ar("\nPress any key to enter the combat preparation phase.\n");
 	}
 	
+	//We immediately begin combat - this could be an enemy or a pc, depending upon who was the first char in the combat_initiative queue:
 	else if !valid_char_found {
+		global.combat_prep_phase = false;
+		
 		global.cur_combat_round = 1; //reset
 		scr_add_str_to_dialogue_ar($"\nRound {global.cur_combat_round} of combat has begun.\n");	
 		
@@ -48,10 +51,13 @@ function scr_enter_combat_final_step(){
 		temp_ran_init_ar = scr_shuffle_ar(global.combat_initiative_ar);
 			
 		global.combat_initiative_ar = scr_reverse_sort_combat_init_ar(temp_ran_init_ar);
-			
+		
+		//Assign cur_combat_char and next_combat_char:
 		global.cur_combat_char_index = 0;
 		global.cur_combat_char = global.combat_initiative_ar[0];
 		next_combat_char = global.cur_combat_char;
+		
+		global.cur_game_state = game_state.combat_paused;
 		
 		if global.cur_combat_char.char_team_enum == team_type.pc {
 			//We set this as a failsafe just in case the char revives during scr_trigger_dot_effects() in our combat_paused game state; if they do not,
@@ -61,14 +67,15 @@ function scr_enter_combat_final_step(){
 			we've correctly set our next_combat_game_state, so we'll end up in combat_assign_pc_command game state; if they remain unconscious or die, 
 			scr_evaluate_combat_conclusion will be called, and the game will either end or proceed to the enemy char, and the next char correctly chosen.
 			*/
-			global.cur_game_state = game_state.combat_paused;
 		}
 		else {
 			next_combat_game_state = game_state.combat_execute_action; 	
-			//"This enemy can only take stock of a devastated battlefield and wait" will trigger, scr_evaluate_combat_conclusion will be called, and we'll ad
-			//-vance from there as normal
+			//This will occur: "This enemy can only take stock of a devastated battlefield and wait" will trigger, scr_evaluate_combat_conclusion will be called, 
+			//and we'll advance from there as normal
 		}
 	}
+	
+	d($"\nJust finished moving through scr_enter_combat_final_step: valid_char_found == {valid_char_found}");
 			
 	//Center our cam (eventually pressing enter will give us a slow zoom before transitioning into the combat screen):
 	scr_center_map_window(global.cur_combat_char.cur_grid_x,global.cur_combat_char.cur_grid_y,global.map_cam,"\n\no_con step event: game_state == init_combat: combat begun == true: centering on the first pc in this group...");

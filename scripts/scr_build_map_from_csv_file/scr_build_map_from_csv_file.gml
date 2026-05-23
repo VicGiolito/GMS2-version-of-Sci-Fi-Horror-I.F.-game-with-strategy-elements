@@ -44,6 +44,11 @@ function scr_build_map_from_csv_file(location_enum){
 					//new global.Character(character.enemy_skittering_larva,xx,yy,global.research_vessel_grid,team_type.enemy,true); 
 					//new global.Character(character.enemy_sodden_shambler,xx,yy,global.research_vessel_grid,team_type.enemy,true);
 					
+					//Debug hazards:
+					if !is_array(room_struct_id.hazard_generator_ar) room_struct_id.hazard_generator_ar = [];
+					array_push(room_struct_id.hazard_generator_ar, hazard_generator_types.electric);
+					if !is_array(room_struct_id.hazard_ar) room_struct_id.hazard_ar = [];
+					array_push(room_struct_id.hazard_ar, hazard_type.electric_current);
 				}
 				
 				//For path finding purposes:
@@ -89,17 +94,23 @@ function scr_build_map_from_csv_file(location_enum){
 						
 					//Debug pcs:
 					
-					//new global.Character(character.ogre,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.ogre,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					new global.Character(character.mechanician,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					//new global.Character(character.security_guard,xx,yy,global.research_vessel_grid,team_type.pc,true);
-					//new global.Character(character.doctor,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.doctor,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					//new global.Character(character.engineer,xx,yy,global.research_vessel_grid,team_type.pc,true);
-					//new global.Character(character.service_droid,xx,yy,global.research_vessel_grid,team_type.pc,true);
+					new global.Character(character.service_droid,xx,yy,global.research_vessel_grid,team_type.pc,true);
 					new global.Character(character.child,xx,yy,global.research_vessel_grid,team_type.pc,true);
 				}
 				
 				//East of stasis room:
 				else if room_enum == research_vessel_room.sc_corridor_east {
+					
+					//Debug hazards:
+					if !is_array(room_struct_id.hazard_generator_ar) room_struct_id.hazard_generator_ar = [];
+					array_push(room_struct_id.hazard_generator_ar, hazard_generator_types.fire);
+					if !is_array(room_struct_id.hazard_ar) room_struct_id.hazard_ar = [];
+					array_push(room_struct_id.hazard_ar, hazard_type.fire);
 					
 					//Debug:
 						//Enemies:

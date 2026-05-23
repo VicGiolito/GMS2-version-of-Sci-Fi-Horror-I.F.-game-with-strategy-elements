@@ -1,4 +1,6 @@
 
+//We do this for EVERY grid in our global.level_ar
+
 function scr_spread_hazard_fire() {
 	
 	/*Note: Each index in the coords_to_ignite_ar array contains a struct which contains grid coordinates of the cells that we will turn to fire 

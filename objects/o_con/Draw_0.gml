@@ -165,6 +165,26 @@ if global.cur_game_state >= game_state.main_game && global.cur_game_state < game
 			draw_text(pc_char_id.char_sprite_room_x,pc_char_id.char_sprite_room_y-(char_spr_h+name_offset_y),string(pc_char_id.nick_name) );
 			scr_reset_font_align();
 			scr_reset_font();
+			
+			//Draw cur char if applicable:
+			if global.cur_game_state > game_state.choose_chars && global.cur_game_state < game_state.combat_paused {
+				if global.acting_char_struct_id != -1 && is_struct(global.acting_char_struct_id) && global.acting_char_struct_id.struct_type_enum == struct_type.Character &&
+				global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.stun_count <= 0 && global.acting_char_struct_id.unconscious_bool == false {
+					
+					if global.acting_char_struct_id == pc_char_id {
+					
+						cur_char_spr_counter++;
+					
+						if cur_char_spr_counter < game_get_speed(gamespeed_fps) {
+							draw_sprite(spr_cur_char_spr,0,pc_char_id.char_sprite_room_x,pc_char_id.char_sprite_room_y)	;
+						}
+						
+						if cur_char_spr_counter > game_get_speed(gamespeed_fps)*2 {
+							cur_char_spr_counter = 0;	
+						}
+					}
+				}
+			}
 		}
 	}
 }

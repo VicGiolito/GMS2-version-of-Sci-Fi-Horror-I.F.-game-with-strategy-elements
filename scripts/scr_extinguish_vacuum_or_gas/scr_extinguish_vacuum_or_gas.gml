@@ -3,6 +3,8 @@
 
 if extinguish_vac_bool == false, we extinguish gas instead.
 
+We do this for EVERY grid in our global.level_ar
+
 */
 
 function scr_extinguish_vacuum_or_gas(extinguish_vac_bool){

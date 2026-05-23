@@ -390,7 +390,7 @@ else if global.cur_game_state == game_state.choose_chars {
 						scr_update_char_sprite_position_vars(global.pc_char_ar[oo]);
 					}
 					
-					scr_define_enemy_mobs(global.cur_grid);
+					scr_define_enemy_mobs();
 					
 					scr_apply_random_hazard_gen(global.cur_grid); //debug only
 					scr_reveal_entire_grid(global.cur_grid, true); //debug only
@@ -559,13 +559,13 @@ else if global.cur_game_state == game_state.init_combat {
 		//Combat is warranted - go to pause, then assign pc command (combat prep phase)
 		else if combat_begun {
 			
-			//Switch mob struct id movement ai var to hunting, if applicable:
+			//Switch mob struct id movement ai var from guarding to hunting, if applicable:
 			
 			//We use the first character in the g.combat_initiative_ar - it could be any team, so long as their cur_grid and cur_grid_* vars are accurate, that's all we care about.
 			var enemy_mobs_at_cell_ar = scr_return_enemy_mob_id(global.combat_initiative_ar[0].cur_grid, global.combat_initiative_ar[0].cur_grid_x, global.combat_initiative_ar[0].cur_grid_y);
 			
 			if array_length(enemy_mobs_at_cell_ar) > 0 {
-				d("\no_con step event: game_state == init_combat: combat_begun == true, switch ai omvement type of enemy mobs: our enemy_mobs_at_cell_ar ar_len was > 0.\n")
+				d("\no_con step event: game_state == init_combat: combat_begun == true, switch ai movement type of enemy mobs from guarding to hunting: our enemy_mobs_at_cell_ar ar_len was > 0.\n")
 				var mob_struct_id;
 				for(var i = 0; i < array_length(enemy_mobs_at_cell_ar); i++) {
 					
@@ -573,7 +573,7 @@ else if global.cur_game_state == game_state.init_combat {
 					
 					if mob_struct_id.ai_movement_behavior != ai_movement_type.guarding {
 						mob_struct_id.ai_movement_behavior = ai_movement_type.hunting;	
-						d("\no_con step event: game_state == init_combat: combat_begun == true, switch ai omvement type of enemy mobs:switched enemy ai movement type to hunting.\n");
+						d("\no_con step event: game_state == init_combat: combat_begun == true, switch ai movement type of enemy mobs: SUCCESS! switched enemy ai movement type from guarding to hunting.\n");
 					}
 				}
 			}
@@ -2833,6 +2833,7 @@ else if (global.cur_game_state == game_state.combat_choose_pc_wep || global.cur_
 											scr_add_str_to_dialogue_ar("You can't use this ability during the combat preparation phase, try again.\n",true);	
 										}
 									}
+										
 									//This is an ability that does something else: spawns a unit, buffs a stat, applies a debuff, etc.
 									//some of these may require a target and will therefore send us to game_state.use_target_item
 									//some examples include: torvalds shield generator, energizing stim prick, cooper's smoke grenade, field_medicine, avia's spawn droid, etc.
@@ -3400,7 +3401,7 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 				//Changing pcs:
 				if global.passing_item_boolean == false {
 					
-					if global.pc_char_ar[index_int].unconscious_count <= 0 && global.pc_char_ar[index_int].unconscious_bool == false {
+					if global.pc_char_ar[index_int].unconscious_count <= 0 && global.pc_char_ar[index_int].unconscious_bool == false && global.pc_char_ar[index_int].stun_count <= 0 {
 						
 						var prev_cur_char = global.acting_char_struct_id;
 						
@@ -3411,7 +3412,8 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						changed_cur_char = true;
 					}
 					else {
-						scr_add_str_to_dialogue_ar($"{global.pc_char_ar[index_int].name} is still unconscious, you can't assume control of that character, try again.", true)
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar($"{global.pc_char_ar[index_int].name} is still unconscious or stunned, you can't assume control of that character, try again.", true)
 					}
 				}
 			}	
@@ -3709,7 +3711,24 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					}
 					
 					//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
-					if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+					if !use_prev_cur_char { 
+						
+						//If this character is stunned but otherwise alive and there's enemies in this room - move to combat, they will lose their first turn:
+						if global.acting_char_struct_id.stun_count > 0 && global.acting_char_struct_id.unconscious_bool == false && global.acting_char_struct_id.has_died_bool == false
+						&& is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+							global.cur_game_state = game_state.init_combat;	
+						}
+						
+						//Change character - we know that they're unconscious or dead:
+						else {
+							global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); 
+						
+							//Show message that control has been changed:
+							if global.acting_char_struct_id != -1 {
+								scr_add_str_to_dialogue_ar($"\nCharacter control has automatically moved to {global.acting_char_struct_id.name}.");	
+							}
+						}
+					}
 		
 					/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
 					there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
@@ -3725,15 +3744,15 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						scr_end_turn();
 					}
 					
-					//We didn't change cur chars, so check this room; if we had, we don't potentially want combat being triggered in another room by another char
-					//at this time - there would be no cause for it.
-					else if use_prev_cur_char {
-						//Check to see if we're triggering combat in the new room:
+					//There was at least SOME other valid character we could move to, somewhere...
+					else {
+						//So print the room for the character we are using now, even if it has changed:
+						scr_print_char_new_room_text(global.acting_char_struct_id);
+						
+						//We didn't change cur chars, so check this room; if we had, we don't potentially want combat being triggered in another room by another char
+						//at this time - there would be no cause for it.
 						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
 							global.cur_game_state = game_state.init_combat;	
-						}
-						else {
-							scr_print_char_new_room_text(global.acting_char_struct_id);
 						}
 					}
 				}
@@ -3968,67 +3987,12 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						scr_print_add_movement_chars_screen(move_str);
 					}
 					
-					#region Just move this one specific char, the player shouldn't really have been using this command just for this anyway:
+					#region Just give a debug command - the player shouldn't be using the command to just move one character, and it's extraneous to rewrite all of the movement code for YET ANOTHER movement case.
 					
 					else if array_length(local_party_ar) == 1 {
 						
-						var char_to_move = local_party_ar[0];
-						
-						//Set as the new acting_char_inst (just in case it changed):
-						global.acting_char_struct_id = char_to_move;
-						
-						//Reduce movepoints:
-						char_to_move.move_points_cur -= 1;
-					
-						//Remove from current room:
-						scr_add_remove_char_room_ar(char_to_move.cur_room_id, char_to_move, false);
-					
-						//Update char x and y vars:
-						char_to_move.cur_grid_x += party_move_dir_x;
-						char_to_move.cur_grid_y += party_move_dir_y;
-				
-						//Update cur_room_id:
-						char_to_move.cur_room_id = global.cur_grid[# char_to_move.cur_grid_x, char_to_move.cur_grid_y];
-				
-						//Add to next room array:
-						scr_add_remove_char_room_ar(char_to_move.cur_room_id, char_to_move, true);
-					
-						//Update vars for any neutrals in this char's neutrals_following_this_char_ar, if applicable:
-						scr_update_neutrals_movement_vars(char_to_move.neutrals_following_this_char_ar, char_to_move.cur_grid_x, char_to_move.cur_grid_y);	
-					
-						//Re-position it's sprite vars:
-						scr_update_char_sprite_position_vars(char_to_move);
-						
-						//Update camera:
-						scr_center_map_window(char_to_move.cur_grid_x,char_to_move.cur_grid_y,global.map_cam,"\n\no_con step event: player just successfully moved a pc to another room.");
-				
-						//Add room to tilemap, if it hasn't already been done:
-						if char_to_move.cur_room_id.explored_boolean == false {
-							scr_add_cell_to_tilemap(global.tile_main_lay_id,char_to_move.cur_room_id.room_enum,char_to_move.cur_grid_x,char_to_move.cur_grid_y);
-						}
-						//Add doors to room, if it hasn't already been done:
-						if char_to_move.cur_room_id.doors_already_added_boolean == false {
-							scr_add_doors_to_tilemap(global.tile_doors_lay_id,char_to_move.cur_grid_x,char_to_move.cur_grid_y,char_to_move.cur_grid);
-						}
-				
-						//Update the room's boolean vars:
-						char_to_move.cur_room_id.explored_boolean = true;
-						char_to_move.cur_room_id.doors_already_added_boolean = true;
-			
-						//Call scr_reset_visibility(), then update visibility:
-						scr_reset_visibility(char_to_move.cur_grid);
-						scr_update_visibility(char_to_move.cur_grid);
-				
-						//Display move result:
-						scr_add_str_to_dialogue_ar($"\n{char_to_move.name} moves {move_str}.");
-						
-						//Check to see if we're triggering combat in the new room:
-						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
-							global.cur_game_state = game_state.init_combat;	
-						}
-						else {
-							scr_print_char_new_room_text(char_to_move);	
-						}
+						multi_word_str_failed = true;
+						scr_add_str_to_dialogue_ar("There's only one character in this room capable of moving, so you really don't need to use the party movement command. Just control that character and enter 'W'EST, 'E'AST, 'N'ORTH, or 'S'OUTH instead. Try again.", true);
 					}
 					
 					#endregion
@@ -4129,7 +4093,31 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 							}
 							
 							//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
-							if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+							if !use_prev_cur_char {
+								
+								//If this character is stunned but otherwise alive and there's enemies in this room - move to combat, they will lose their first turn:
+								if global.acting_char_struct_id.stun_count > 0 && global.acting_char_struct_id.unconscious_bool == false && global.acting_char_struct_id.has_died_bool == false
+								&& is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+									global.cur_game_state = game_state.init_combat;	
+								}
+						
+								//Change character - we know that they're unconscious or dead:
+								else {
+								
+									//Try to change control to someone in the local_party_ar first:
+									global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, local_party_ar); 
+								
+									//If that failed, try to move to someone in the global.pc_char_ar instead:
+									if global.acting_char_struct_id == -1 {
+										global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar);
+									}
+								
+									//If either of those changes succeeded, show message:
+									if global.acting_char_struct_id != -1 {
+										scr_add_str_to_dialogue_ar($"\nCharacter control has automatically moved to {global.acting_char_struct_id.name}.");
+									}
+								}
+							}
 							
 							/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
 							there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
@@ -4147,10 +4135,10 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 						}
 						
 						//Check to see if we're triggering combat in the new room:
-						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+						if global.acting_char_struct_id != -1 && is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
 							global.cur_game_state = game_state.init_combat;	
 						}
-						else {
+						else if global.acting_char_struct_id != -1 {
 							scr_print_char_new_room_text(global.acting_char_struct_id);
 						}
 					}
@@ -4921,7 +4909,31 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 							}
 							
 							//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
-							if !use_prev_cur_char { global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar); }
+							if !use_prev_cur_char { 
+								
+								//If this character is stunned but otherwise alive and there's enemies in this room - move to combat, they will lose their first turn:
+								if global.acting_char_struct_id.stun_count > 0 && global.acting_char_struct_id.unconscious_bool == false && global.acting_char_struct_id.has_died_bool == false
+								&& is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+									global.cur_game_state = game_state.init_combat;	
+								}
+						
+								//Change character - we know that they're unconscious or dead:
+								else {
+								
+									//Try to pick someone from the moving party first:
+									global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, moving_party_ar);
+								
+									//If that didn't work, pick from the pc_char_ar instead:
+									if global.acting_char_struct_id == -1 {
+										global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar);	
+									}
+								
+									//If either of those changes worked, show message:
+									if global.acting_char_struct_id != -1 {
+										scr_add_str_to_dialogue_ar($"\nCharacter control has automatically moved to {global.acting_char_struct_id.name}.");	
+									}
+								}
+							}
 							
 							/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
 							there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
@@ -4939,10 +4951,10 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 						}
 						
 						//Check to see if we're triggering combat in the new room:
-						if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+						if global.acting_char_struct_id != -1 && is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
 							global.cur_game_state = game_state.init_combat;	
 						}
-						else {
+						else if global.acting_char_struct_id != -1 {
 							//Return to main game state:
 							global.cur_game_state = game_state.main_game;
 				
@@ -5034,11 +5046,67 @@ else if global.cur_game_state == game_state.add_chars_to_movement_party && globa
 				//Display move result:
 				scr_add_str_to_dialogue_ar($"\n{global.acting_char_struct_id.name} leads the party {party_moving_dir_str}.");
 				
+				//Check hazard damage:
+				if scr_check_for_hazards(global.acting_char_struct_id) == true {
+							
+					moving_party_ar = scr_trigger_hazard_damage(false, moving_party_ar);
+							
+					//Make sure our g.acting_char_struct_id is still alive, not unconscious, and not stunned:
+					//Change g.acting_char_struct_id if the previous one died or is unconscious:
+					var use_prev_cur_char = false;
+							
+					if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
+					global.acting_char_struct_id.stun_count <= 0 {
+						use_prev_cur_char = true; //We don't need to change our g.acting_char_struct_id from the last main game state - they're still available.
+					}
+							
+					//Our previous g.acting_char_struct_id was unavailable - attempt to change to a valid, available character now:
+					if !use_prev_cur_char { 
+						
+						//If this character is stunned but otherwise alive and there's enemies in this room - move to combat, they will lose their first turn:
+						if global.acting_char_struct_id.stun_count > 0 && global.acting_char_struct_id.unconscious_bool == false && global.acting_char_struct_id.has_died_bool == false
+						&& is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+							global.cur_game_state = game_state.init_combat;	
+						}
+						
+						//Change character - we know that they're unconscious or dead:
+						else {
+						
+							//Try to pick someone from the moving party first:
+							global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, moving_party_ar);
+								
+							//If that didn't work, pick from the pc_char_ar instead:
+							if global.acting_char_struct_id == -1 {
+								global.acting_char_struct_id = scr_return_next_char_in_ar_direction(1, 0, -1, global.pc_char_ar);	
+							}
+								
+							//If either of those changes worked, show message:
+							if global.acting_char_struct_id != -1 {
+								scr_add_str_to_dialogue_ar($"\nCharacter control has automatically moved to {global.acting_char_struct_id.name}.");	
+							}
+						}
+					}
+							
+					/*If, after calling scr_return_next_char_in_ar_direction(), our active char == -1, then we know that our prev active char is unavail, and we know
+					there is no one else in our pc_char_ar that is available; whether an unconscious or stunned character will revive on their own is irrelevant - the
+					player has no one to control, so we'll call our end_turn effects and, as scr_trigger_dot_effects() is repeatedly called, unconscious chars will either
+					revive or die; they may even be dragged into combat, where they will then either revive or die. Either way, the player will just be observing until the
+					char either revives, or the game ends, which is a state we check at the end of init_combat.
+					*/
+					if global.acting_char_struct_id == -1 {
+			
+						scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
+			
+						//This brings us to init_combat
+						scr_end_turn();
+					}
+				}
+				
 				//Check to see if we're triggering combat in the new room:
-				if is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
+				if global.acting_char_struct_id != -1 && is_array(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) && array_length(global.acting_char_struct_id.cur_room_id.enemies_in_room_ar) > 0 {
 					global.cur_game_state = game_state.init_combat;	
 				}
-				else {
+				else if global.acting_char_struct_id != -1 {
 					//Return to main game state:
 					global.cur_game_state = game_state.main_game;
 
@@ -5115,6 +5183,7 @@ else if global.cur_game_state == game_state.spread_hazards {
 				
 		//Change g.acting_char_struct_id if the previous one died or is unconscious:
 		var use_prev_cur_char = false;
+		
 		if scr_check_ar_for_val(global.pc_char_ar, global.acting_char_struct_id) == true {
 			if global.acting_char_struct_id.has_died_bool == false && global.acting_char_struct_id.unconscious_bool == false &&
 			global.acting_char_struct_id.stun_count <= 0 {
@@ -5134,7 +5203,10 @@ else if global.cur_game_state == game_state.spread_hazards {
 		if global.acting_char_struct_id == -1 {
 			
 			//We should still update all of our doors - they could have been destroyed by fire:
-			scr_update_all_door_tiles_in_grid(global.acting_char_struct_id.cur_grid);
+			for(var i = 0; i < array_length(global.level_ar); i++) {
+				var grid_id = global.level_ar[i];
+				scr_update_all_door_tiles_in_grid(grid_id);
+			}
 			
 			scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
 			

@@ -1,4 +1,4 @@
-/// @description Setup ds_grids and initial enemy structs
+/// @description Setup ds_grids and initial enemy structs - o_con alarm[2]
 
 //switch to full screen:
 window_set_fullscreen(true);

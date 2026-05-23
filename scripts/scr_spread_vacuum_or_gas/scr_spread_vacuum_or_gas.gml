@@ -1,4 +1,5 @@
 
+//We do this for EVERY grid in our global.level_ar
 
 function scr_spread_vacuum_or_gas(vacuum_boolean){
 	

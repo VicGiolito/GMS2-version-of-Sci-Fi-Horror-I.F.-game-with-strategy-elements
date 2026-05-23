@@ -67,7 +67,6 @@
     "IDEVersion": "2023.8.2.108",
   },
   "resources": [
-    {"id":{"name":"scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread","path":"scripts/scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread/scr_placeholder_for_scr_perform_flood_fill_recursion_for_vacuum_or_gas_spread.yy",},},
     {"id":{"name":"array_count","path":"scripts/array_count/array_count.yy",},},
     {"id":{"name":"scr_check_rank_all_combat_immune","path":"scripts/scr_check_rank_all_combat_immune/scr_check_rank_all_combat_immune.yy",},},
     {"id":{"name":"fnt_default_8","path":"fonts/fnt_default_8/fnt_default_8.yy",},},
@@ -96,6 +95,7 @@
     {"id":{"name":"fnt_default_dialogue_screen","path":"fonts/fnt_default_dialogue_screen/fnt_default_dialogue_screen.yy",},},
     {"id":{"name":"scr_unequip_item","path":"scripts/scr_unequip_item/scr_unequip_item.yy",},},
     {"id":{"name":"spr_tile_template_for_tiled_editor","path":"sprites/spr_tile_template_for_tiled_editor/spr_tile_template_for_tiled_editor.yy",},},
+    {"id":{"name":"spr_cur_char_spr","path":"sprites/spr_cur_char_spr/spr_cur_char_spr.yy",},},
     {"id":{"name":"scr_filter_abil_ar_by_combat_only","path":"scripts/scr_filter_abil_ar_by_combat_only/scr_filter_abil_ar_by_combat_only.yy",},},
     {"id":{"name":"scr_set_cam_follow","path":"scripts/scr_set_cam_follow/scr_set_cam_follow.yy",},},
     {"id":{"name":"scr_add_remove_char_from_global_ar","path":"scripts/scr_add_remove_char_from_global_ar/scr_add_remove_char_from_global_ar.yy",},},

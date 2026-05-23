@@ -3,7 +3,7 @@
 function scr_flood_fill_vacuum_or_gas(origin_grid_x, origin_grid_y, steps_grid_id, grid_to_check, cardinal_directions_only, spread_vac_boolean, called_from_str){
 		
 	
-	d($"For scr_flood_fill_vacuum_or_gas: YOU CUNT! Where is this being called from? {called_from_str}")
+	d($"For scr_flood_fill_vacuum_or_gas: Called from: {called_from_str}")
 	
 	ds_grid_clear(steps_grid_id,UNVISITED_STEP_VAL);
 	ds_grid_clear(global.visited_grid,UNVISITED_CELL);

@@ -13,7 +13,8 @@ function scr_filter_ar_for_movement_party(ar_to_check){
 			char_struct_id = ar_to_check[i];
 			
 			if is_struct(char_struct_id) && char_struct_id.struct_type_enum == struct_type.Character {
-				if char_struct_id.move_points_cur > 0 {
+				if char_struct_id.move_points_cur > 0 && char_struct_id.unconscious_bool == false && char_struct_id.has_died_bool == false &&
+				char_struct_id.stun_count <= 0 {
 					array_push(new_ar,char_struct_id);	
 				}
 			}

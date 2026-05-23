@@ -16,13 +16,16 @@ function scr_trigger_starvation_damage(){
 				
 					if pc_char_id.unconscious_bool == false {
 						
-						pc_char_id.hp_cur -= STARVING_HP_LOSS;	
+						if scr_check_ar_for_val(pc_char_id.passive_abil_ar, passive_abil_type.synthetic) == false {
 						
-						scr_add_str_to_dialogue_ar($"\n{pc_char_id.name} is starving! Their hit points have been reduced by {STARVING_HP_LOSS}.");
+							pc_char_id.hp_cur -= STARVING_HP_LOSS;	
 						
-						if pc_char_id.hp_cur <= 0 {
-							pc_char_id.unconscious_bool = true;
-							scr_add_str_to_dialogue_ar($"\n{pc_char_id.name} has collapsed!");	
+							scr_add_str_to_dialogue_ar($"\n{pc_char_id.name} is starving! Their hit points have been reduced by {STARVING_HP_LOSS}.");
+						
+							if pc_char_id.hp_cur <= 0 {
+								pc_char_id.unconscious_bool = true;
+								scr_add_str_to_dialogue_ar($"\n{pc_char_id.name} has collapsed!");	
+							}
 						}
 					}
 				}

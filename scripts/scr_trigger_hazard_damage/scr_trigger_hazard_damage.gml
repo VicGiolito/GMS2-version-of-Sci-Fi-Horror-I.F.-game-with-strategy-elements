@@ -135,8 +135,6 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								if char_struct_id.hp_cur <= 0 {
 									char_struct_id.unconscious_bool = true;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has collapsed!");
-									scr_add_remove_char_room_ar(char_struct_id.cur_room_id, char_struct_id, false);
-									scr_auto_reassign_neutrals_owner(char_struct_id);
 								}
 							}
 						}
@@ -162,7 +160,7 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 					
 					#region Electric damage:
 					
-					//organics have a 25% chance of being stunned, cybernetics and synethics a 50%; cybernetics take double damage, synthetics take triple damage
+					//organics have a 25% chance of being stunned, cybernetics and synethics a 50%; cybernetics and synthetics take triple damage
 					
 					if scr_check_ar_for_val(char_struct_id.cur_room_id.hazard_ar,hazard_type.electric_current) {
 						
@@ -197,8 +195,8 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 									}
 							
 									if ran_val <= threshold {
-										char_struct_id.stun_count = true;	
-										stunned_str = "They have also been stunned for 1 turn!";
+										char_struct_id.stun_count = 1;	
+										stunned_str = " They have also been stunned for 1 turn!";
 									}
 								}
 		
@@ -207,8 +205,6 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								if char_struct_id.hp_cur <= 0 {
 									char_struct_id.unconscious_bool = true;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has collapsed!");
-									scr_add_remove_char_room_ar(char_struct_id.cur_room_id, char_struct_id, false);
-									scr_auto_reassign_neutrals_owner(char_struct_id);
 								}
 							}
 						}
@@ -229,7 +225,7 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 									}
 							
 									if ran_val <= threshold {
-										char_struct_id.stun_count = true;	
+										char_struct_id.stun_count = 1;	
 										stunned_str = "They have also been stunned for 1 turn!";
 									}
 								}
@@ -273,8 +269,6 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								if char_struct_id.hp_cur <= 0 {
 									char_struct_id.unconscious_bool = true;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has collapsed!");
-									scr_add_remove_char_room_ar(char_struct_id.cur_room_id, char_struct_id, false);
-									scr_auto_reassign_neutrals_owner(char_struct_id);
 								}
 							}
 						}
@@ -297,6 +291,7 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 					}
 					
 					#endregion
+					
 				}	
 			}
 			

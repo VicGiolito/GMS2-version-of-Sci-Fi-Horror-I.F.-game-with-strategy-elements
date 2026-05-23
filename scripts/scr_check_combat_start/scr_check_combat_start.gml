@@ -37,7 +37,11 @@ function scr_check_combat_start(){
 		//char_hiding_in_room is reset to false in scr_post_combat_reset_vars(), and only set to true if a char successfully passes a skill check with 'HIDE' in main game state.
 		if char_struct_id.char_hiding_in_room == true continue;
 		
-		if char_struct_id.participated_in_new_turn_battle == false { //participated_in_new_turn_battle is set to true below, and only reset to false again in scr_post_combat_reset_vars(), and scr_end_turn(), which is called whenever we 'END' the turn from the main game state.
+		//Dead or unconscious do not contribute to this battle. They fell unconscious during the main game state and are immune to enemies until they are revived - 
+		//I don't want wandering monsters pushing their shit in without the player being able to rally their position in an attempt to save them.
+		if char_struct_id.has_died_bool == true || char_struct_id.unconscious_bool == true continue;
+		
+		if char_struct_id.participated_in_new_turn_battle == false { //participated_in_new_turn_battle is set to true below, and only reset to false again in scr_post_combat_reset_vars(), and scr_end_turn(), which is called whenever we 'END' the turn from the main game state; is also reset to false whenever a pc flees combat, so that they will trigger combat again.
 			
 			cur_room_struct_id = char_struct_id.cur_room_id;
 			
@@ -77,7 +81,7 @@ function scr_check_combat_start(){
 							valid_add = false;	
 						}
 						
-						//If we have no just come here directly from scr_end_turn() AND the character has the 'child' passive, then exclude them:
+						//If we have not just come here directly from scr_end_turn() AND the character has the 'child' passive, then exclude them:
 						if global.full_game_turn_completed == false && scr_return_passive_enum_in_ar(pc_struct_id.passive_abil_ar, passive_abil_type.child) == true {
 							valid_add = false;	
 						}
