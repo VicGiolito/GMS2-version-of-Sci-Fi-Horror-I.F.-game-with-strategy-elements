@@ -52,7 +52,7 @@ function scr_define_structs(){
 	
 	#region Character struct
 	
-	global.Character = function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, wep_loadout_int = 0) constructor {
+	global.Character = function(char_enum, spawn_grid_x, spawn_grid_y, spawn_grid, team_enum, add_to_room_list_bool, wep_loadout_int = 0, auto_add_to_mob_struct = false, enemy_ai_movement_type_enum = ai_movement_type.guarding) constructor {
 		
 		struct_type_enum = struct_type.Character;
 		
@@ -241,13 +241,16 @@ function scr_define_structs(){
 		evading_boolean = false;
 		
 		avail_weps_or_abils_list = -1; //Used as an array; is filled with either items from rh and lh or abilities.
+		
+		//Use this char's cur_grid to define their 'location_enum':
+		location_enum = scr_return_location_enum_from_grid_id(cur_grid);
 
         #region Define char stats....
 		
         if char_type_enum == character.ogre {
 
             name = "Cragos, 'The Ogre'";
-			nick_name = "Cragos";
+			nick_name = "Ogre";
             hp_max = 16;
             hp_cur = 16;
             ability_points_cur = 8;
@@ -1107,6 +1110,36 @@ function scr_define_structs(){
 			else if i == status_effect_chance.suppress array_push(status_res_list,res_infect);
 		}
 		
+		//Automatically add this enemy struct to a mob struct at this location or, if one does not exist, create and add to a new mob struct at this location;
+		//also define the ai movement type enum for the mob:
+		if auto_add_to_mob_struct {
+			//enemy_ai_movement_type_enum	; mob_grid_x and y ; cur_grid_x ; cur_grid ; mob_cur_grid
+			//Iterate through global mob_ar:
+			var mob_found = false;
+			if is_array(global.enemy_mob_ar) && array_length(global.enemy_mob_ar) > 0 {
+				for(var mi = 0; mi < array_length(global.enemy_mob_ar); mi++) {
+					
+					var mob_struct_id = global.enemy_mob_ar[mi];
+					
+					//If we find another mob at this location that has the same movement type, simply add ourself to it:
+					if mob_struct_id.mob_grid_x == cur_grid_x && mob_struct_id.mob_grid_y == cur_grid_y && mob_struct_id.ai_movement_behavior == enemy_ai_movement_type_enum {
+						if !is_array(mob_struct_id.enemies_in_mob_ar) mob_struct_id.enemies_in_mob_ar = [];
+						array_push(mob_struct_id.enemies_in_mob_ar, self);
+						mob_found = true;
+						break;
+					}
+				}
+			}
+			
+			//Otherwise, we need to create one:
+			if !mob_found {
+				//Create new enemy mob:
+				array_push(global.enemy_mob_ar, new enemy_mob_struct(cur_grid, cur_grid_x, cur_grid_y, location_enum, enemy_ai_movement_type_enum) );
+				//Add to its nested array:
+				array_push(global.enemy_mob_ar[array_length(global.enemy_mob_ar) - 1].enemies_in_mob_ar, self);
+			}
+		}
+		
 	} //closed bracket for Character struct
 	
 	#endregion
@@ -1220,7 +1253,7 @@ function scr_define_structs(){
             requires_ammo_boolean = false;
             item_name = "PULSE PISTOL";
             item_equip_enum = item_equip_type.one_hand;
-            max_range = 3;
+            max_range = 2; //3? Is 2 too shit?
             item_verb = "fires the";
             item_dmg_str = "burned";
             can_overwatch_boolean = true;
@@ -1371,7 +1404,7 @@ function scr_define_structs(){
             item_name = "FIELD MEDICINE";
             max_range = 0;
             ability_point_cost = 3;
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {FIELD_MEDICINE_HP_BOOST} hit points and is cleared of the following status effects: burning, bleeding, poisoned.";
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn if in combat: target player character heals {FIELD_MEDICINE_HP_BOOST} hit points and is cleared of the following status effects: burning, bleeding, poisoned.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
@@ -1394,7 +1427,7 @@ function scr_define_structs(){
             item_name = "IMPROVISED TREATMENT";
             max_range = 0;
             ability_point_cost = 3;
-            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn: target player character heals {IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF} infection points.";
+            ability_cost_str = $"Spend {ability_point_cost} AP and pass your turn if in combat: target player character heals {IMPROVISED_MEDICINE_INFECT_REMOVE_BUFF} infection points.";
             non_attack_ability_boolean = true;
             abil_passes_turn_boolean = true;
             requires_ammo_boolean = false;
@@ -1443,7 +1476,7 @@ function scr_define_structs(){
             dmg_min = 1;
             dmg_max = 2;
             requires_ammo_boolean = false;
-            item_name = "SOLDIERING TOOLS";
+            item_name = "SOLDERING TOOLS";
             item_equip_enum = item_equip_type.none;
             item_verb = "swings the";
             item_dmg_str = "blundgeons";
@@ -1811,13 +1844,13 @@ function scr_define_structs(){
             dmg_max = 6;
             item_name = "MACHINE GUN";
             item_equip_enum = item_equip_type.two_hands;
-            max_range = 4; //4;
+            max_range = 3; //3;
             item_verb = "fires the";
             item_dmg_str = "shot";
             can_overwatch_boolean = true;
             bleed_chance = 25;
             suppress_chance = 33;
-			aoe_count = 2;
+			aoe_count = 1;
 			use_context = abil_use_context.combat_only;
 		}
         else if item_enum == item_type.spine_projectile {
@@ -2742,8 +2775,8 @@ function scr_define_structs(){
 				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
 				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
-				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
+				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
 				
 				directional_ar[DOOR_DIR_N].door_enum = door_state.wall;
 				directional_ar[DOOR_DIR_N].door_hp = BASE_WALL_HP;

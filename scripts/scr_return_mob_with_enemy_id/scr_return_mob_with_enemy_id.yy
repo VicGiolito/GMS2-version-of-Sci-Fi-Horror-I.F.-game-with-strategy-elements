@@ -1,7 +1,7 @@
 {
   "resourceType": "GMScript",
   "resourceVersion": "1.0",
-  "name": "scr_delete_enemy_mobs",
+  "name": "scr_return_mob_with_enemy_id",
   "isCompatibility": false,
   "isDnD": false,
   "parent": {

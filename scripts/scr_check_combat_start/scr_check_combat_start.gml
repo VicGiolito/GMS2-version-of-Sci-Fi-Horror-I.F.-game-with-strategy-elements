@@ -45,6 +45,8 @@ function scr_check_combat_start(){
 			
 			cur_room_struct_id = char_struct_id.cur_room_id;
 			
+			#region Add characters - for clarification: chars that are hidden do not get added to the g.combat_rank_ar, and chars that have the child trait AND its not the start of the turn ALSO do not get added to the g.combat_rank_ar; both however, are still added to the g.combat_initiative_ar.
+			
 			if is_array(cur_room_struct_id.enemies_in_room_ar) && array_length(cur_room_struct_id.enemies_in_room_ar) > 0 {
 				
 				d($"scr_check_combat_start: For char_struct_id: {char_struct_id.name}, the enemies in room ar was an array and its length was > 0. Its length is: {array_length(cur_room_struct_id.enemies_in_room_ar)}. This script will return TRUE.");
@@ -72,7 +74,7 @@ function scr_check_combat_start(){
 						
 						var starting_combat_rank = rank_pos.pc_far;
 						
-						//We need to consider how Kira will get excluded from combat here if she just moevd into a new room
+						//We need to consider how Kira will get excluded from combat here if she just moved into a new room
 						
 						var valid_add = true;
 						
@@ -83,14 +85,13 @@ function scr_check_combat_start(){
 						
 						//If we have not just come here directly from scr_end_turn() AND the character has the 'child' passive, then exclude them:
 						if global.full_game_turn_completed == false && scr_return_passive_enum_in_ar(pc_struct_id.passive_abil_ar, passive_abil_type.child) == true {
+							d($"\nscr_check_combat_start: For pc_struct_id: {char_struct_id.name}, g.full_turn_completed == false AND this char had the 'child' passive.");
 							valid_add = false;	
 						}
 						
 						if valid_add {
 							array_push(global.combat_rank_ar[starting_combat_rank],pc_struct_id);
 						}
-						
-						//d($"scr_check_combat_start: At nested array at index 5, pc_struct_id.name == {pc_struct_id.name}");
 						
 						//Hidden chars will, however, be added to the combat_init_ar (they will be removed again immediately after 
 						//this script), and they will have their other vars reset:
@@ -153,10 +154,21 @@ function scr_check_combat_start(){
 					
 				}
 				
+				d($"\nscr_check_combat_start: after building g.combat_initiative_ar, our g.combat_rank_ar[pc_far_position] looks like this:\n");
+				for(var i = 0; i < array_length(global.combat_rank_ar[rank_pos.pc_far]); i++) {
+					
+					var pc_in_combat_rank = global.combat_rank_ar[rank_pos.pc_far][i];
+					
+					d($"\ng.global.combat_rank_ar[rank_pos.pc_far][{i}].name == {pc_in_combat_rank.name}\n");	
+					
+				}
+				
 				global.combat_begun = true;
 				
 				return true;
 			}
+				
+			#endregion	
 		}
 		
 		d($"scr_check_combat_start: For char_struct_id: {char_struct_id.name}, the enemies_in_room_ar for this char's cur room either does not exists or its length is not greater than 0.");

@@ -20,7 +20,7 @@ global.level_ar = []; //Contains all of ids for all our map grids in the game.
 
 main_menu_str_ar = ["Start New Game\n", "Continue Game\n", "Options\n", "Exit\n"];
 
-party_limit = 5;
+party_limit = 8;
 
 global.pc_char_ar = [];
 global.enemy_char_ar = [];
@@ -81,7 +81,7 @@ global.left_window_text_offset_x = 64;
 global.left_window_text_offset_y = 64;
 
 global.max_abilities = 6;
-global.max_player_inv = 20; //12; //23; //Just my observation with this current font-window size etc. how many fit.
+global.max_player_inv = 16; //17 //Just my observation with this current font-window size etc. how many fit, considering torvald has 6 abilities listed, including his passive.
 
 d($"global.center_x_of_upper_window: {global.center_x_of_upper_window}, global.center_y_of_upper_window: {global.center_y_of_upper_window}");
 
@@ -165,7 +165,7 @@ d($"reset_full_screen_count: {global.reset_full_screen_count}");
 alarm[2] = 1; //Setup all of our 'initialization' data: grids, world maps, cur_grid variables, character selection data, etc.
 
 //Define a lot of 'content' type data like string arrays, etc.
-global.resources_food = 0;
+global.resources_food = 12;
 global.resources_scrap = 8; // 0;
 global.resources_basic_tech = 0;
 global.resources_advanced_tech = 0;
@@ -303,14 +303,16 @@ skill_test_type_enum = -1;
 global.cur_grid = -1; 
 global.cur_grid_w = -1;
 global.cur_grid_h = -1;
-global.origin_grid_x = -1;
-global.origin_grid_y = -1;
+global.origin_grid_x = -1; //5
+global.origin_grid_y = -1; //8
 global.tile_main_lay_id = -1;
 global.tile_doors_lay_id = -1;
 global.tile_fow_lay_id = -1;
 global.frontier_queue = -1; 
 
 cur_char_spr_counter = 0;
+
+global.north_south_y_research_ship_delineator = 10; //At and above this y grid coordinate is considered the north half of the research station; below it is considered the more dangerous southern half.
 
 
 

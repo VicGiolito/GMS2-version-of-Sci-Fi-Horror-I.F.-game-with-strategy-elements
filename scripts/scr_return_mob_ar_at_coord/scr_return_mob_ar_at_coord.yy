@@ -5,7 +5,7 @@
   "isCompatibility": false,
   "isDnD": false,
   "parent": {
-    "name": "Combat and Enemies",
-    "path": "folders/Scripts/Combat and Enemies.yy",
+    "name": "Enemy Mobs",
+    "path": "folders/Scripts/Enemy Mobs.yy",
   },
 }

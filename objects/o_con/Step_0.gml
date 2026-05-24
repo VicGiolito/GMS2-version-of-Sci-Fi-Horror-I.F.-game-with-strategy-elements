@@ -543,8 +543,8 @@ else if global.cur_game_state == game_state.init_combat {
 				
 				/* The only way this scenario can occur is if a char walks into a new room, is stunned or rendered unconscious by a trap, 
 				and they were the last avail character in the global.pc_char_ar. In such a case, just end the turn. We will then be brought 
-				back here, and then our 'spread_hazards' condition will execute. Then we'll the turn will end again, and we'll be brought back
-				here again. This will then loop until the char expires, either through scr_dot_effects() or while in combat, from scr_dot_effects().
+				back here, and then our 'spread_hazards' condition will execute. Then the turn will end again, and we'll be brought back
+				here again. This will then loop until the char expires, either through scr_dot_effects() or while in combat.
 				*/
 				if global.acting_char_struct_id == -1 {
 					scr_add_str_to_dialogue_ar($"\nThere are no playable characters left to control! All playable characters are either stunned or unconscious, but will they revive on their own? Is this truly their end?");
@@ -587,11 +587,19 @@ else if global.cur_game_state == game_state.init_combat {
 				
 				combat_char_id = global.combat_initiative_ar[i];
 				
+				//If the char is hiding, add them to the hidden_chars_in_room_ar:
 				if combat_char_id.char_hiding_in_room == true {
 					array_push(hidden_chars_in_room_ar, combat_char_id);
 				}
+				
+				//We need to give the player the option of adding those chars with the 'child' trait to the g.combat_rank_ar, since they would not be in scr_check_combat_start:
+				if global.full_game_turn_completed == false && is_array(combat_char_id.passive_abil_ar) && 
+				scr_check_ar_for_val(combat_char_id.passive_abil_ar, passive_abil_type.child) == true {
+					array_push(hidden_chars_in_room_ar, combat_char_id);	
+				}
 			}
 			
+			//Weed out chars in the hidden_chars_in_room_ar from the global.combat_initiative_ar, then bring us to game_state.add_hidden_chars_to_combat:
 			if array_length(hidden_chars_in_room_ar) > 0 {
 				
 				var temp_ar = [];
@@ -599,8 +607,23 @@ else if global.cur_game_state == game_state.init_combat {
 				for(var i = 0; i < array_length(global.combat_initiative_ar); i++) {
 					
 					combat_char_id = global.combat_initiative_ar[i];
-				
-					if combat_char_id.char_hiding_in_room == false {
+					
+					//If this same char is also in the hidden_chars_in_room_ar, then do NOT add them to the temp array:
+					var valid_char_add = true;
+					
+					var hidden_char;
+					for(var yy = 0; yy < array_length(hidden_chars_in_room_ar); yy++) {
+						
+						hidden_char = hidden_chars_in_room_ar[yy];
+						
+						if combat_char_id == hidden_char {
+							valid_char_add = false;
+							break;
+						}
+					}
+					
+					//In this way, we only add chars to our g.combat_initiative_ar that were not in the hidden_chars_in_room_ar:
+					if valid_char_add {
 						array_push(temp_ar, combat_char_id);
 					}
 				}
@@ -1367,11 +1390,11 @@ else if global.cur_game_state == game_state.combat_assign_pc_command {
 					
 					if item_struct_id.use_context == abil_use_context.combat_only || item_struct_id.use_context == abil_use_context.both {
 						
-						if item_struct_id.move_point_cost > 0 && global.cur_combat_char.move_points_cur < item_struct_id.move_point_cost {
+						if global.cur_combat_char.move_points_cur >= item_struct_id.move_point_cost {
 							
-							if item_struct_id.ability_point_cost > 0 && global.cur_combat_char.ability_points_cur < item_struct_id.ability_point_cost {
+							if global.cur_combat_char.ability_points_cur >= item_struct_id.ability_point_cost {
 								
-								if item_struct_id.scrap_cost > 0 && global.resources_scrap < item_struct_id.scrap_cost {
+								if global.resources_scrap >= item_struct_id.scrap_cost {
 								
 									prev_game_state = global.cur_game_state;
 									global.cur_combat_char.using_item_struct_id = item_struct_id;
@@ -4251,11 +4274,11 @@ else if global.cur_game_state == game_state.main_game && global.wait {
 					
 					if item_struct_id.use_context == abil_use_context.main_game_only || item_struct_id.use_context == abil_use_context.both {
 						
-						if item_struct_id.move_point_cost > 0 && global.acting_char_struct_id.move_points_cur < item_struct_id.move_point_cost {
+						if global.acting_char_struct_id.move_points_cur >= item_struct_id.move_point_cost {
 							
-							if item_struct_id.ability_point_cost > 0 && global.acting_char_struct_id.ability_points_cur < item_struct_id.ability_point_cost {
+							if global.acting_char_struct_id.ability_points_cur >= item_struct_id.ability_point_cost {
 								
-								if item_struct_id.scrap_cost > 0 && global.resources_scrap < item_struct_id.scrap_cost {
+								if global.resources_scrap >= item_struct_id.scrap_cost {
 								
 									prev_game_state = global.cur_game_state;
 									global.acting_char_struct_id.using_item_struct_id = item_struct_id;

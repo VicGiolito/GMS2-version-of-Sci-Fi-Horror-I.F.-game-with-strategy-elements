@@ -105,7 +105,7 @@ function scr_spread_hazard_fire() {
 											var cur_door_struct_id = scr_return_door_struct_id(room_struct_id, cur_door_macro);
 											var adjoining_door_struct_id = scr_return_door_struct_id(checking_room_struct, adjoining_door_macro);
 											
-											if cur_door_struct_id.door_enum == door_state.wall && adjoining_door_struct_id.door_enum == door_state.wall {
+											if cur_door_struct_id.door_enum == door_state.wall || adjoining_door_struct_id.door_enum == door_state.wall {
 												valid_dir = false;	
 											}
 											
@@ -164,8 +164,12 @@ function scr_spread_hazard_fire() {
 					var room_struct_to_ignite_id = grid_id[# grid_coord_x, grid_coord_y];
 					
 					//We always 'Destroy' the doors of the door structs...
-					coords_to_ignite_ar[z].original_door.door_enum = door_state.destroyed;
-					coords_to_ignite_ar[z].adjoining_door.door_enum = door_state.destroyed;
+					if coords_to_ignite_ar[z].original_door.door_enum != door_state.wall {
+						coords_to_ignite_ar[z].original_door.door_enum = door_state.destroyed;
+					}
+					if coords_to_ignite_ar[z].adjoining_door.door_enum != door_state.wall {
+						coords_to_ignite_ar[z].adjoining_door.door_enum = door_state.destroyed;
+					}
 					
 					//We don't apply fire to rooms with vacuum or vacuum generators:
 					if is_array(room_struct_to_ignite_id.hazard_ar) && scr_check_ar_for_val(room_struct_to_ignite_id.hazard_ar, hazard_type.vacuum) == true {
@@ -186,6 +190,12 @@ function scr_spread_hazard_fire() {
 					}
 					
 					array_push(room_struct_to_ignite_id.hazard_ar, hazard_type.fire);
+					
+					//Show message to alert the player - but only if there's anyone in there (we don't care what state they are in):
+					if (is_array(room_struct_to_ignite_id.pcs_in_room_ar) && array_length(room_struct_to_ignite_id.pcs_in_room_ar) > 0 ) ||
+					(is_array(room_struct_to_ignite_id.neutrals_in_room_ar) && array_length(room_struct_to_ignite_id.neutrals_in_room_ar) > 0 ) {
+						scr_add_str_to_dialogue_ar($"\nFire has spread into the {room_struct_to_ignite_id.room_name_str}!");	
+					}
 				}
 			}
 			

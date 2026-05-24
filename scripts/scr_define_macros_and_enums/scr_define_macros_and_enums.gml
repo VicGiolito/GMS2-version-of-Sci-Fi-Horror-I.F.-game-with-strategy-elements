@@ -20,7 +20,8 @@ function scr_define_macros_and_enums(){
 		vacuum_gen,
 		fire_gen,
 		gas_gen,
-		electric_gen
+		electric_gen,
+		uncontrollable_neutrals_present
 	}
 	
 	//These are mostly 'passive' type abilities and abilities that do NOT double as items:
@@ -295,6 +296,8 @@ function scr_define_macros_and_enums(){
 		neutral_spinning_scattershot,
 		neutral_fumigating_flamer,
 		neutral_light_sentry_gun,
+		neutral_surveillance_cam,
+		
 		enemy_skittering_larva,
 		enemy_spined_spitter,
 		enemy_lumbering_carrier,

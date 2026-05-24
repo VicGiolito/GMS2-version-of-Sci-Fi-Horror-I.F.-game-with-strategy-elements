@@ -35,10 +35,13 @@ function scr_define_enemy_mobs() {
 						var location_enum = scr_return_location_enum_from_grid_id(grid_id);
 						
 						//Manually define some hunting and wandering type mobs; default will be guarding:
-						var movement_type = ai_movement_type.wandering; //guarding
+						var movement_type = ai_movement_type.guarding; //guarding is default.
 						
-						if location_enum == location.research_vessel && room_struct_id.room_enum == research_vessel_room.shuttle_bay {
-							movement_type = ai_movement_type.hunting;
+						if location_enum == location.research_vessel {
+							//Debug only:
+							if room_struct_id.room_enum == research_vessel_room.shuttle_bay || (xx == 3 && yy == 8) {
+								movement_type = ai_movement_type.hunting;
+							}
 						}
 						
 						array_push(global.enemy_mob_ar, new enemy_mob_struct(grid_id, xx, yy, location_enum, movement_type) );

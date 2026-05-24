@@ -10,7 +10,8 @@ function scr_apply_random_hazard_gen(grid_to_use){
 	//var ran_hazard_gen_ar = [ hazard_generator_types.fire, hazard_generator_types.vacuum, hazard_generator_types.toxic_gas, hazard_generator_types.electric ];
 	
 	var ran_hazard_gen_ar = [ hazard_generator_types.vacuum, hazard_generator_types.fire, hazard_generator_types.toxic_gas, hazard_generator_types.electric,
-	hazard_generator_types.vacuum, hazard_generator_types.fire, hazard_generator_types.toxic_gas, hazard_generator_types.electric ];
+	hazard_generator_types.vacuum, hazard_generator_types.fire, hazard_generator_types.toxic_gas, hazard_generator_types.electric, hazard_generator_types.fire,
+	hazard_generator_types.fire, hazard_generator_types.fire ];
 	
 	var ran_hazard_count = 0, ran_hazard_max = array_length(ran_hazard_gen_ar), failsafe_val = 0, failsafe_max = (grid_w*grid_h)+1;
 	

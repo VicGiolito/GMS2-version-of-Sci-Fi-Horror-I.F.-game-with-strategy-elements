@@ -77,6 +77,8 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								if char_struct_id.hp_cur <= 0 {
 									char_struct_id.unconscious_bool = true;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has collapsed!");
+									//Drop all of their inventory:
+									scr_drop_all_char_inv(char_struct_id, true);
 								}
 							}
 						}
@@ -89,10 +91,18 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								
 								var hunting_str = "";
 								
+								var mob_struct_id = -1;
+								
 								if char_struct_id.char_team_enum == team_type.enemy {
-									if char_struct_id.ai_movement_behavior != ai_movement_type.hunting {
-										char_struct_id.ai_movement_behavior = ai_movement_type.hunting;
-										hunting_str = "They have become enraged and are now hunting for blood!";
+									
+									var mob_struct_id = scr_return_mob_with_enemy_id(char_struct_id.cur_grid_x, char_struct_id.cur_grid_y, char_struct_id);
+									
+									if mob_struct_id != -1 && is_struct(mob_struct_id) && mob_struct_id.struct_type_enum == struct_type.Enemy_mob {
+									
+										if mob_struct_id.ai_movement_behavior != ai_movement_type.hunting {
+											mob_struct_id.ai_movement_behavior = ai_movement_type.hunting;
+											hunting_str = " They have become enraged and are now hunting for blood!";
+										}
 									}
 								}
 								
@@ -102,6 +112,11 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 									scr_add_remove_char_room_ar(char_struct_id.cur_room_id, char_struct_id, false);
 									ar_to_use[i] = -1;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has died!");
+									
+									//remove from corresponding mob:
+									if char_struct_id.char_team_enum == team_type.enemy && mob_struct_id != -1 {
+										scr_delete_enemy_struct_from_mob(mob_struct_id, char_struct_id);
+									}
 								}
 							}
 						}
@@ -135,6 +150,8 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								if char_struct_id.hp_cur <= 0 {
 									char_struct_id.unconscious_bool = true;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has collapsed!");
+									//Drop all of their inventory:
+									scr_drop_all_char_inv(char_struct_id, true);
 								}
 							}
 						}
@@ -144,13 +161,35 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 							if base_gas_dmg != 0 {
 							
 								char_struct_id.hp_cur -= DOT_HAZARD_DMG_TOXIC_GAS;
+								
+								var hunting_str = "";
+								
+								var mob_struct_id = -1;
+								
+								if char_struct_id.char_team_enum == team_type.enemy {
+									
+									var mob_struct_id = scr_return_mob_with_enemy_id(char_struct_id.cur_grid_x, char_struct_id.cur_grid_y, char_struct_id);
+									
+									if mob_struct_id != -1 && is_struct(mob_struct_id) && mob_struct_id.struct_type_enum == struct_type.Enemy_mob {
+									
+										if mob_struct_id.ai_movement_behavior != ai_movement_type.hunting {
+											mob_struct_id.ai_movement_behavior = ai_movement_type.hunting;
+											hunting_str = " They have become enraged and are now hunting for blood!";
+										}
+									}
+								}
 		
-								scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) is choking from the toxic gas in the {char_struct_id.cur_room_id.room_name_str}! They have taken {DOT_HAZARD_DMG_TOXIC_GAS} damage!");
+								scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) is choking from the toxic gas in the {char_struct_id.cur_room_id.room_name_str}! They have taken {DOT_HAZARD_DMG_TOXIC_GAS} damage!{hunting_str}");
 		
 								if char_struct_id.hp_cur <= 0 {
 									scr_add_remove_char_room_ar(char_struct_id.cur_room_id, char_struct_id, false);
 									ar_to_use[i] = -1;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has died!!");
+									
+									//remove from corresponding mob:
+									if char_struct_id.char_team_enum == team_type.enemy && mob_struct_id != -1 {
+										scr_delete_enemy_struct_from_mob(mob_struct_id, char_struct_id);
+									}
 								}
 							}
 						}
@@ -205,6 +244,8 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								if char_struct_id.hp_cur <= 0 {
 									char_struct_id.unconscious_bool = true;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has collapsed!");
+									//Drop all of their inventory:
+									scr_drop_all_char_inv(char_struct_id, true);
 								}
 							}
 						}
@@ -212,7 +253,26 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 						else if char_struct_id.char_team_enum != team_type.pc {
 							
 							if base_electric_dmg != 0 {
-							
+								
+								char_struct_id.hp_cur -= base_electric_dmg;
+								
+								var hunting_str = "";
+								
+								var mob_struct_id = -1;
+								
+								if char_struct_id.char_team_enum == team_type.enemy {
+									
+									var mob_struct_id = scr_return_mob_with_enemy_id(char_struct_id.cur_grid_x, char_struct_id.cur_grid_y, char_struct_id);
+									
+									if mob_struct_id != -1 && is_struct(mob_struct_id) && mob_struct_id.struct_type_enum == struct_type.Enemy_mob {
+									
+										if mob_struct_id.ai_movement_behavior != ai_movement_type.hunting {
+											mob_struct_id.ai_movement_behavior = ai_movement_type.hunting;
+											hunting_str = " They have become enraged and are now hunting for blood!";
+										}
+									}
+								}
+								
 								//Perform stunned check:
 								if char_struct_id.stun_immune_boolean == false {
 									var ran_val = irandom_range(1,100);
@@ -226,16 +286,21 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 							
 									if ran_val <= threshold {
 										char_struct_id.stun_count = 1;	
-										stunned_str = "They have also been stunned for 1 turn!";
+										stunned_str = " They have also been stunned for 1 turn!";
 									}
 								}
 		
-								scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) is being electrocuted from the exposed electrical hazard in the {char_struct_id.cur_room_id.room_name_str}! They have taken {base_electric_dmg} damage!{stunned_str}");
+								scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) is being electrocuted from the exposed electrical hazard in the {char_struct_id.cur_room_id.room_name_str}! They have taken {base_electric_dmg} damage!{hunting_str}{stunned_str}");
 		
 								if char_struct_id.hp_cur <= 0 {
 									scr_add_remove_char_room_ar(char_struct_id.cur_room_id, char_struct_id, false);
 									ar_to_use[i] = -1;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has died!");
+									
+									//remove from corresponding mob:
+									if char_struct_id.char_team_enum == team_type.enemy && mob_struct_id != -1 {
+										scr_delete_enemy_struct_from_mob(mob_struct_id, char_struct_id);
+									}
 								}
 							}
 						}
@@ -269,6 +334,8 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 								if char_struct_id.hp_cur <= 0 {
 									char_struct_id.unconscious_bool = true;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has collapsed!");
+									//Drop all of their inventory:
+									scr_drop_all_char_inv(char_struct_id, true);
 								}
 							}
 						}
@@ -278,6 +345,23 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 							if vac_dmg != 0 {
 							
 								char_struct_id.hp_cur -= vac_dmg;
+								
+								var hunting_str = "";
+								
+								var mob_struct_id = -1;
+								
+								if char_struct_id.char_team_enum == team_type.enemy {
+									
+									var mob_struct_id = scr_return_mob_with_enemy_id(char_struct_id.cur_grid_x, char_struct_id.cur_grid_y, char_struct_id);
+									
+									if mob_struct_id != -1 && is_struct(mob_struct_id) && mob_struct_id.struct_type_enum == struct_type.Enemy_mob {
+									
+										if mob_struct_id.ai_movement_behavior != ai_movement_type.hunting {
+											mob_struct_id.ai_movement_behavior = ai_movement_type.hunting;
+											hunting_str = " They have become enraged and are now hunting for blood!";
+										}
+									}
+								}
 		
 								scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has been exposed to vacuum in the {char_struct_id.cur_room_id.room_name_str}! They have taken {vac_dmg} damage!");
 		
@@ -285,6 +369,11 @@ function scr_trigger_hazard_damage(iterate_through_global_ars_boolean, user_defi
 									scr_add_remove_char_room_ar(char_struct_id.cur_room_id, char_struct_id, false);
 									ar_to_use[i] = -1;
 									scr_add_str_to_dialogue_ar($"\n{char_struct_id.name}({char_struct_id.unique_id}) has died!!");
+									
+									//remove from corresponding mob:
+									if char_struct_id.char_team_enum == team_type.enemy && mob_struct_id != -1 {
+										scr_delete_enemy_struct_from_mob(mob_struct_id, char_struct_id);
+									}
 								}
 							}
 						}

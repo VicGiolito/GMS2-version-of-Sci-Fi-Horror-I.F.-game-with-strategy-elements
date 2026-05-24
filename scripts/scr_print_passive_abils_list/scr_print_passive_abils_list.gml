@@ -25,10 +25,10 @@ function scr_print_passive_abils_list(cur_char_id, update_scroll_pos = true){
 				abil_str += $"Healing Factor: Automatically heals {HEALING_FACTOR_HEAL_VAL} hit points or {HEALING_FACTOR_HEAL_VAL} infection points each turn, both in combat and outside of it. Does not heal infection during combat. Also has a 20% chance of removing permanent injuries at the start of every turn.";
 			}
 			else if abil_enum == passive_abil_type.cybernetic {
-				abil_str += $"Cybernetic: Increased resistence to most status effects and hazards. Susceptible to electrical damage and electrical hazards. All electrical damage sustained is increased by 50%.";
+				abil_str += $"Cybernetic: Increased resistence to most status effects and hazards. Susceptible to electrical damage: all electrical damage sustained is doubled.";
 			}
 			else if abil_enum == passive_abil_type.synthetic {
-				abil_str += $"Synthetic: Immune to most status effects and hazards. Immune to morale damage. +1 armor. Susceptible to electrical damage and electrical hazards. All electrical damage sustained is increased by 100%.";
+				abil_str += $"Synthetic: Immune to most status effects and hazards. Immune to morale damage. +1 armor. Does not consume food. Must be 'r'epaired in order to regain hit points. Susceptible to electrical damage: all electrical damage sustained is tripled.";
 			}
 			else if abil_enum == passive_abil_type.child {
 				abil_str += $"Child: Due to their small size, this character can't wield weapons and can't wear marine armor. This character does not automatically trigger combat with enemies while moving between rooms, but will still trigger combat with enemies at the start of each turn, if they are not hidden. Also is the only character small enough to traverse through ventillation shafts.";

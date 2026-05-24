@@ -29,13 +29,13 @@ function scr_spread_vacuum_or_gas(vacuum_boolean){
 						if vacuum_boolean && is_array(room_struct_id.hazard_generator_ar) && scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.vacuum) == true {
 							
 							//We need to perform a flood fill from this location:
-							scr_flood_fill_vacuum_or_gas(room_struct_id.grid_x, room_struct_id.grid_y, global.steps_grid, room_struct_id.location_grid, true, true, "called from: scr_spread_vacuum_or_gas, which itself was called from global.cur_game_state == game_state.spread_hazards in our o_con step event");
+							scr_flood_fill_vacuum_or_gas(room_struct_id.grid_x, room_struct_id.grid_y, global.steps_grid, room_struct_id.location_grid, true, true, "scr_spread_vacuum_or_gas, which itself was called from global.cur_game_state == game_state.spread_hazards in our o_con step event");
 						}
 						
 						else if !vacuum_boolean && is_array(room_struct_id.hazard_generator_ar) && scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.toxic_gas) == true {
 							
 							//We need to perform a flood fill from this location:
-							scr_flood_fill_vacuum_or_gas(room_struct_id.grid_x, room_struct_id.grid_y, global.steps_grid, room_struct_id.location_grid, true, false,"called from: scr_spread_vacuum_or_gas, which itself was called from global.cur_game_state == game_state.spread_hazards in our o_con step event");
+							scr_flood_fill_vacuum_or_gas(room_struct_id.grid_x, room_struct_id.grid_y, global.steps_grid, room_struct_id.location_grid, true, false,"scr_spread_vacuum_or_gas, which itself was called from global.cur_game_state == game_state.spread_hazards in our o_con step event");
 						}
 					}
 				}

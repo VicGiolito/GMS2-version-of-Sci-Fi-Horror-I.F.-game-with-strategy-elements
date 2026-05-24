@@ -47,7 +47,7 @@ function scr_add_passive_ability(char_struct_id, passive_abil_enum, called_from_
 	else if passive_abil_enum == passive_abil_type.alien {	
 		
 		//Base 'alien' resistences
-        char_struct_id.res_fire += 75; 
+        char_struct_id.res_fire += 50; 
         char_struct_id.res_vacuum += 100;
         char_struct_id.res_gas += 100;
         char_struct_id.res_electric += 100;

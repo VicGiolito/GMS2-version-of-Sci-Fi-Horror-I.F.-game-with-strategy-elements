@@ -3,7 +3,7 @@
 function scr_flood_fill_vacuum_or_gas(origin_grid_x, origin_grid_y, steps_grid_id, grid_to_check, cardinal_directions_only, spread_vac_boolean, called_from_str){
 		
 	
-	d($"For scr_flood_fill_vacuum_or_gas: Called from: {called_from_str}")
+	d($"Entering scr_flood_fill_vacuum_or_gas: Called from: {called_from_str}")
 	
 	ds_grid_clear(steps_grid_id,UNVISITED_STEP_VAL);
 	ds_grid_clear(global.visited_grid,UNVISITED_CELL);
@@ -112,23 +112,55 @@ function scr_flood_fill_vacuum_or_gas(origin_grid_x, origin_grid_y, steps_grid_i
 									
 									//Change the room struct hazard_ar at this location to include 'vacuum': 
 									if spread_vac_boolean {
+										
+										var observer_str = "";
+										var room_struct_id = grid_to_check[# checking_cell_x, checking_cell_y];
+										var room_str = room_struct_id.room_name_str;
+										
 										//Add vacuum, if applicable:
 										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.vacuum) == false {
 											array_push(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.vacuum);
+											observer_str += $"Vacuum has spread to the {room_str}! ";
 										}
 										//If applicable, clear them of fire and toxic gas:
 										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.fire) == true {
 											array_delete(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, array_get_index(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.fire),1);
+											observer_str += $"The fire in the {room_str} has been extinguished by vacuum. ";
 										}
 										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas) == true {
 											array_delete(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, array_get_index(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas),1);
+											observer_str += $"The toxic gas in the {room_str} has been cleared by vacuum. ";
+										}
+										
+										//If there's anyone in the same room, show message:
+										if observer_str != "" {
+											if (is_array(room_struct_id.pcs_in_room_ar) && array_length(room_struct_id.pcs_in_room_ar) > 0 ) ||
+											(is_array(room_struct_id.neutrals_in_room_ar) && array_length(room_struct_id.neutrals_in_room_ar) > 0 ) {
+											
+													scr_add_str_to_dialogue_ar($"{observer_str}");	
+											}
 										}
 									}
 									
 									else if !spread_vac_boolean {
+										
+										var observer_str = "";
+										var room_struct_id = grid_to_check[# checking_cell_x, checking_cell_y];
+										var room_str = room_struct_id.room_name_str;
+										
 										//Add gas, if applicable:
 										if scr_check_ar_for_val(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas) == false {
 											array_push(grid_to_check[# checking_cell_x, checking_cell_y].hazard_ar, hazard_type.toxic_gas);
+											observer_str += $"Toxic gas has spread to the {room_str}! ";
+										}
+										
+										//If there's anyone in the same room, show message:
+										if observer_str != "" {
+											if (is_array(room_struct_id.pcs_in_room_ar) && array_length(room_struct_id.pcs_in_room_ar) > 0 ) ||
+											(is_array(room_struct_id.neutrals_in_room_ar) && array_length(room_struct_id.neutrals_in_room_ar) > 0 ) {
+											
+													scr_add_str_to_dialogue_ar($"{observer_str}");	
+											}
 										}
 									}
 								}

@@ -1,7 +1,7 @@
 
 /* Returns an array of mob struct ids at the specified grid and coordinates:
 
-
+identical to scr_return_mob_ar_at_coord (oof)
 
 */
 

@@ -52,17 +52,34 @@ if global.cur_game_state >= game_state.main_game && global.cur_game_state < game
 				if is_struct(room_struct_id) && room_struct_id.struct_type_enum == struct_type.Room {
 
 					icon_ar = [];
-			
+					
+					//Check for powered room:
 					if room_struct_id.powered_boolean == true {
 						array_push(icon_ar,icon_type.powered_room);
 					}
-			
+					
+					//Check for enemies:
 					var enemy_ar = room_struct_id.enemies_in_room_ar;
-		
+					
 					if is_array(enemy_ar) && array_length(enemy_ar) > 0 {
 						array_push(icon_ar,icon_type.enemies_present);
 					}
-			
+					
+					//Check for uncontrollable neutrals that do not move - survelliance bug, sentry gun:
+					var neutral_ar = room_struct_id.neutrals_in_room_ar;
+					
+					if is_array(neutral_ar) && array_length(neutral_ar) > 0 {
+						for(var ni = 0; ni < array_length(neutral_ar); ni++) {
+							if neutral_ar[ni].char_type_enum == character.neutral_light_sentry_gun || 
+							neutral_ar[ni].char_type_enum == character.neutral_surveillance_cam {
+								array_push(icon_ar,icon_type.uncontrollable_neutrals_present);
+								break;
+							}
+						}
+						
+					}
+					
+					//Check for both hazards:
 					var hazard_ar = room_struct_id.hazard_ar;
 			
 					if is_array(hazard_ar) && array_length(hazard_ar) > 0 {
@@ -85,6 +102,7 @@ if global.cur_game_state >= game_state.main_game && global.cur_game_state < game
 						}
 					}
 					
+					//Check for hazard generators:
 					if is_array(room_struct_id.hazard_generator_ar) && array_length(room_struct_id.hazard_generator_ar) > 0 {
 						if scr_check_ar_for_val(room_struct_id.hazard_generator_ar, hazard_generator_types.fire) == true {
 							array_push(icon_ar, icon_type.fire_gen);
@@ -121,6 +139,7 @@ if global.cur_game_state >= game_state.main_game && global.cur_game_state < game
 							else if icon_enum == icon_type.fire_gen spr_id = spr_hazard_fire_gen;
 							else if icon_enum == icon_type.gas_gen spr_id = spr_hazard_gas_gen;
 							else if icon_enum == icon_type.electric_gen spr_id = spr_hazard_electrical_gen;
+							else if icon_enum == icon_type.uncontrollable_neutrals_present spr_id = spr_uncontrollable_neutrals;
 					
 							draw_sprite(spr_id,0,spr_x,spr_y);
 						}
