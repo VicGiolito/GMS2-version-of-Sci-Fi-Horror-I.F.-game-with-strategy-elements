@@ -156,7 +156,7 @@ function scr_define_macros_and_enums(){
 		recycler, //26 done: possibly the most important room in the game: Spend 1 MP to convert an inputted amount of scrap and/or bio-matter into engine fuel. 
 		astrometrics, //27 - not in use
 		animal_lab, //28 done: perhaps this room just periodically spawns some particularly nasty enemy mobs. There's some dark shit going on in here.
-		officers_quarters, //29 done: basic lore provided here, journals as to what actually transpired on the such; otherwise functions just like 
+		officers_quarters, //29 done: basic lore provided here, journals as to what actually transpired on the such; otherwise functions just like the crew quarters
 		computer_core, //30 - not in use
 		
 		intersection_e_w_n, //31 done

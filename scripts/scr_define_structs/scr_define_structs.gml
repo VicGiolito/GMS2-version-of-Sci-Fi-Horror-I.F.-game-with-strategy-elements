@@ -634,6 +634,10 @@ function scr_define_structs(){
             ability_points_max = 15;
             sanity_max = 20;
 			
+			//debug:
+			move_points_max = 100;
+			move_points_cur = move_points_max;
+			
 			nick_name = "RG-88";
 			
 			courage = AVG_COURAGE_VAL+20; 
@@ -2972,11 +2976,11 @@ function scr_define_structs(){
 				post_event_unpowered_room_desc = pre_event_unpowered_room_desc;
 				post_event_powered_room_desc = pre_event_powered_room_desc;
 				
-				directional_ar[DOOR_DIR_E].door_enum = door_state.wall;
-				directional_ar[DOOR_DIR_E].door_hp = BASE_WALL_HP;
+				directional_ar[DOOR_DIR_E].door_enum = door_state.unlocked;
+				directional_ar[DOOR_DIR_E].door_hp = BASE_DOOR_HP;
 				
-				directional_ar[DOOR_DIR_W].door_enum = door_state.unlocked;
-				directional_ar[DOOR_DIR_W].door_hp = BASE_DOOR_HP;
+				directional_ar[DOOR_DIR_W].door_enum = door_state.wall;
+				directional_ar[DOOR_DIR_W].door_hp = BASE_WALL_HP;
 				
 				directional_ar[DOOR_DIR_N].door_enum = door_state.unlocked;
 				directional_ar[DOOR_DIR_N].door_hp = BASE_DOOR_HP;

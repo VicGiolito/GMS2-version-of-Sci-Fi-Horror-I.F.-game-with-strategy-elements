@@ -5,7 +5,7 @@
 
 function scr_build_map_from_csv_file(location_enum){
 	
-	var add_ran_enemies = true;
+	var add_ran_enemies = false;
 	
 	if add_ran_enemies {
 		var ran_enemy_coord_ar = [];
